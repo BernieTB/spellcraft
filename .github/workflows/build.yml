@@ -39,29 +39,36 @@ jobs:
                   # Full history so the builder's default Semantic versioning can count commits.
                   fetch-depth: 0
                   lfs: true
+                  persist-credentials: false
 
             - name: Compute short SHA
               id: vars
               run: echo "short_sha=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
 
-            # Same path and key as the test workflow so both reuse one Library cache.
+            # Key per target: the Windows build and the EditMode test run import assets for different
+            # targets. The `Library-` fallback still reuses any other Library cache on a miss.
             - name: Cache Library
               uses: actions/cache@v6
               with:
                   path: game/Library
-                  key: Library-${{ hashFiles('game/Assets/**', 'game/Packages/**', 'game/ProjectSettings/**') }}
-                  restore-keys: Library-
+                  key: Library-StandaloneWindows64-${{ hashFiles('game/Assets/**', 'game/Packages/**', 'game/ProjectSettings/**') }}
+                  restore-keys: |
+                      Library-StandaloneWindows64-
+                      Library-
 
             - name: Build
-              uses: game-ci/unity-builder@v5
+              uses: game-ci/unity-builder@v6
               env:
                   UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
                   UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
                   UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
               with:
+                  # game-ci/cli binary the action runs; pinned for reproducible builds (same as tests.yml).
+                  cliVersion: v0.1.69
                   projectPath: game
                   targetPlatform: StandaloneWindows64
                   buildName: Spellcraft
+                  buildsPath: build # uploaded below from build/StandaloneWindows64
 
             - name: Upload player
               uses: actions/upload-artifact@v7
