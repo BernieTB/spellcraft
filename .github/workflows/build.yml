@@ -33,6 +33,9 @@ jobs:
               with:
                   large-packages: false
 
+            - name: Disk space after cleanup
+              run: df -h / /mnt
+
             - name: Checkout
               uses: actions/checkout@v7
               with:
@@ -69,6 +72,13 @@ jobs:
                   targetPlatform: StandaloneWindows64
                   buildName: Spellcraft
                   buildsPath: build # uploaded below from build/StandaloneWindows64
+
+            # Runs even when the Unity step fails, e.g. with "no space left on device".
+            - name: Disk space after Unity
+              if: always()
+              run: |
+                  df -h / /mnt
+                  docker image ls
 
             - name: Upload player
               uses: actions/upload-artifact@v7

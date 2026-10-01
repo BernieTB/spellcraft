@@ -25,6 +25,9 @@ jobs:
               with:
                   large-packages: false
 
+            - name: Disk space after cleanup
+              run: df -h / /mnt
+
             - name: Checkout
               uses: actions/checkout@v7
               with:
@@ -58,6 +61,13 @@ jobs:
                   artifactsPath: test-results
                   githubToken: ${{ secrets.GITHUB_TOKEN }}
                   checkName: EditMode Test Results
+
+            # Runs even when the Unity step fails, e.g. with "no space left on device".
+            - name: Disk space after Unity
+              if: always()
+              run: |
+                  df -h / /mnt
+                  docker image ls
 
             - name: Upload test results
               if: always()
