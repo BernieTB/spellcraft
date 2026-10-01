@@ -14,7 +14,7 @@ words. Use these terms consistently in code, docs and issues.
 | **Linked choice** | The level-up reward: a package of one passive upgrade plus one card. The player picks a package, not the two parts separately. See [Character and level-ups](GAME_DESIGN.md#character-and-level-ups). |
 | **Meta-progression** | Progress kept between runs. It widens options (cards in the pool, classes, bestiary, grimoire), not raw stat power. |
 | **Mini-boss** | A mythical creature found in a secret room. |
-| **Neighbour modifier** | A bonus carried by a card that applies to one cast of the next or previous card in the spell line (e.g. "the next card deals +X damage"). |
+| **Neighbour modifier** | A bonus carried by a card that applies to the next or previous card in the spell line (e.g. "the next card deals +X damage"). See [ADR 0002](adr/0002-first-pass-combat-rules.md). |
 | **Passive upgrade** | The non-card half of a linked choice: an improvement to the character. Its catalogue is not designed yet. |
 | **Preparation phase** | The step before a professor fight where the player studies the boss, rearranges the spell line and may swap cards from a limited reserve. See [Boss preparation phase and recap](GAME_DESIGN.md#boss-preparation-phase-and-recap). |
 | **Professor** | The boss of a biome. |
