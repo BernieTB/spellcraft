@@ -45,6 +45,16 @@ Keep one logical change per commit. Mention any change to `game/ProjectSettings/
   and state the result in the PR.)
 - Merge only after review.
 
+## Changelog
+
+[`CHANGELOG.md`](CHANGELOG.md) follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+
+- Update the `## [Unreleased]` section in the same PR as any notable change: new features, bug fixes,
+  removals, and tooling or workflow changes visible to the developer.
+- Add one short line under the matching heading (`Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`,
+  `Security`), written for a player or developer, without commit hashes.
+- Skip it for typo fixes, internal refactors and other changes nobody would notice.
+
 ## Testing
 
 - Every change to `Game.Core` comes with EditMode tests in `game/Assets/_Project/Tests/Core/`.
@@ -78,7 +88,7 @@ An issue is done when all of these are true:
 - [ ] No hardcoded balance numbers (content is data-driven).
 - [ ] No secrets, `.ulf`/`.alf` files or generated Unity folders committed.
 - [ ] Docs updated when relevant (GDD, glossary, ADR, README) and changelog updated when relevant
-      (TODO: `CHANGELOG.md` does not exist yet).
+      (see [Changelog](#changelog)).
 - [ ] PR title follows Conventional Commits.
 - [ ] PR reviewed and merged.
 - [ ] Linked issue closed.
