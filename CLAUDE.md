@@ -58,11 +58,13 @@ Rationale: [ADR 0001](docs/adr/0001-separate-core-logic-from-unity.md).
 Run EditMode tests (verified, uses the Unity CLI `unity`, beta):
 
 ```powershell
-unity test game --editor-version 6000.3.24f1 --mode EditMode --output <scratch-dir>/results.xml
+unity test ./game --editor-version 6000.3.24f1 --mode EditMode --output <scratch-dir>/results.xml
 ```
 
 Exit code `0` = all passed, `8` = tests failed, anything else = the run itself failed (compile error,
 license, crash). Write results outside the repo.
+Keep the `./`: the argument is a project path **or name**, and a bare `game` can resolve to another project
+named `game` (for example the main checkout when working in a git worktree), silently testing the wrong code.
 
 - TODO: raw editor command line (`Unity.exe -batchmode -runTests ...`), not verified yet.
   Editor path on the dev machine: `C:\Program Files\Unity\Hub\Editor\6000.3.24f1\Editor\Unity.exe`.
