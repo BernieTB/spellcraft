@@ -67,9 +67,7 @@ jobs:
             # Runs even when the Unity step fails, e.g. with "no space left on device".
             - name: Disk space after Unity
               if: always()
-              run: |
-                  df -h /
-                  docker image ls
+              run: df -h /
 
             - name: Upload test results
               if: always()
