@@ -41,8 +41,10 @@ Keep one logical change per commit. Mention any change to `game/ProjectSettings/
 
 - One PR per issue. The PR body contains `Closes #<issue>`.
 - Keep PRs small enough to review in one sitting.
-- CI must be green before merging. (TODO: GameCI workflow not set up yet; until then, run the tests locally
-  and state the result in the PR.)
+- CI must be green before merging. The `Tests` workflow (`.github/workflows/tests.yml`) runs the EditMode
+  tests with GameCI on every PR to `main`; superseded runs are cancelled and the results are attached to the
+  run as an artifact. It can also be started by hand from the Actions tab (`workflow_dispatch`). A separate
+  build workflow (`.github/workflows/build.yml`) runs on push to `main`.
 - Merge only after review.
 
 ## Testing
