@@ -41,6 +41,7 @@ jobs:
             # tree stays clean for the builder. With no LFS files yet, an empty cache is saved and restored.
             - name: List LFS objects
               id: lfs
+              shell: bash # -o pipefail: fail if git lfs ls-files fails instead of hashing an empty list
               run: |
                   git lfs ls-files --long | cut -d' ' -f1 | sort > "$RUNNER_TEMP/lfs-ids.txt"
                   echo "LFS objects: $(wc -l < "$RUNNER_TEMP/lfs-ids.txt")"
@@ -55,12 +56,16 @@ jobs:
                   restore-keys: lfs-
 
             # Only objects missing from the cache are downloaded. The token is passed for this command
-            # only, the same way actions/checkout does, since credentials are not persisted.
+            # only, the same way actions/checkout does, since credentials are not persisted. Its base64 form
+            # is masked (GitHub only masks the raw token). `git lfs install --local` sets up the LFS filters
+            # as checkout's `lfs: true` would, so pulled files do not show as modified to the builder.
             - name: Pull LFS objects
               env:
                   GITHUB_TOKEN: ${{ github.token }}
               run: |
                   auth=$(printf 'x-access-token:%s' "$GITHUB_TOKEN" | base64 -w0)
+                  echo "::add-mask::$auth"
+                  git lfs install --local
                   git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth" lfs pull
                   git lfs ls-files
 
