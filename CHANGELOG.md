@@ -1,0 +1,22 @@
+# Changelog
+
+All notable changes to this project are documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+The project has no releases yet and does not follow a versioning scheme. Once the first build is
+released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+### Added
+
+- Unity 6 project (URP 2D) in `game/`, with Git LFS for binary assets and enforced LF line endings.
+- Architecture skeleton: `Game.Core` (pure C# logic), `Game.Unity` (presentation) and `Game.Core.Tests`
+  (EditMode tests) assemblies, plus `.editorconfig` code style.
+- Game design document, glossary and ADR 0001 (separate core logic from Unity).
+- Contributing guide with Git workflow and Definition of Done, and `CLAUDE.md` operating manual.
+- GitHub issue forms (feature, bug, tech task, spike, docs) and pull request template.
+- Scripts to set up GitHub labels and milestones in `tools/`.
+- This changelog.
+
+[Unreleased]: https://github.com/BernieTB/spellcraft/commits/main
