@@ -10,7 +10,7 @@ namespace Game.Unity
     {
         private void Start()
         {
-            Debug.Log($"[Spellcraft] {CoreInfo.ModuleName} loaded.");
+            Debug.Log($"[{GameInfo.Name}] Core loaded.");
         }
     }
 }

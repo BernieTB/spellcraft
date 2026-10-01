@@ -18,5 +18,7 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
 - GitHub issue forms (feature, bug, tech task, spike, docs) and pull request template.
 - Scripts to set up GitHub labels and milestones in `tools/`.
 - This changelog.
+- CI: EditMode tests on every pull request to `main` (GameCI), required to merge.
+- CI: Windows 64-bit player built on every push to `main`, downloadable as a workflow artifact.
 
 [Unreleased]: https://github.com/BernieTB/spellcraft/commits/main
