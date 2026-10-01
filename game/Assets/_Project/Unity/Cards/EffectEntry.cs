@@ -18,16 +18,6 @@ namespace Game.Unity.Cards
         [Min(0)]
         private int _amount;
 
-        public EffectEntry(EffectKind kind, int amount)
-        {
-            _kind = kind;
-            _amount = amount;
-        }
-
-        public EffectKind Kind => _kind;
-
-        public int Amount => _amount;
-
         /// <summary>
         /// Creates the Core effect described by this entry.
         /// </summary>

@@ -26,12 +26,6 @@ namespace Game.Unity.Cards
         [Tooltip("Effects applied in this order when the card resolves.")]
         private List<EffectEntry> _effects = new List<EffectEntry>();
 
-        public string Id => _id;
-
-        public int CastTime => _castTime;
-
-        public IReadOnlyList<EffectEntry> Effects => _effects;
-
         /// <summary>
         /// Converts this asset to an immutable Core card definition.
         /// </summary>
@@ -48,11 +42,7 @@ namespace Game.Unity.Cards
 
                 return new CardDefinition(_id, _castTime, effects);
             }
-            catch (ArgumentException exception)
-            {
-                throw new InvalidOperationException($"Card asset '{name}' is invalid: {exception.Message}", exception);
-            }
-            catch (InvalidOperationException exception)
+            catch (Exception exception) when (exception is ArgumentException || exception is InvalidOperationException)
             {
                 throw new InvalidOperationException($"Card asset '{name}' is invalid: {exception.Message}", exception);
             }
