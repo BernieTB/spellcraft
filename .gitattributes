@@ -39,13 +39,17 @@
 *.shadersubgraph text eol=lf
 ProjectVersion.txt text eol=lf
 *.json           text eol=lf
+.editorconfig    text eol=lf
+.gitattributes   text eol=lf
+.gitignore       text eol=lf
+*.md             text eol=lf
 
 # --- Code ---
-*.cs             text diff=csharp
-*.shader         text
-*.cginc          text
-*.hlsl           text
-*.compute        text
+*.cs             text eol=lf diff=csharp
+*.shader         text eol=lf
+*.cginc          text eol=lf
+*.hlsl           text eol=lf
+*.compute        text eol=lf
 
 # --- Git LFS: heavy assets ---
 # Images
