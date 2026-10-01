@@ -80,7 +80,7 @@ license, crash). Write results outside the repo.
 
 - **Never commit to `main`.** Branch from up-to-date `main`.
 - Branch name: `type/<issue>-short-name` (e.g. `feat/12-spell-line`). Types: `feat`, `fix`, `docs`, `chore`,
-  `refactor`, `test`.
+  `refactor`, `test`, `spike`. Never merge a `spike/` branch: report findings in the issue or an ADR.
 - Commits: [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/), one logical change each.
 - One PR per ticket, body contains `Closes #<issue>`. Never merge a PR yourself unless asked.
 - **Run the EditMode tests before every commit** that touches code. Do not commit with failing tests.
