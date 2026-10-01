@@ -43,6 +43,7 @@ ProjectVersion.txt text eol=lf
 .gitattributes   text eol=lf
 .gitignore       text eol=lf
 *.md             text eol=lf
+*.sh             text eol=lf
 
 # --- Code ---
 *.cs             text eol=lf diff=csharp
