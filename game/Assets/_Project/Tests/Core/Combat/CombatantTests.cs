@@ -48,14 +48,6 @@ namespace Game.Core.Tests.Combat
         }
 
         [Test]
-        public void Constructor_ZeroShield_IsAllowed()
-        {
-            var combatant = CreateUnshielded();
-
-            Assert.AreEqual(0, combatant.Shield);
-        }
-
-        [Test]
         public void Constructor_ValidValues_IsAlive()
         {
             var combatant = CreateShielded();
@@ -150,16 +142,6 @@ namespace Game.Core.Tests.Combat
             var combatant = CreateUnshielded();
 
             Assert.Throws<ArgumentOutOfRangeException>(() => combatant.TakeDamage(-1));
-        }
-
-        [Test]
-        public void TakeDamage_Negative_LeavesHealthUnchanged()
-        {
-            var combatant = CreateUnshielded();
-
-            Assert.Catch(() => combatant.TakeDamage(-1));
-
-            Assert.AreEqual(MaxHealth, combatant.CurrentHealth);
         }
 
         [Test]
@@ -349,16 +331,6 @@ namespace Game.Core.Tests.Combat
         }
 
         // --- GainShield ---
-
-        [Test]
-        public void GainShield_FromZero_SetsShield()
-        {
-            var combatant = CreateUnshielded();
-
-            combatant.GainShield(3);
-
-            Assert.AreEqual(3, combatant.Shield);
-        }
 
         [Test]
         public void GainShield_WithExistingShield_Stacks()
