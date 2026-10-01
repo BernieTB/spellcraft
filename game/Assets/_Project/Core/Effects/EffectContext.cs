@@ -4,8 +4,8 @@ using Game.Core.Combat;
 namespace Game.Core.Effects
 {
     /// <summary>
-    /// Who an effect acts on when it is applied. Kept minimal on purpose: targeting, timing and neighbour
-    /// information will be added when those rules are designed (spike #8).
+    /// Who an effect acts on when it is applied. Kept minimal on purpose: neighbour modifiers
+    /// (<c>docs/adr/0002-first-pass-combat-rules.md</c>) will be added by the neighbour effects work (#13).
     /// </summary>
     public sealed class EffectContext
     {
