@@ -15,8 +15,8 @@ the biomes of a magic school, each biome ending with a professor boss. The full 
 - Target: Windows PC only.
 - Git LFS for images, audio, fonts and 3D models (see `.gitattributes`).
 - CI/CD: GitHub Actions with GameCI. `.github/workflows/tests.yml` runs the EditMode tests on every PR to
-  `main` (make it a required check in the `main` branch protection); `.github/workflows/build.yml` builds on
-  push to `main`.
+  `main` (required check `EditMode tests` in the `main` repository ruleset, see
+  [GitHub settings](CONTRIBUTING.md#github-settings)); `.github/workflows/build.yml` builds on push to `main`.
 - Sprints of 2 weeks, tracked in GitHub Issues + GitHub Projects.
 
 ## Layout
