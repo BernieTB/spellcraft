@@ -20,5 +20,7 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
 - This changelog.
 - CI: EditMode tests on every pull request to `main` (GameCI), required to merge.
 - CI: Windows 64-bit player built on every push to `main`, downloadable as a workflow artifact.
+- Core combat model: combatants with health and shield (shield absorbs damage first, healing capped at max
+  health, death at zero).
 
 [Unreleased]: https://github.com/BernieTB/spellcraft/commits/main
