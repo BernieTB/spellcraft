@@ -1,0 +1,78 @@
+# Normalize line endings: text files are stored as LF in the repo
+* text=auto
+
+# --- Unity YAML (Force Text serialization) — Unity writes LF ---
+*.unity          text eol=lf merge=unityyamlmerge diff
+*.prefab         text eol=lf merge=unityyamlmerge diff
+*.asset          text eol=lf merge=unityyamlmerge diff
+*.meta           text eol=lf merge=unityyamlmerge diff
+*.mat            text eol=lf merge=unityyamlmerge diff
+*.anim           text eol=lf merge=unityyamlmerge diff
+*.controller     text eol=lf merge=unityyamlmerge diff
+*.overrideController text eol=lf merge=unityyamlmerge diff
+*.physicMaterial text eol=lf merge=unityyamlmerge diff
+*.physicsMaterial2D text eol=lf merge=unityyamlmerge diff
+*.playable       text eol=lf merge=unityyamlmerge diff
+*.mask           text eol=lf merge=unityyamlmerge diff
+*.brush          text eol=lf merge=unityyamlmerge diff
+*.flare          text eol=lf merge=unityyamlmerge diff
+*.fontsettings   text eol=lf merge=unityyamlmerge diff
+*.guiskin        text eol=lf merge=unityyamlmerge diff
+*.giparams       text eol=lf merge=unityyamlmerge diff
+*.renderTexture  text eol=lf merge=unityyamlmerge diff
+*.spriteatlas    text eol=lf merge=unityyamlmerge diff
+*.spriteatlasv2  text eol=lf merge=unityyamlmerge diff
+*.terrainlayer   text eol=lf merge=unityyamlmerge diff
+*.mixer          text eol=lf merge=unityyamlmerge diff
+*.shadervariants text eol=lf merge=unityyamlmerge diff
+*.preset         text eol=lf merge=unityyamlmerge diff
+*.scenetemplate  text eol=lf merge=unityyamlmerge diff
+*.lighting       text eol=lf merge=unityyamlmerge diff
+
+# --- Other Unity text files ---
+*.inputactions   text eol=lf
+*.asmdef         text eol=lf
+*.asmref         text eol=lf
+*.uxml           text eol=lf
+*.uss            text eol=lf
+*.shadergraph    text eol=lf
+*.shadersubgraph text eol=lf
+ProjectVersion.txt text eol=lf
+*.json           text eol=lf
+
+# --- Code ---
+*.cs             text diff=csharp
+*.shader         text
+*.cginc          text
+*.hlsl           text
+*.compute        text
+
+# --- Binaries (never diff/merge/convert) ---
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.psd   binary
+*.tga   binary
+*.tif   binary
+*.tiff  binary
+*.exr   binary
+*.hdr   binary
+*.wav   binary
+*.mp3   binary
+*.ogg   binary
+*.aif   binary
+*.aiff  binary
+*.fbx   binary
+*.obj   binary
+*.blend binary
+*.ttf   binary
+*.otf   binary
+*.mp4   binary
+*.mov   binary
+*.dll   binary
+*.so    binary
+*.a     binary
+*.zip   binary
+*.cubemap binary
+*.unitypackage binary
