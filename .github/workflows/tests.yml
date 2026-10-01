@@ -33,8 +33,36 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v7
               with:
-                  lfs: true
+                  lfs: false # pulled below, through the LFS cache
                   persist-credentials: false
+
+            # Git LFS objects are cached so each one is downloaded once, not on every run (LFS bandwidth
+            # quota). The key is the hash of the sorted LFS object IDs, written outside the workspace so the
+            # tree stays clean for the builder. With no LFS files yet, an empty cache is saved and restored.
+            - name: List LFS objects
+              id: lfs
+              run: |
+                  git lfs ls-files --long | cut -d' ' -f1 | sort > "$RUNNER_TEMP/lfs-ids.txt"
+                  echo "LFS objects: $(wc -l < "$RUNNER_TEMP/lfs-ids.txt")"
+                  echo "hash=$(sha256sum "$RUNNER_TEMP/lfs-ids.txt" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+                  mkdir -p .git/lfs/objects
+
+            - name: Cache LFS objects
+              uses: actions/cache@v6
+              with:
+                  path: .git/lfs/objects
+                  key: lfs-${{ steps.lfs.outputs.hash }}
+                  restore-keys: lfs-
+
+            # Only objects missing from the cache are downloaded. The token is passed for this command
+            # only, the same way actions/checkout does, since credentials are not persisted.
+            - name: Pull LFS objects
+              env:
+                  GITHUB_TOKEN: ${{ github.token }}
+              run: |
+                  auth=$(printf 'x-access-token:%s' "$GITHUB_TOKEN" | base64 -w0)
+                  git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth" lfs pull
+                  git lfs ls-files
 
             # Key per job type: the test run and the Windows build import assets for different targets.
             # The `Library-` fallback lets a PR start from the build cache saved on main.
