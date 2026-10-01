@@ -19,3 +19,4 @@ Status values: `Proposed`, `Accepted`, `Rejected`, `Deprecated`, `Superseded by 
 | # | Title | Status |
 |---|---|---|
 | [0001](0001-separate-core-logic-from-unity.md) | Separate core game logic from Unity | Accepted |
+| [0003](0003-effect-representation.md) | Card effect representation | Proposed |
