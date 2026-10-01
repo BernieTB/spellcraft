@@ -1,0 +1,35 @@
+name: Tech task
+description: Refactoring, tooling or infrastructure work.
+title: "[Tech] "
+labels: ["type:tech"]
+body:
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objective
+      description: What will be different when this is done.
+    validations:
+      required: true
+  - type: textarea
+    id: why-now
+    attributes:
+      label: Why now
+      description: What this unblocks or what risk it removes.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance criteria
+      description: Every item must be verifiable.
+      value: |
+        - [ ]
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Constraints, links to ADRs in docs/adr/, related issues.
+    validations:
+      required: false

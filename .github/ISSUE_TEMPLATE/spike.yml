@@ -1,0 +1,38 @@
+name: Spike
+description: Time-boxed research or prototype.
+title: "[Spike] "
+labels: ["type:spike"]
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: Question to answer
+      description: The single question this spike must answer.
+    validations:
+      required: true
+  - type: input
+    id: time-box
+    attributes:
+      label: Time box
+      description: The spike stops when time runs out, even without a full answer.
+      placeholder: "4 hours"
+    validations:
+      required: true
+  - type: dropdown
+    id: deliverable
+    attributes:
+      label: Expected deliverable
+      options:
+        - Written note in the issue
+        - ADR in docs/adr/
+        - Throwaway prototype branch
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Background, links, what is already known.
+    validations:
+      required: false
