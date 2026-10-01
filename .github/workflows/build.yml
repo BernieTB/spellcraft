@@ -1,0 +1,72 @@
+# Builds the Windows 64-bit player (Mono) after every push to main, and on demand.
+# The player is uploaded as a short-lived artifact named after the short commit SHA.
+#
+# Required repository secrets (Unity Personal license, see https://game.ci/docs/github/activation):
+#   UNITY_LICENSE   contents of the .ulf license file
+#   UNITY_EMAIL     Unity account email
+#   UNITY_PASSWORD  Unity account password
+name: Build
+
+on:
+    push:
+        branches: [main]
+    workflow_dispatch:
+
+concurrency:
+    group: build-${{ github.ref }}
+    cancel-in-progress: true
+
+permissions:
+    contents: read
+
+jobs:
+    build-windows:
+        name: Build Windows player
+        # A Linux runner can cross-compile a Windows player with the Mono backend
+        # (https://game.ci/docs/github/builder#targetplatform). IL2CPP would need a Windows runner.
+        runs-on: ubuntu-latest
+        timeout-minutes: 90
+        steps:
+            # The Unity editor image is large; reclaim space on the hosted runner first.
+            - name: Free disk space
+              uses: jlumbroso/free-disk-space@v2
+              with:
+                  large-packages: false
+
+            - name: Checkout
+              uses: actions/checkout@v7
+              with:
+                  # Full history so the builder's default Semantic versioning can count commits.
+                  fetch-depth: 0
+                  lfs: true
+
+            - name: Compute short SHA
+              id: vars
+              run: echo "short_sha=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+            # Same path and key as the test workflow so both reuse one Library cache.
+            - name: Cache Library
+              uses: actions/cache@v6
+              with:
+                  path: game/Library
+                  key: Library-${{ hashFiles('game/Assets/**', 'game/Packages/**', 'game/ProjectSettings/**') }}
+                  restore-keys: Library-
+
+            - name: Build
+              uses: game-ci/unity-builder@v5
+              env:
+                  UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+                  UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+                  UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+              with:
+                  projectPath: game
+                  targetPlatform: StandaloneWindows64
+                  buildName: Spellcraft
+
+            - name: Upload player
+              uses: actions/upload-artifact@v7
+              with:
+                  name: Spellcraft-Windows64-${{ steps.vars.outputs.short_sha }}
+                  path: build/StandaloneWindows64
+                  retention-days: 7
+                  if-no-files-found: error
