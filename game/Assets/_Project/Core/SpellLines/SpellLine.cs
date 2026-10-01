@@ -12,14 +12,14 @@ namespace Game.Core.SpellLines
     /// Positions are zero-based, from the first card (0) to the last card (<see cref="Count"/> - 1).
     /// </para>
     /// <para>
-    /// A cursor gives the playing order: <see cref="Next"/> returns the card at <see cref="NextPosition"/> and
-    /// moves the cursor one position forward, from the last card back to the first.
-    /// The cursor is a position, not a card: adding, removing, swapping or moving cards keeps it on the same
-    /// position, and it goes back to the first position when that position no longer exists.
+    /// The line loops: <see cref="PositionAfter"/> goes from the last card back to the first and
+    /// <see cref="PositionBefore"/> from the first card to the last. In a single-card line both return the same
+    /// position. The line holds no playing cursor: which card is being cast is fight state, kept by the combat
+    /// loop, so editing a line between fights never carries over a position from an earlier fight.
     /// </para>
     /// <para>
     /// The line knows nothing about timing or neighbour effects. It is generic over the card type so it does not
-    /// depend on how cards are defined.
+    /// depend on how cards are defined. The same card may sit at several positions.
     /// </para>
     /// </remarks>
     /// <typeparam name="TCard">The card type. Null cards are rejected.</typeparam>
@@ -27,7 +27,6 @@ namespace Game.Core.SpellLines
     {
         private readonly List<TCard> _cards;
         private readonly ReadOnlyCollection<TCard> _readOnlyCards;
-        private int _nextPosition;
 
         /// <summary>
         /// Creates an empty spell line.
@@ -61,11 +60,6 @@ namespace Game.Core.SpellLines
         /// <summary>The cards in order, from the first position to the last. Read-only live view.</summary>
         public IReadOnlyList<TCard> Cards => _readOnlyCards;
 
-        /// <summary>
-        /// Position of the card that <see cref="Next"/> returns. 0 when the line is empty.
-        /// </summary>
-        public int NextPosition => _nextPosition;
-
         /// <summary>The card at <paramref name="position"/>.</summary>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="position"/> is not a valid position.</exception>
         public TCard this[int position]
@@ -78,43 +72,29 @@ namespace Game.Core.SpellLines
         }
 
         /// <summary>
-        /// Returns the card at <see cref="NextPosition"/> and moves the cursor forward, looping from the last card
-        /// back to the first.
+        /// The position played after <paramref name="position"/>: the next one, or the first after the last.
         /// </summary>
-        /// <exception cref="InvalidOperationException">The line is empty.</exception>
-        public TCard Next()
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="position"/> is not a valid position.</exception>
+        public int PositionAfter(int position)
         {
-            if (IsEmpty)
-            {
-                throw new InvalidOperationException("Cannot play an empty spell line.");
-            }
-
-            var card = _cards[_nextPosition];
-            _nextPosition = (_nextPosition + 1) % _cards.Count;
-            return card;
+            ValidatePosition(position, nameof(position));
+            return (position + 1) % _cards.Count;
         }
 
-        /// <summary>Moves the cursor back to the first position.</summary>
-        public void ResetCursor()
+        /// <summary>
+        /// The position played before <paramref name="position"/>: the previous one, or the last before the first.
+        /// </summary>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="position"/> is not a valid position.</exception>
+        public int PositionBefore(int position)
         {
-            _nextPosition = 0;
+            ValidatePosition(position, nameof(position));
+            return (position + _cards.Count - 1) % _cards.Count;
         }
 
         /// <summary>Adds a card after the last position.</summary>
         /// <exception cref="ArgumentNullException"><paramref name="card"/> is null.</exception>
         /// <exception cref="InvalidOperationException">The line is full.</exception>
         public void Add(TCard card)
-        {
-            if (!TryAdd(card))
-            {
-                throw new InvalidOperationException($"The spell line is full (capacity {Capacity}).");
-            }
-        }
-
-        /// <summary>Adds a card after the last position if the line is not full.</summary>
-        /// <returns>True if the card was added, false if the line is full.</returns>
-        /// <exception cref="ArgumentNullException"><paramref name="card"/> is null.</exception>
-        public bool TryAdd(TCard card)
         {
             if (card == null)
             {
@@ -123,11 +103,10 @@ namespace Game.Core.SpellLines
 
             if (IsFull)
             {
-                return false;
+                throw new InvalidOperationException($"The spell line is full (capacity {Capacity}).");
             }
 
             _cards.Add(card);
-            return true;
         }
 
         /// <summary>Removes the card at <paramref name="position"/>; the following cards move up one position.</summary>
@@ -138,7 +117,6 @@ namespace Game.Core.SpellLines
             ValidatePosition(position, nameof(position));
             var card = _cards[position];
             _cards.RemoveAt(position);
-            KeepCursorInRange();
             return card;
         }
 
@@ -167,27 +145,12 @@ namespace Game.Core.SpellLines
             _cards.Insert(toPosition, card);
         }
 
-        /// <summary>Removes every card and moves the cursor back to the first position.</summary>
-        public void Clear()
-        {
-            _cards.Clear();
-            _nextPosition = 0;
-        }
-
         private void ValidatePosition(int position, string paramName)
         {
             if (position < 0 || position >= _cards.Count)
             {
                 throw new ArgumentOutOfRangeException(
                     paramName, position, $"Position is outside the spell line ({_cards.Count} cards).");
-            }
-        }
-
-        private void KeepCursorInRange()
-        {
-            if (_nextPosition >= _cards.Count)
-            {
-                _nextPosition = 0;
             }
         }
     }

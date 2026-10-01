@@ -24,12 +24,17 @@ namespace Game.Core.Tests.SpellLines
             return line;
         }
 
+        /// <summary>
+        /// Plays the line from the first position, following <see cref="SpellLine{TCard}.PositionAfter"/>.
+        /// </summary>
         private static List<string> Play(SpellLine<string> line, int times)
         {
             var played = new List<string>();
+            var position = 0;
             for (var i = 0; i < times; i++)
             {
-                played.Add(line.Next());
+                played.Add(line[position]);
+                position = line.PositionAfter(position);
             }
 
             return played;
@@ -57,15 +62,7 @@ namespace Game.Core.Tests.SpellLines
         // --- Looping order ---
 
         [Test]
-        public void Next_SeveralCards_ReturnsCardsInOrder()
-        {
-            var line = CreateLine(3, CardA, CardB, CardC);
-
-            CollectionAssert.AreEqual(new[] { CardA, CardB, CardC }, Play(line, 3));
-        }
-
-        [Test]
-        public void Next_AfterLastCard_LoopsBackToFirst()
+        public void PositionAfter_PlayedRepeatedly_LoopsThroughCardsInOrder()
         {
             var line = CreateLine(3, CardA, CardB, CardC);
 
@@ -73,56 +70,77 @@ namespace Game.Core.Tests.SpellLines
         }
 
         [Test]
-        public void Next_SingleCard_AlwaysReturnsThatCard()
+        public void PositionAfter_MiddlePosition_ReturnsNextPosition()
+        {
+            var line = CreateLine(3, CardA, CardB, CardC);
+
+            Assert.AreEqual(2, line.PositionAfter(1));
+        }
+
+        [Test]
+        public void PositionAfter_LastPosition_ReturnsFirst()
+        {
+            var line = CreateLine(3, CardA, CardB, CardC);
+
+            Assert.AreEqual(0, line.PositionAfter(2));
+        }
+
+        [Test]
+        public void PositionAfter_SingleCard_ReturnsSamePosition()
         {
             var line = CreateLine(3, CardA);
 
-            CollectionAssert.AreEqual(new[] { CardA, CardA, CardA }, Play(line, 3));
+            Assert.AreEqual(0, line.PositionAfter(0));
         }
 
-        [Test]
-        public void Next_EmptyLine_Throws()
-        {
-            var line = new SpellLine<string>(3);
-
-            Assert.Throws<InvalidOperationException>(() => line.Next());
-        }
-
-        [Test]
-        public void Next_SameCardsInTwoLines_GivesSameSequence()
-        {
-            var first = CreateLine(4, CardA, CardB, CardC);
-            var second = CreateLine(4, CardA, CardB, CardC);
-
-            CollectionAssert.AreEqual(Play(first, 10), Play(second, 10));
-        }
-
-        [Test]
-        public void NextPosition_AfterLastCard_IsZero()
-        {
-            var line = CreateLine(2, CardA, CardB);
-            Play(line, 2);
-
-            Assert.AreEqual(0, line.NextPosition);
-        }
-
-        [Test]
-        public void NextPosition_EmptyLine_IsZero()
-        {
-            var line = new SpellLine<string>(3);
-
-            Assert.AreEqual(0, line.NextPosition);
-        }
-
-        [Test]
-        public void ResetCursor_MidLoop_NextReturnsFirstCard()
+        [TestCase(-1)]
+        [TestCase(3)]
+        public void PositionAfter_InvalidPosition_Throws(int position)
         {
             var line = CreateLine(3, CardA, CardB, CardC);
-            Play(line, 2);
 
-            line.ResetCursor();
+            Assert.Throws<ArgumentOutOfRangeException>(() => line.PositionAfter(position));
+        }
 
-            Assert.AreEqual(CardA, line.Next());
+        [Test]
+        public void PositionAfter_EmptyLine_Throws()
+        {
+            var line = new SpellLine<string>(3);
+
+            Assert.Throws<ArgumentOutOfRangeException>(() => line.PositionAfter(0));
+        }
+
+        [Test]
+        public void PositionBefore_MiddlePosition_ReturnsPreviousPosition()
+        {
+            var line = CreateLine(3, CardA, CardB, CardC);
+
+            Assert.AreEqual(0, line.PositionBefore(1));
+        }
+
+        [Test]
+        public void PositionBefore_FirstPosition_ReturnsLast()
+        {
+            var line = CreateLine(3, CardA, CardB, CardC);
+
+            Assert.AreEqual(2, line.PositionBefore(0));
+        }
+
+        [Test]
+        public void PositionBefore_SingleCard_ReturnsSamePosition()
+        {
+            var line = CreateLine(3, CardA);
+
+            Assert.AreEqual(0, line.PositionBefore(0));
+        }
+
+        [TestCase(-1)]
+        [TestCase(3)]
+        public void PositionBefore_InvalidPosition_Throws(int position)
+        {
+            var line = CreateLine(3, CardA, CardB, CardC);
+
+            Assert.Throws<ArgumentOutOfRangeException>(() => line.PositionBefore(position));
         }
 
         // --- Adding and capacity ---
@@ -179,42 +197,6 @@ namespace Game.Core.Tests.SpellLines
             CollectionAssert.AreEqual(new[] { CardA, CardA }, line.Cards);
         }
 
-        [Test]
-        public void TryAdd_NotFull_ReturnsTrueAndAdds()
-        {
-            var line = new SpellLine<string>(1);
-
-            Assert.IsTrue(line.TryAdd(CardA));
-            Assert.AreEqual(CardA, line[0]);
-        }
-
-        [Test]
-        public void TryAdd_LineFull_ReturnsFalse()
-        {
-            var line = CreateLine(1, CardA);
-
-            Assert.IsFalse(line.TryAdd(CardB));
-        }
-
-        [Test]
-        public void TryAdd_NullCard_Throws()
-        {
-            var line = new SpellLine<string>(1);
-
-            Assert.Throws<ArgumentNullException>(() => line.TryAdd(null));
-        }
-
-        [Test]
-        public void Add_DuringLoop_NewCardPlaysAfterLastCard()
-        {
-            var line = CreateLine(3, CardA, CardB);
-            Play(line, 1);
-
-            line.Add(CardC);
-
-            CollectionAssert.AreEqual(new[] { CardB, CardC, CardA }, Play(line, 3));
-        }
-
         // --- Removing ---
 
         [Test]
@@ -241,8 +223,9 @@ namespace Game.Core.Tests.SpellLines
             var line = CreateLine(2, CardA, CardB);
 
             line.RemoveAt(0);
+            line.Add(CardC);
 
-            Assert.IsTrue(line.TryAdd(CardC));
+            CollectionAssert.AreEqual(new[] { CardB, CardC }, line.Cards);
         }
 
         [TestCase(-1)]
@@ -260,28 +243,6 @@ namespace Game.Core.Tests.SpellLines
             var line = new SpellLine<string>(3);
 
             Assert.Throws<ArgumentOutOfRangeException>(() => line.RemoveAt(0));
-        }
-
-        [Test]
-        public void RemoveAt_LastCardWhenCursorOnIt_CursorGoesBackToFirst()
-        {
-            var line = CreateLine(3, CardA, CardB, CardC);
-            Play(line, 2);
-
-            line.RemoveAt(2);
-
-            Assert.AreEqual(CardA, line.Next());
-        }
-
-        [Test]
-        public void RemoveAt_OnlyCard_LeavesEmptyLineWithCursorAtZero()
-        {
-            var line = CreateLine(3, CardA);
-
-            line.RemoveAt(0);
-
-            Assert.IsTrue(line.IsEmpty);
-            Assert.AreEqual(0, line.NextPosition);
         }
 
         // --- Swapping ---
@@ -304,27 +265,6 @@ namespace Game.Core.Tests.SpellLines
             line.Swap(1, 1);
 
             CollectionAssert.AreEqual(new[] { CardA, CardB, CardC }, line.Cards);
-        }
-
-        [Test]
-        public void Swap_TwoPositions_ChangesLoopingOrder()
-        {
-            var line = CreateLine(3, CardA, CardB, CardC);
-
-            line.Swap(0, 1);
-
-            CollectionAssert.AreEqual(new[] { CardB, CardA, CardC, CardB }, Play(line, 4));
-        }
-
-        [Test]
-        public void Swap_DuringLoop_CursorStaysOnSamePosition()
-        {
-            var line = CreateLine(3, CardA, CardB, CardC);
-            Play(line, 1);
-
-            line.Swap(1, 2);
-
-            Assert.AreEqual(CardC, line.Next());
         }
 
         [TestCase(-1, 0)]
@@ -405,29 +345,6 @@ namespace Game.Core.Tests.SpellLines
             Assert.Catch(() => line.Move(0, 3));
 
             CollectionAssert.AreEqual(new[] { CardA, CardB, CardC }, line.Cards);
-        }
-
-        // --- Clearing ---
-
-        [Test]
-        public void Clear_WithCards_EmptiesLine()
-        {
-            var line = CreateLine(3, CardA, CardB);
-
-            line.Clear();
-
-            Assert.IsTrue(line.IsEmpty);
-        }
-
-        [Test]
-        public void Clear_MidLoop_ResetsCursor()
-        {
-            var line = CreateLine(3, CardA, CardB);
-            Play(line, 1);
-
-            line.Clear();
-
-            Assert.AreEqual(0, line.NextPosition);
         }
 
         // --- Read access ---
