@@ -19,6 +19,12 @@ jobs:
         runs-on: ubuntu-latest
         timeout-minutes: 60
         steps:
+            # The Unity editor image is large; reclaim space on the hosted runner first.
+            - name: Free disk space
+              uses: jlumbroso/free-disk-space@v2
+              with:
+                  large-packages: false
+
             - name: Checkout
               uses: actions/checkout@v7
               with:
