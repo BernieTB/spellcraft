@@ -21,4 +21,8 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
 - CI: EditMode tests on every pull request to `main` (GameCI), required to merge.
 - CI: Windows 64-bit player built on every push to `main`, downloadable as a workflow artifact.
 
+### Changed
+
+- Local test command is now `unity test ./game ...`, so it always tests the current checkout.
+
 [Unreleased]: https://github.com/BernieTB/spellcraft/commits/main
