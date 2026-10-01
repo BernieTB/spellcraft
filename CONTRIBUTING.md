@@ -13,6 +13,10 @@ Run `git lfs install` once per machine before cloning.
 
 Every change starts from a GitHub Issue, planned in the GitHub Project. Sprints last 2 weeks.
 
+- Milestones represent project phases (Sprint 0, Prototype, Vertical slice, MVP). They have no due date and
+  close when their goal is reached. Setup: `tools/setup-github-milestones.sh`.
+- Sprints are tracked with the Iteration field of the GitHub Project, not with milestones.
+
 ## Branches
 
 - Never commit directly to `main`.
