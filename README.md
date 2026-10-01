@@ -84,6 +84,12 @@ unity test game --editor-version 6000.3.24f1 --mode EditMode --output <scratch-d
 Exit code `0` means all tests passed, `8` means tests failed, anything else means the run itself failed.
 Write the results file outside the repository.
 
+### Downloading a build
+
+Every push to `main` builds the Windows player (workflow **Build**, which can also be run manually). Open the
+run in the **Actions** tab and download the `Spellcraft-Windows64-<short-sha>` artifact. Artifacts are kept for
+7 days. Unzip it and run `Spellcraft.exe`.
+
 ## Contributing
 
 This is a solo project, developed with a strict workflow.
