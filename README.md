@@ -1,7 +1,8 @@
 # Spellcraft
 
-![Tests](https://github.com/<user>/<repo>/actions/workflows/tests.yml/badge.svg)
-![Unity](https://img.shields.io/badge/Unity-LTS-black?logo=unity)
+<!-- TODO: add the tests badge once the GameCI workflow exists:
+![Tests](https://github.com/BernieTB/spellcraft/actions/workflows/<workflow>.yml/badge.svg) -->
+![Unity](https://img.shields.io/badge/Unity-6000.3%20LTS-black?logo=unity)
 ![Platform](https://img.shields.io/badge/platform-Windows-blue)
 ![Status](https://img.shields.io/badge/status-pre--prototype-orange)
 
@@ -27,10 +28,10 @@ Pre-prototype. The repository has just been set up (Sprint 0). Work is tracked i
 
 ## Tech stack
 
-- **Engine:** Unity (LTS version pinned in `ProjectSettings/ProjectVersion.txt`), URP 2D
+- **Engine:** Unity 6000.3.24f1 LTS (pinned in `game/ProjectSettings/ProjectVersion.txt`), URP 2D
 - **Language:** C#
 - **Target platform:** PC (Windows)
-- **CI/CD:** GitHub Actions with [GameCI](https://game.ci)
+- **CI/CD:** GitHub Actions with [GameCI](https://game.ci) (not set up yet)
 - **Asset versioning:** Git LFS
 
 ## Architecture
@@ -38,13 +39,17 @@ Pre-prototype. The repository has just been set up (Sprint 0). Work is tracked i
 Game logic is kept separate from Unity so it can be tested and simulated headlessly.
 
 ```
-Assets/_Project/
-├── Core/          # Pure C# logic (combat simulator, cards, effects), no UnityEngine dependency
-├── Unity/         # Unity integration: rendering, UI, scenes, ScriptableObjects
-└── Tests/         # EditMode tests
-docs/              # Game design, architecture decision records (ADRs)
-.github/           # CI workflows, issue and PR templates
+game/                       # Unity project (open this folder in Unity Hub)
+└── Assets/_Project/
+    ├── Core/               # Game.Core: pure C# logic (combat simulator, cards, effects), no UnityEngine dependency
+    ├── Unity/              # Game.Unity: rendering, UI, scenes, ScriptableObjects
+    └── Tests/Core/         # Game.Core.Tests: EditMode tests for Core
+docs/                       # Game design, glossary, architecture decision records (ADRs)
+CLAUDE.md                   # Operating manual for Claude Code
+CONTRIBUTING.md             # Workflow, conventions, Definition of Done
 ```
+
+The reasoning behind this split is in [ADR 0001](docs/adr/0001-separate-core-logic-from-unity.md).
 
 Cards, words, enemies and professors are described by **data** (ScriptableObjects), not code.
 
@@ -53,27 +58,31 @@ Cards, words, enemies and professors are described by **data** (ScriptableObject
 ### Prerequisites
 
 - [Git](https://git-scm.com) and [Git LFS](https://git-lfs.com)
-- [Unity Hub](https://unity.com/download) and the editor version listed in `ProjectSettings/ProjectVersion.txt`, with the *Windows Build Support* module
+- [Unity Hub](https://unity.com/download) and the editor version listed in `game/ProjectSettings/ProjectVersion.txt` (currently 6000.3.24f1), with the *Windows Build Support* module
 
 ### Setup
 
 ```bash
 git lfs install
-git clone https://github.com/<user>/<repo>.git
-cd <repo>
+git clone https://github.com/BernieTB/spellcraft.git
+cd spellcraft
 ```
 
-Then open the project folder from Unity Hub. The first import processes all assets and can take a few minutes.
+Then, in Unity Hub, **add the `game/` folder** (not the repository root) and open it. The first import processes
+all assets and can take a few minutes.
 
 ### Running tests
 
 In Unity: **Window > General > Test Runner > EditMode > Run All**.
 
-From the command line:
+From the command line, from the repository root, with the Unity CLI (`unity`, beta):
 
 ```bash
-Unity -batchmode -projectPath . -runTests -testPlatform EditMode -testResults results.xml
+unity test game --editor-version 6000.3.24f1 --mode EditMode --output <scratch-dir>/results.xml
 ```
+
+Exit code `0` means all tests passed, `8` means tests failed, anything else means the run itself failed.
+Write the results file outside the repository.
 
 ## Contributing
 
