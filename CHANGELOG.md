@@ -22,5 +22,7 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
 - CI: Windows 64-bit player built on every push to `main`, downloadable as a workflow artifact.
 - Core combat model: combatants with health and shield (shield absorbs damage first, healing capped at max
   health, death at zero).
+- Data-driven cards: Core card definition (id, cast time, ordered effects) with placeholder deal damage,
+  heal and gain shield effects, authored as `CardAsset` ScriptableObjects (ADR 0003).
 
 [Unreleased]: https://github.com/BernieTB/spellcraft/commits/main
