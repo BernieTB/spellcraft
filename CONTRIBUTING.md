@@ -17,7 +17,9 @@ Every change starts from a GitHub Issue, planned in the GitHub Project. Sprints 
 
 - Never commit directly to `main`.
 - One short-lived branch per issue, from up-to-date `main`: `type/<issue>-short-name`.
-- Types: `feat`, `fix`, `docs`, `chore`, `refactor`, `test`.
+- Types: `feat`, `fix`, `docs`, `chore`, `refactor`, `test`, `spike`.
+- `spike/...` branches hold throwaway prototypes for a spike issue. They are never merged; the findings go
+  in the issue or in an ADR.
 - Example: `feat/12-spell-line`.
 
 ## Commits
@@ -68,7 +70,11 @@ An issue is done when all of these are true:
 - [ ] Tests written and passing.
 - [ ] CI green.
 - [ ] No `UnityEngine` reference in `Game.Core`.
+- [ ] No game logic in MonoBehaviours.
+- [ ] No hardcoded balance numbers (content is data-driven).
+- [ ] No secrets, `.ulf`/`.alf` files or generated Unity folders committed.
 - [ ] Docs updated when relevant (GDD, glossary, ADR, README) and changelog updated when relevant
       (TODO: `CHANGELOG.md` does not exist yet).
+- [ ] PR title follows Conventional Commits.
 - [ ] PR reviewed and merged.
 - [ ] Linked issue closed.
