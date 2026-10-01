@@ -1,19 +1,17 @@
-# .gitignore for a Unity project located at the repository root.
-# If the project lives in a subfolder (e.g. /game), place this file
-# in that subfolder instead.
+# .gitignore for the Unity project located in /game.
 
 # --- Unity-generated folders ---
-/[Ll]ibrary/
-/[Tt]emp/
-/[Oo]bj/
-/[Bb]uild/
-/[Bb]uilds/
-/[Ll]ogs/
-/[Uu]ser[Ss]ettings/
+/game/[Ll]ibrary/
+/game/[Tt]emp/
+/game/[Oo]bj/
+/game/[Bb]uild/
+/game/[Bb]uilds/
+/game/[Ll]ogs/
+/game/[Uu]ser[Ss]ettings/
 
 # Memory captures and recordings (can get very large)
-/[Mm]emoryCaptures/
-/[Rr]ecordings/
+/game/[Mm]emoryCaptures/
+/game/[Rr]ecordings/
 
 # --- Generated IDE project files ---
 .vs/
@@ -36,7 +34,7 @@ ExportedObj/
 *.VC.db
 
 # Auto-generated Rider plugin
-/[Aa]ssets/Plugins/Editor/JetBrains*
+/game/[Aa]ssets/Plugins/Editor/JetBrains*
 
 # Generated meta files
 *.pidb.meta
@@ -55,11 +53,11 @@ crashlytics-build.properties
 *.app
 
 # Packed Addressables
-/[Aa]ssets/[Aa]ddressable[Aa]ssets[Dd]ata/*/*.bin*
+/game/[Aa]ssets/[Aa]ddressable[Aa]ssets[Dd]ata/*/*.bin*
 
 # Temporary auto-generated Android assets
-/[Aa]ssets/[Ss]treamingAssets/aa.meta
-/[Aa]ssets/[Ss]treamingAssets/aa/*
+/game/[Aa]ssets/[Ss]treamingAssets/aa.meta
+/game/[Aa]ssets/[Ss]treamingAssets/aa/*
 
 # --- Unity license and secrets (NEVER commit these) ---
 *.ulf
