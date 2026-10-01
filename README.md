@@ -1,7 +1,6 @@
 # Spellcraft
 
-<!-- TODO: add the tests badge once the GameCI workflow exists:
-![Tests](https://github.com/BernieTB/spellcraft/actions/workflows/<workflow>.yml/badge.svg) -->
+[![Tests](https://github.com/BernieTB/spellcraft/actions/workflows/tests.yml/badge.svg)](https://github.com/BernieTB/spellcraft/actions/workflows/tests.yml)
 ![Unity](https://img.shields.io/badge/Unity-6000.3%20LTS-black?logo=unity)
 ![Platform](https://img.shields.io/badge/platform-Windows-blue)
 ![Status](https://img.shields.io/badge/status-pre--prototype-orange)
@@ -31,7 +30,7 @@ Pre-prototype. The repository has just been set up (Sprint 0). Work is tracked i
 - **Engine:** Unity 6000.3.24f1 LTS (pinned in `game/ProjectSettings/ProjectVersion.txt`), URP 2D
 - **Language:** C#
 - **Target platform:** PC (Windows)
-- **CI/CD:** GitHub Actions with [GameCI](https://game.ci) (not set up yet)
+- **CI/CD:** GitHub Actions with [GameCI](https://game.ci) (EditMode tests on every pull request)
 - **Asset versioning:** Git LFS
 
 ## Architecture
