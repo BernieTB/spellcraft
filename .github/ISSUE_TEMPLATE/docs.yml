@@ -1,0 +1,29 @@
+name: Docs
+description: Documentation change (GDD, glossary, ADR, README, contributing guide).
+title: "[Docs] "
+labels: ["type:docs"]
+body:
+  - type: input
+    id: documents
+    attributes:
+      label: Documents
+      description: Files to create or change.
+      placeholder: "e.g. docs/GAME_DESIGN.md, docs/GLOSSARY.md"
+    validations:
+      required: true
+  - type: textarea
+    id: change
+    attributes:
+      label: Change needed
+      description: >-
+        What should be added, corrected or removed. Game design changes must come from a decision by the
+        project owner, not be invented here.
+    validations:
+      required: true
+  - type: textarea
+    id: reason
+    attributes:
+      label: Reason
+      description: Why this change is needed (decision taken, inaccuracy found, related issue or PR).
+    validations:
+      required: false
