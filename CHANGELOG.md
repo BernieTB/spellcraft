@@ -20,5 +20,7 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
 - This changelog.
 - CI: EditMode tests on every pull request to `main` (GameCI), required to merge.
 - CI: Windows 64-bit player built on every push to `main`, downloadable as a workflow artifact.
+- Spell line in Core: an ordered sequence of cards with a capacity set from data, played in a loop, whose
+  cards can be added, removed, swapped and moved.
 
 [Unreleased]: https://github.com/BernieTB/spellcraft/commits/main
