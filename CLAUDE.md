@@ -15,7 +15,8 @@ the biomes of a magic school, each biome ending with a professor boss. The full 
 - Target: Windows PC only.
 - Git LFS for images, audio, fonts and 3D models (see `.gitattributes`).
 - CI/CD: GitHub Actions with GameCI. `.github/workflows/tests.yml` runs the EditMode tests on every PR to
-  `main` (required check); `.github/workflows/build.yml` builds on push to `main`.
+  `main` (make it a required check in the `main` branch protection); `.github/workflows/build.yml` builds on
+  push to `main`.
 - Sprints of 2 weeks, tracked in GitHub Issues + GitHub Projects.
 
 ## Layout
@@ -69,8 +70,8 @@ license, crash). Write results outside the repo.
   Unity version read from `ProjectVersion.txt`) runs on PRs to `main` and on manual dispatch
   (`gh workflow run tests.yml --ref <branch>`). Results are uploaded as the `editmode-test-results` artifact.
   Needs the `UNITY_LICENSE`, `UNITY_EMAIL` and `UNITY_PASSWORD` repository secrets.
-  `game/Library` is cached with the key `Library-<hash of Assets, Packages, ProjectSettings>`, shared with
-  `build.yml`.
+  `game/Library` is cached with the key `Library-EditMode-<hash of Assets, Packages, ProjectSettings>`; on a
+  miss it falls back to any `Library-` cache, such as the one `build.yml` saves on `main`.
 
 ## Code conventions
 
