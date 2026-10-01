@@ -7,7 +7,8 @@
 
 A card must be described as data and executed by the headless Core simulator
 ([ADR 0001](0001-separate-core-logic-from-unity.md)). A card does one or more things when it resolves (deal
-damage, heal, gain shield...). The first-pass combat rules (ADR 0002, first-pass combat rules) add constraints:
+damage, heal, gain shield...). The first-pass combat rules ([ADR 0002](0002-first-pass-combat-rules.md)) add
+constraints:
 
 - combatants have health and shield;
 - each card has a cast time in simulation ticks, read from data;
@@ -31,11 +32,12 @@ In the Unity layer we will author effects as a **flat list of `EffectEntry` (kin
 integers.
 
 Forward-looking constraint for neighbour modifiers (#13): modifiers must be applicable **without mutating** an
-effect or a definition, which are shared and immutable. The intended extension point is the resolution step:
-either `EffectContext` carries the modifiers active for the card being resolved and effects read their final
-amount through it, or the resolver builds a modified copy of the card's effects. Effects that can be modified
-(e.g. damage) will expose their parameters for that purpose, as `Amount` does today. Choosing between these is
-left to #13.
+effect or a definition, which are shared and immutable. Pending modifiers belong to a position in a
+combatant's spell line, not to a `CardDefinition`, because the same definition can sit at several positions.
+The intended extension point is the resolution step: either `EffectContext` carries the modifiers active for
+the card being resolved and effects read their final amount through it, or the resolver builds a modified copy
+of the card's effects. Effects that can be modified (e.g. damage) will expose their parameters for that
+purpose, as `Amount` does today. Choosing between these is left to #13.
 
 ## Consequences
 
