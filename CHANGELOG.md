@@ -45,6 +45,8 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
 - Neighbour bonuses in the combat log: each cast records the bonus it received and the part it wasted (a bonus
   of a kind the card has no effect for), shown on the cast event in the text and JSON log and in the debug fight
   viewer.
+- Headless simulation runner: a batch-mode command plays the debug fight setup over a range of seeds and writes a
+  reproducible JSON summary (win, loss and timeout rates, fight length in ticks, damage per card), with ADR 0006.
 
 ### Changed
 

@@ -47,22 +47,56 @@ namespace Game.Unity.DebugTools
         /// <summary>Playback rate at speed x1, in ticks per second of real time.</summary>
         public float TicksPerSecond => _ticksPerSecond;
 
+        /// <summary>Seed of the debug fight. The headless simulation runner starts its seed range here by default.</summary>
+        public long Seed => _seed;
+
         /// <summary>
         /// Builds the fight described by this asset, runs it in Core and returns its log.
         /// </summary>
         /// <exception cref="InvalidOperationException">The asset data is invalid; the message names the asset.</exception>
         public CombatLog Simulate()
         {
+            return Guarded(() =>
+            {
+                var (hero, enemies) = CreateParticipants();
+                return CombatLogRecorder.Record(hero, enemies, _maxTicks, CreateRandom(_seed));
+            });
+        }
+
+        /// <summary>
+        /// Builds a fresh, not yet run, fight from this asset with <paramref name="seed"/> instead of the asset's own
+        /// seed. Used by the headless simulation runner to play the same setup over a range of seeds.
+        /// </summary>
+        /// <exception cref="InvalidOperationException">The asset data is invalid; the message names the asset.</exception>
+        public Fight CreateFight(long seed)
+        {
+            return Guarded(() =>
+            {
+                var (hero, enemies) = CreateParticipants();
+                return new Fight(hero, enemies, _maxTicks, CreateRandom(seed));
+            });
+        }
+
+        // The seed is a long in the inspector; the random source takes its bits as an unsigned value.
+        private static IRandom CreateRandom(long seed) => new Pcg32Random(unchecked((ulong)seed));
+
+        private (FightParticipant Hero, List<FightParticipant> Enemies) CreateParticipants()
+        {
+            var hero = _hero.ToParticipant("hero");
+            var enemies = new List<FightParticipant>(_enemies.Count);
+            for (var i = 0; i < _enemies.Count; i++)
+            {
+                enemies.Add(_enemies[i].ToParticipant($"enemy {i + 1}"));
+            }
+
+            return (hero, enemies);
+        }
+
+        private T Guarded<T>(Func<T> build)
+        {
             try
             {
-                var hero = _hero.ToParticipant("hero");
-                var enemies = new List<FightParticipant>(_enemies.Count);
-                for (var i = 0; i < _enemies.Count; i++)
-                {
-                    enemies.Add(_enemies[i].ToParticipant($"enemy {i + 1}"));
-                }
-
-                return CombatLogRecorder.Record(hero, enemies, _maxTicks, new Pcg32Random(unchecked((ulong)_seed)));
+                return build();
             }
             catch (Exception exception) when (exception is ArgumentException || exception is InvalidOperationException)
             {

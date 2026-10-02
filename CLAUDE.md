@@ -27,7 +27,7 @@ The Unity project lives in `game/`, not at the repo root.
 |---|---|---|
 | `game/Assets/_Project/Core/` | `Game.Core` | Pure C# game logic (combat simulator, cards, effects) |
 | `game/Assets/_Project/Unity/` | `Game.Unity` | Rendering, UI, scenes, ScriptableObjects. References `Game.Core` |
-| `game/Assets/_Project/Unity/EditorTools/` | `Game.Unity.EditorTools` | Editor-only tools: content generators, build checks |
+| `game/Assets/_Project/Unity/EditorTools/` | `Game.Unity.EditorTools` | Editor-only tools: content generators, build checks, headless simulation runner |
 | `game/Assets/_Project/Unity/DebugTools/` | `Game.Unity` | Debug fight viewer: scene, setup asset, playback (never in builds) |
 | `game/Assets/_Project/Tests/Core/` | `Game.Core.Tests` | EditMode tests for `Game.Core` (Editor only, NUnit) |
 | `game/Assets/_Project/Tests/Unity/` | `Game.Unity.Tests` | EditMode tests for `Game.Unity` data conversion (Editor only, NUnit) |
@@ -100,6 +100,23 @@ Close the editor on this project first (verified; menu: **Tools > Game > Rebuild
 & "C:\Program Files\Unity\Hub\Editor\6000.3.24f1\Editor\Unity.exe" -batchmode -quit -projectPath <absolute path to game> `
   -executeMethod Game.Unity.EditorTools.DebugTools.DebugFightSceneBuilder.Build -logFile <scratch-dir>/debug-scene.log
 ```
+
+Run the headless simulation runner ([ADR 0006](docs/adr/0006-headless-simulation-runner.md)): plays the fight of a
+`DebugFightSetup` asset over a range of seeds and writes a JSON summary (win/timeout counts and rates, fight
+length in ticks, damage per side and card id, where damage = health lost + shield absorbed). Same seeds, same file.
+Close the editor on this project first (verified; menu: **Tools > Game > Run Simulation**, default options):
+
+```powershell
+& "C:\Program Files\Unity\Hub\Editor\6000.3.24f1\Editor\Unity.exe" -batchmode -quit -projectPath <absolute path to game> `
+  -executeMethod Game.Unity.EditorTools.Simulation.SimulationRunner.Run `
+  -simFights 1000 -simSeedStart 1 -simOutput <scratch-dir>/simulation-summary.json -logFile <scratch-dir>/simulation.log
+```
+
+Every `-sim*` option is optional: `-simSetup` (asset path, default `Assets/_Project/Unity/DebugTools/DebugFightSetup.asset`),
+`-simFights` (default 1000), `-simSeedStart` (default: the asset's seed; fight `i` uses seed + `i`), `-simOutput`
+(default `game/SimulationResults/simulation-summary.json`, ignored by Git; a relative path is resolved from `game/`;
+never commit run outputs). Exit code `0` = summary written, `1` = error (see the log). Durations (simulation loop,
+runner total) are in the log lines starting with `[Simulation]`, not in the summary.
 
 ## Code conventions
 

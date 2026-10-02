@@ -103,6 +103,25 @@ second at x1). Edits are picked up the next time you press Play, or with **Reloa
 scene or the asset is missing, use **Tools > Game > Rebuild Debug Fight Scene** (it keeps an existing setup
 asset).
 
+### Simulate many fights
+
+The headless simulation runner plays the fight of `DebugFightSetup.asset` (see above) over a range of seeds and
+writes a JSON summary: how many fights the hero won, lost or timed out (counts and rates), the average, minimum and
+maximum fight length in ticks, and per card and side the casts, damage (health lost + shield absorbed), healing and
+shield gained. The same seeds always give the same file. Close the editor on the project first, then from PowerShell:
+
+```powershell
+& "C:\Program Files\Unity\Hub\Editor\6000.3.24f1\Editor\Unity.exe" -batchmode -quit -projectPath <absolute path to game> `
+  -executeMethod Game.Unity.EditorTools.Simulation.SimulationRunner.Run `
+  -simFights 1000 -simSeedStart 1 -simOutput <scratch-dir>/simulation-summary.json -logFile <scratch-dir>/simulation.log
+```
+
+All `-sim*` options are optional: `-simSetup` (another `DebugFightSetup` asset), `-simFights` (default 1000),
+`-simSeedStart` (default: the asset's seed) and `-simOutput` (default `game/SimulationResults/simulation-summary.json`,
+ignored by Git; a relative path is resolved from `game/`). The exit code is `0` on success and `1` on error; timings
+are printed in the log. In the editor, use **Tools > Game > Run Simulation**. Design notes:
+[ADR 0006](docs/adr/0006-headless-simulation-runner.md).
+
 ### Downloading a build
 
 Every push to `main` builds the Windows player (workflow **Build**, which can also be run manually). Open the
