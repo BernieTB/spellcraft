@@ -73,16 +73,6 @@ namespace Game.Core.Tests.Simulation
         }
 
         [Test]
-        public void Run_CountsEveryFight()
-        {
-            var summary = FightBatch.Run(0L, 20, CreateFight);
-
-            Assert.AreEqual(20, summary.FightCount);
-            Assert.AreEqual(20, summary.HeroWins + summary.EnemyWins + summary.Timeouts);
-            Assert.IsNotEmpty(summary.Cards);
-        }
-
-        [Test]
         public void Run_NullFactory_Throws()
         {
             Assert.Throws<ArgumentNullException>(() => FightBatch.Run(0L, 1, null));

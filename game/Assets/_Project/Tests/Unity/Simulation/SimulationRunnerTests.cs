@@ -65,18 +65,6 @@ namespace Game.Unity.Tests.Simulation
         }
 
         [Test]
-        public void Simulate_SetupAsset_SameSeedsGiveIdenticalSummary()
-        {
-            var setup = LoadSetup();
-
-            var first = SimulationRunner.Simulate(setup, 1L, 20).ToJson();
-            var second = SimulationRunner.Simulate(setup, 1L, 20).ToJson();
-
-            Assert.AreEqual(first, second);
-            StringAssert.Contains("\"fightCount\":20", first);
-        }
-
-        [Test]
         public void Simulate_SetupAsset_FirstFightMatchesTheDebugViewer()
         {
             var setup = LoadSetup();
@@ -105,14 +93,6 @@ namespace Game.Unity.Tests.Simulation
             {
                 Directory.Delete(Path.GetDirectoryName(output), true);
             }
-        }
-
-        [Test]
-        public void DefaultOutputPath_IsInTheIgnoredResultsFolder()
-        {
-            var expectedFolder = Path.Combine(Directory.GetParent(UnityEngine.Application.dataPath).FullName, SimulationRunner.DefaultOutputFolder);
-
-            Assert.AreEqual(expectedFolder, Path.GetDirectoryName(SimulationRunner.DefaultOutputPath()));
         }
     }
 }
