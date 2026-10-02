@@ -53,7 +53,7 @@ namespace Game.Core.Combat
             EffectBonus bonus,
             EffectBonus wastedBonus)
         {
-            if (wastedBonus.Damage > bonus.Damage || wastedBonus.Heal > bonus.Heal || wastedBonus.Shield > bonus.Shield)
+            if (!bonus.Covers(wastedBonus))
             {
                 throw new ArgumentException(
                     $"Wasted bonus ({wastedBonus}) exceeds the bonus received ({bonus}).",

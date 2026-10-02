@@ -47,10 +47,13 @@ namespace Game.Core.Combat.Log
         }
 
         /// <summary>
-        /// Creates an event; <paramref name="bonus"/> and <paramref name="wastedBonus"/> are meant for
+        /// Creates an event; <paramref name="bonus"/> and <paramref name="wastedBonus"/> are only allowed on
         /// <see cref="CombatEventKind.CardCast"/> (see <see cref="Bonus"/>).
         /// </summary>
-        /// <exception cref="ArgumentException"><paramref name="cardId"/> is null or empty.</exception>
+        /// <exception cref="ArgumentException">
+        /// <paramref name="cardId"/> is null or empty, <paramref name="wastedBonus"/> exceeds
+        /// <paramref name="bonus"/> for some kind, or an event other than a cast has a bonus.
+        /// </exception>
         public CombatEvent(
             int sequence,
             int tick,
@@ -70,6 +73,18 @@ namespace Game.Core.Combat.Log
             if (string.IsNullOrEmpty(cardId))
             {
                 throw new ArgumentException("Card id cannot be null or empty.", nameof(cardId));
+            }
+
+            if (!bonus.Covers(wastedBonus))
+            {
+                throw new ArgumentException(
+                    $"Wasted bonus ({wastedBonus}) exceeds the bonus received ({bonus}).",
+                    nameof(wastedBonus));
+            }
+
+            if (kind != CombatEventKind.CardCast && !bonus.IsNone)
+            {
+                throw new ArgumentException("Only a cast event can carry a neighbour bonus.", nameof(bonus));
             }
 
             Sequence = sequence;

@@ -46,6 +46,9 @@ namespace Game.Core.Tests.Combat.Log
         private static CombatEvent BoostedCast(CombatLog log) =>
             log.Events.Where(e => e.Kind == CombatEventKind.CardCast).ElementAt(1);
 
+        private static CombatEvent Event(CombatEventKind kind, EffectBonus bonus, EffectBonus wastedBonus) =>
+            new CombatEvent(0, 1, kind, "test_hit", 0, Hero, FirstEnemy, 0, 0, 0, 10, 0, bonus, wastedBonus);
+
         private static FightParticipant Participant(int health, int shield, params CardDefinition[] cards)
         {
             var line = new SpellLine<CardDefinition>(Capacity);
@@ -211,6 +214,24 @@ namespace Game.Core.Tests.Combat.Log
             var withoutBonus = log.Events.Where(e => e != BoostedCast(log)).ToList();
             Assert.That(withoutBonus.Select(e => e.Bonus), Is.All.EqualTo(EffectBonus.None));
             Assert.That(withoutBonus.Select(e => e.WastedBonus), Is.All.EqualTo(EffectBonus.None));
+        }
+
+        [Test]
+        public void CombatEvent_WastedBonusExceedsBonus_Throws()
+        {
+            Assert.Throws<ArgumentException>(() => Event(
+                CombatEventKind.CardCast,
+                EffectBonus.Of(BonusKind.Damage, 1),
+                EffectBonus.Of(BonusKind.Heal, 1)));
+        }
+
+        [Test]
+        public void CombatEvent_BonusOnEventOtherThanCast_Throws()
+        {
+            Assert.Throws<ArgumentException>(() => Event(
+                CombatEventKind.Damage,
+                EffectBonus.Of(BonusKind.Damage, 1),
+                EffectBonus.None));
         }
 
         // --- Tick, card, position, caster and target ---

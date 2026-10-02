@@ -100,6 +100,10 @@ namespace Game.Core.Effects
             }
         }
 
+        // True when every value of part is at most the matching value of this bonus.
+        internal bool Covers(EffectBonus part) =>
+            part.Damage <= Damage && part.Heal <= Heal && part.Shield <= Shield;
+
         /// <summary>The sum of this bonus and <paramref name="other"/>, value by value.</summary>
         /// <exception cref="OverflowException">A sum exceeds <see cref="int.MaxValue"/>.</exception>
         public EffectBonus Plus(EffectBonus other) =>
