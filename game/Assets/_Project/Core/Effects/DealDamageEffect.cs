@@ -4,6 +4,8 @@ namespace Game.Core.Effects
 {
     /// <summary>
     /// Placeholder effect: deals a fixed amount of damage, from data, to the context's target.
+    /// The cast's neighbour bonus of the matching kind, if any and not consumed by an earlier effect of the
+    /// card, is added to the amount (<see cref="EffectContext.ConsumeBonus"/>).
     /// </summary>
     public sealed class DealDamageEffect : IEffect
     {
@@ -20,7 +22,7 @@ namespace Game.Core.Effects
         }
 
         /// <summary>
-        /// Damage dealt each time the effect is applied.
+        /// Damage dealt each time the effect is applied, before any neighbour bonus.
         /// </summary>
         public int Amount { get; }
 
@@ -33,7 +35,8 @@ namespace Game.Core.Effects
                 throw new ArgumentNullException(nameof(context));
             }
 
-            return EffectOutcome.FromDamage(context.Target.TakeDamage(Amount));
+            var amount = checked(Amount + context.ConsumeBonus(BonusKind.Damage));
+            return EffectOutcome.FromDamage(context.Target.TakeDamage(amount));
         }
     }
 }

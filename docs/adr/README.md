@@ -20,4 +20,6 @@ Status values: `Proposed`, `Accepted`, `Rejected`, `Deprecated`, `Superseded by 
 |---|---|---|
 | [0001](0001-separate-core-logic-from-unity.md) | Separate core game logic from Unity | Accepted |
 | [0002](0002-first-pass-combat-rules.md) | First-pass combat rules: cast time, card-carried neighbour effects, health and shield | Accepted |
-| [0003](0003-effect-representation.md) | Card effect representation | Proposed |
+| [0003](0003-effect-representation.md) | Card effect representation | Accepted |
+| [0004](0004-confirm-first-pass-combat-rules.md) | Confirm the first-pass combat details, targeting and neighbour modifier kinds | Accepted |
+| [0005](0005-neighbour-modifier-resolution.md) | Neighbour modifier resolution | Proposed |

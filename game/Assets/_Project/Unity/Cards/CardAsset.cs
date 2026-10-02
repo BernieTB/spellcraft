@@ -27,6 +27,10 @@ namespace Game.Unity.Cards
         private List<EffectEntry> _effects = new List<EffectEntry>();
 
         [SerializeField]
+        [Tooltip("Bonuses this card gives to the next or previous card in its spell line each time it resolves.")]
+        private List<NeighbourModifierEntry> _neighbourModifiers = new List<NeighbourModifierEntry>();
+
+        [SerializeField]
         [Tooltip("Test-only content. Tests and builds fail if an asset outside the placeholder and test folders references it.")]
         private bool _isPlaceholder;
 
@@ -50,7 +54,13 @@ namespace Game.Unity.Cards
                     effects.Add(entry.ToEffect());
                 }
 
-                return new CardDefinition(_id, _castTime, effects);
+                var modifiers = new List<NeighbourModifier>(_neighbourModifiers.Count);
+                foreach (var entry in _neighbourModifiers)
+                {
+                    modifiers.Add(entry.ToModifier());
+                }
+
+                return new CardDefinition(_id, _castTime, effects, modifiers);
             }
             catch (Exception exception) when (exception is ArgumentException || exception is InvalidOperationException)
             {

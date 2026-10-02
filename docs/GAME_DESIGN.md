@@ -46,8 +46,9 @@ Pillars:
 - **Cast time:** each card takes a number of ticks to cast (from data). Its effects resolve when the cast
   ends, then the next card starts.
 - **Neighbour effects:** cards react to their neighbours, so position matters. First pass: a card may carry
-  modifiers for the next or previous card in the loop (e.g. "the next card deals +X damage"). No tags or
-  elements yet. See [ADR 0002](adr/0002-first-pass-combat-rules.md).
+  modifiers giving +X damage, +X heal or +X shield to the next or previous card in the loop, used up after one
+  cast. No tags or elements yet. See [ADR 0002](adr/0002-first-pass-combat-rules.md) and
+  [ADR 0004](adr/0004-confirm-first-pass-combat-rules.md).
 - **Evolution through use:** a card cast many times grows stronger, for example by gaining letters, up to a
   5-letter maximum.
 
@@ -58,6 +59,8 @@ Pillars:
   same system as the hero.
 - First-pass stats: **health** and **shield**. Shield absorbs damage before health. The first effects are deal
   damage, heal and gain shield. See [ADR 0002](adr/0002-first-pass-combat-rules.md).
+- Targeting (first pass): the hero targets the first living enemy, enemies target the hero; heal and shield
+  apply to the caster. See [ADR 0004](adr/0004-confirm-first-pass-combat-rules.md).
 - Randomness is **minimised** so that preparation decides outcomes.
 - Technical requirements: the simulation is **deterministic** (seeded RNG, no wall-clock time) and runs
   **headless**, so thousands of fights can be simulated for balancing. See
@@ -119,9 +122,6 @@ Not decided. Do not implement a choice for these without the owner's decision.
 - Class identity and starting deck(s) for the MVP.
 - Element/tag catalogue, neighbour rules beyond the first pass (ADR 0002), and whether grammar-like roles are
   used at all.
-- The provisional combat details listed in
-  [ADR 0002](adr/0002-first-pass-combat-rules.md#provisional-details-to-be-confirmed-by-the-owner)
-  (same-tick order, modifier duration and stacking, single-card line, heal and shield caps).
 - Whether elements are represented as ink colours, and whether word sounds map to elements.
 - Exact level-up pacing, deck size, spell line length per biome, number of biomes.
 - Number and design of professors and mini-bosses.

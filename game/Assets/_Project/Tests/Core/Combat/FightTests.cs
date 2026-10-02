@@ -323,7 +323,7 @@ namespace Game.Core.Tests.Combat
             CollectionAssert.AreEqual(new[] { (2, FirstEnemy, 0) }, Timeline(result));
         }
 
-        // --- Targeting (provisional rule) ---
+        // --- Targeting (rule confirmed in ADR 0004) ---
 
         [Test]
         public void Run_HeroCast_TargetsFirstLivingEnemy()
