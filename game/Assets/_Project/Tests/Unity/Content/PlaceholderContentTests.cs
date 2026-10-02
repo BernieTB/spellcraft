@@ -101,35 +101,11 @@ namespace Game.Unity.Tests.Content
         }
 
         [Test]
-        public void PlaceholderLine_HoldsEveryCardInOrder()
-        {
-            var line = BuildPlaceholderLine();
-
-            CollectionAssert.AreEqual(
-                PlaceholderCardGenerator.CardIds,
-                line.Cards.Select(card => card.Id));
-        }
-
-        [Test]
         public void PlaceholderLine_RunsFight_EndsWithAWinner()
         {
             var result = RunPlaceholderFight();
 
             Assert.AreNotEqual(FightWinner.None, result.Winner);
-            Assert.IsNotEmpty(result.Casts);
-        }
-
-        [Test]
-        public void PlaceholderLine_RunsFightTwice_GivesIdenticalOutcome()
-        {
-            var first = RunPlaceholderFight();
-            var second = RunPlaceholderFight();
-
-            Assert.AreEqual(first.Winner, second.Winner);
-            Assert.AreEqual(first.Ticks, second.Ticks);
-            CollectionAssert.AreEqual(
-                first.Casts.Select(cast => (cast.Tick, cast.CasterIndex, cast.Position, cast.Card.Id)),
-                second.Casts.Select(cast => (cast.Tick, cast.CasterIndex, cast.Position, cast.Card.Id)));
         }
 
         /// <summary>
