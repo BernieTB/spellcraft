@@ -21,12 +21,33 @@ namespace Game.Core.Tests.Combat.Log
         private const int Hero = Fight.HeroIndex;
         private const int FirstEnemy = 1;
 
+        // The bonus fields every JSON event ends with when there is no neighbour bonus.
+        private const string NoBonusJson =
+            ",\"bonus\":{\"damage\":0,\"heal\":0,\"shield\":0},\"wasted\":{\"damage\":0,\"heal\":0,\"shield\":0}";
+
         // --- Helpers ---
 
         private static CardDefinition Card(string id, int castTime, params IEffect[] effects) =>
             new CardDefinition(id, castTime, effects);
 
         private static CardDefinition Idle() => Card("test_idle", MaxTicks + 1);
+
+        // A card with no effect that gives each modifier to the next card.
+        private static CardDefinition Booster(params NeighbourModifier[] modifiers) =>
+            new CardDefinition("test_boost", 1, new IEffect[0], modifiers);
+
+        private static NeighbourModifier Next(BonusKind kind, int amount) =>
+            new NeighbourModifier(kind, NeighbourDirection.Next, amount);
+
+        // The hero casts the booster on tick 1, then the receiver on tick 2, against an idle enemy.
+        private static CombatLog RecordBoosted(CardDefinition booster, CardDefinition receiver) =>
+            RecordFor(2, Participant(10, 0, booster, receiver), Participant(10, 0, Idle()));
+
+        private static CombatEvent BoostedCast(CombatLog log) =>
+            log.Events.Where(e => e.Kind == CombatEventKind.CardCast).ElementAt(1);
+
+        private static CombatEvent Event(CombatEventKind kind, EffectBonus bonus, EffectBonus wastedBonus) =>
+            new CombatEvent(0, 1, kind, "test_hit", 0, Hero, FirstEnemy, 0, 0, 0, 10, 0, bonus, wastedBonus);
 
         private static FightParticipant Participant(int health, int shield, params CardDefinition[] cards)
         {
@@ -153,6 +174,66 @@ namespace Game.Core.Tests.Combat.Log
             CollectionAssert.AreEqual(new[] { CombatEventKind.CardCast }, Kinds(log));
         }
 
+        // --- Neighbour bonuses ---
+
+        [Test]
+        public void Record_BonusUsed_CastEventCarriesBonusWithNothingWasted()
+        {
+            var log = RecordBoosted(Booster(Next(BonusKind.Damage, 3)), Card("test_hit", 1, new DealDamageEffect(1)));
+
+            var cast = BoostedCast(log);
+            Assert.AreEqual((new EffectBonus(3, 0, 0), EffectBonus.None), (cast.Bonus, cast.WastedBonus));
+            Assert.AreEqual(4, log.Events.Single(e => e.Kind == CombatEventKind.Damage).Amount);
+        }
+
+        [Test]
+        public void Record_BonusOfKindTheCardLacks_CastEventMarksItWasted()
+        {
+            var log = RecordBoosted(Booster(Next(BonusKind.Damage, 3)), Card("test_guard", 1, new GainShieldEffect(1)));
+
+            var cast = BoostedCast(log);
+            Assert.AreEqual((new EffectBonus(3, 0, 0), new EffectBonus(3, 0, 0)), (cast.Bonus, cast.WastedBonus));
+            Assert.AreEqual(1, log.Events.Single(e => e.Kind == CombatEventKind.ShieldGain).Amount);
+        }
+
+        [Test]
+        public void Record_StackedBonuses_CastEventCarriesTheirSum()
+        {
+            var booster = Booster(Next(BonusKind.Damage, 2), Next(BonusKind.Damage, 3), Next(BonusKind.Heal, 4));
+            var log = RecordBoosted(booster, Card("test_hit", 1, new DealDamageEffect(1)));
+
+            var cast = BoostedCast(log);
+            Assert.AreEqual((new EffectBonus(5, 4, 0), new EffectBonus(0, 4, 0)), (cast.Bonus, cast.WastedBonus));
+        }
+
+        [Test]
+        public void Record_EventsOtherThanTheBoostedCast_HaveNoBonus()
+        {
+            var log = RecordBoosted(Booster(Next(BonusKind.Damage, 3)), Card("test_hit", 1, new DealDamageEffect(1)));
+
+            var withoutBonus = log.Events.Where(e => e != BoostedCast(log)).ToList();
+            Assert.That(withoutBonus.Select(e => e.Bonus), Is.All.EqualTo(EffectBonus.None));
+            Assert.That(withoutBonus.Select(e => e.WastedBonus), Is.All.EqualTo(EffectBonus.None));
+        }
+
+        [Test]
+        public void CombatEvent_WastedBonusExceedsBonus_Throws()
+        {
+            Assert.Throws<ArgumentException>(() => Event(
+                CombatEventKind.CardCast,
+                EffectBonus.Of(BonusKind.Damage, 1),
+                EffectBonus.Of(BonusKind.Heal, 1)));
+        }
+
+        [Test]
+        public void CombatEvent_BonusOnEventOtherThanCast_Throws()
+        {
+            Assert.Throws<ArgumentException>(() => Event(
+                CombatEventKind.Damage,
+                EffectBonus.Of(BonusKind.Damage, 1),
+                EffectBonus.None));
+        }
+
         // --- Tick, card, position, caster and target ---
 
         [Test]
@@ -254,12 +335,41 @@ namespace Game.Core.Tests.Combat.Log
                 + "    {\"index\":1,\"maxHealth\":5,\"health\":5,\"shield\":1,\"spellLine\":[\"test_heal\"]}\n"
                 + "  ],\n"
                 + "  \"events\":[\n"
-                + "    {\"sequence\":0,\"tick\":1,\"kind\":\"cast\",\"card\":\"test_hit\",\"position\":0,\"caster\":0,\"target\":1,\"amount\":0,\"absorbed\":0,\"healthLost\":0,\"targetHealth\":5,\"targetShield\":1},\n"
-                + "    {\"sequence\":1,\"tick\":1,\"kind\":\"damage\",\"card\":\"test_hit\",\"position\":0,\"caster\":0,\"target\":1,\"amount\":6,\"absorbed\":1,\"healthLost\":5,\"targetHealth\":0,\"targetShield\":0},\n"
-                + "    {\"sequence\":2,\"tick\":1,\"kind\":\"death\",\"card\":\"test_hit\",\"position\":0,\"caster\":0,\"target\":1,\"amount\":0,\"absorbed\":0,\"healthLost\":0,\"targetHealth\":0,\"targetShield\":0}\n"
+                + "    {\"sequence\":0,\"tick\":1,\"kind\":\"cast\",\"card\":\"test_hit\",\"position\":0,\"caster\":0,\"target\":1,\"amount\":0,\"absorbed\":0,\"healthLost\":0,\"targetHealth\":5,\"targetShield\":1" + NoBonusJson + "},\n"
+                + "    {\"sequence\":1,\"tick\":1,\"kind\":\"damage\",\"card\":\"test_hit\",\"position\":0,\"caster\":0,\"target\":1,\"amount\":6,\"absorbed\":1,\"healthLost\":5,\"targetHealth\":0,\"targetShield\":0" + NoBonusJson + "},\n"
+                + "    {\"sequence\":2,\"tick\":1,\"kind\":\"death\",\"card\":\"test_hit\",\"position\":0,\"caster\":0,\"target\":1,\"amount\":0,\"absorbed\":0,\"healthLost\":0,\"targetHealth\":0,\"targetShield\":0" + NoBonusJson + "}\n"
                 + "  ]\n"
                 + "}\n";
             Assert.AreEqual(expected, log.ToJson());
+        }
+
+        [Test]
+        public void ToText_CastWithBonus_WritesReceivedAndWastedBonusOnCastLineOnly()
+        {
+            var booster = Booster(Next(BonusKind.Damage, 3), Next(BonusKind.Heal, 4));
+            var log = RecordBoosted(booster, Card("test_hit", 1, new DealDamageEffect(1)));
+
+            const string expected =
+                "combatant=0 maxHealth=10 health=10 shield=0 line=test_boost,test_hit\n"
+                + "combatant=1 maxHealth=10 health=10 shield=0 line=test_idle\n"
+                + "tick=1 event=cast caster=0 pos=0 card=test_boost target=1\n"
+                + "tick=2 event=cast caster=0 pos=1 card=test_hit target=1 bonusDamage=3 bonusHeal=4 wastedHeal=4\n"
+                + "tick=2 event=damage caster=0 pos=1 card=test_hit target=1 amount=4 absorbed=0 healthLost=4 health=6 shield=0\n"
+                + "winner=none ticks=2\n";
+            Assert.AreEqual(expected, log.ToText());
+        }
+
+        [Test]
+        public void ToJson_CastWithBonus_WritesReceivedAndWastedBonusOnThatCast()
+        {
+            var booster = Booster(Next(BonusKind.Damage, 3), Next(BonusKind.Heal, 4));
+            var json = RecordBoosted(booster, Card("test_hit", 1, new DealDamageEffect(1))).ToJson();
+
+            StringAssert.Contains(
+                "{\"sequence\":1,\"tick\":2,\"kind\":\"cast\",\"card\":\"test_hit\",\"position\":1,\"caster\":0,"
+                + "\"target\":1,\"amount\":0,\"absorbed\":0,\"healthLost\":0,\"targetHealth\":10,\"targetShield\":0,"
+                + "\"bonus\":{\"damage\":3,\"heal\":4,\"shield\":0},\"wasted\":{\"damage\":0,\"heal\":4,\"shield\":0}},\n",
+                json);
         }
 
         [Test]

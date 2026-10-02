@@ -274,6 +274,80 @@ namespace Game.Core.Tests.Combat
             Assert.AreEqual((1 + Bonus, 1), (outcomes[0].Damage.Total, outcomes[1].Damage.Total));
         }
 
+        // --- Bonus carried by the cast record ---
+
+        [Test]
+        public void CastRecord_BonusUsed_CarriesBonusWithNothingWasted()
+        {
+            var result = RunHero(
+                2,
+                Card("test_card_01", NoEffect(), Next(BonusKind.Damage, Bonus)),
+                Card("test_card_02", Damage(1)));
+
+            var cast = result.Casts[1];
+            Assert.AreEqual((EffectBonus.Of(BonusKind.Damage, Bonus), EffectBonus.None), (cast.Bonus, cast.WastedBonus));
+        }
+
+        [Test]
+        public void CastRecord_BonusOfKindTheCardLacks_IsWasted()
+        {
+            var result = RunHero(
+                2,
+                Card("test_card_01", NoEffect(), Next(BonusKind.Damage, Bonus), Next(BonusKind.Heal, 2)),
+                Card("test_card_02", new IEffect[] { new GainShieldEffect(1), new DealDamageEffect(1) }));
+
+            var cast = result.Casts[1];
+            Assert.AreEqual(
+                (new EffectBonus(Bonus, 2, 0), new EffectBonus(0, 2, 0)),
+                (cast.Bonus, cast.WastedBonus));
+        }
+
+        [Test]
+        public void CastRecord_NoPendingBonus_CarriesNoBonus()
+        {
+            var result = RunHero(
+                1,
+                Card("test_card_01", Damage(1), Next(BonusKind.Damage, Bonus)),
+                Card("test_card_02", Damage(1)));
+
+            var cast = result.Casts[0];
+            Assert.AreEqual((EffectBonus.None, EffectBonus.None), (cast.Bonus, cast.WastedBonus));
+        }
+
+        [Test]
+        public void CastRecord_SingleCardLine_OnlyLaterCastsCarryTheSelfBonus()
+        {
+            var result = RunHero(2, Card("test_card_01", Damage(1), Next(BonusKind.Damage, Bonus)));
+
+            Assert.AreEqual(
+                (EffectBonus.None, EffectBonus.Of(BonusKind.Damage, Bonus), EffectBonus.None),
+                (result.Casts[0].Bonus, result.Casts[1].Bonus, result.Casts[1].WastedBonus));
+        }
+
+        [Test]
+        public void CastRecord_WastedBonusExceedsBonus_Throws()
+        {
+            var card = Card("test_card_01", NoEffect());
+
+            Assert.Throws<System.ArgumentException>(() => new CastRecord(
+                1,
+                Hero,
+                0,
+                card,
+                FirstEnemy,
+                new EffectOutcome[0],
+                EffectBonus.Of(BonusKind.Damage, 1),
+                EffectBonus.Of(BonusKind.Heal, 1)));
+        }
+
+        [Test]
+        public void CastRecord_ConstructorWithoutBonus_HasNoBonus()
+        {
+            var cast = new CastRecord(1, Hero, 0, Card("test_card_01", NoEffect()), FirstEnemy, new EffectOutcome[0]);
+
+            Assert.AreEqual((EffectBonus.None, EffectBonus.None), (cast.Bonus, cast.WastedBonus));
+        }
+
         // --- Per combatant, dead caster ---
 
         [Test]

@@ -30,6 +30,20 @@ namespace Game.Core.Tests.Effects
             Assert.AreEqual(new EffectBonus(0, 0, 0), EffectBonus.None);
         }
 
+        [Test]
+        public void IsNone_AllZero_IsTrue()
+        {
+            Assert.IsTrue(EffectBonus.None.IsNone);
+        }
+
+        [TestCase(1, 0, 0)]
+        [TestCase(0, 1, 0)]
+        [TestCase(0, 0, 1)]
+        public void IsNone_AnyValueAboveZero_IsFalse(int damage, int heal, int shield)
+        {
+            Assert.IsFalse(new EffectBonus(damage, heal, shield).IsNone);
+        }
+
         [TestCase(BonusKind.Damage, 4, 0, 0)]
         [TestCase(BonusKind.Heal, 0, 4, 0)]
         [TestCase(BonusKind.Shield, 0, 0, 4)]

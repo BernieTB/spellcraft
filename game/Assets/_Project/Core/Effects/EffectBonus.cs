@@ -35,6 +35,9 @@ namespace Game.Core.Effects
         /// <summary>No bonus.</summary>
         public static EffectBonus None => default;
 
+        /// <summary>True when every value is zero.</summary>
+        public bool IsNone => Damage == 0 && Heal == 0 && Shield == 0;
+
         /// <summary>Extra damage for a <see cref="DealDamageEffect"/>.</summary>
         public int Damage { get; }
 
@@ -96,6 +99,10 @@ namespace Game.Core.Effects
                     throw new ArgumentOutOfRangeException(nameof(kind), kind, "Unknown bonus kind.");
             }
         }
+
+        // True when every value of part is at most the matching value of this bonus.
+        internal bool Covers(EffectBonus part) =>
+            part.Damage <= Damage && part.Heal <= Heal && part.Shield <= Shield;
 
         /// <summary>The sum of this bonus and <paramref name="other"/>, value by value.</summary>
         /// <exception cref="OverflowException">A sum exceeds <see cref="int.MaxValue"/>.</exception>

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Text;
+using Game.Core.Effects;
 
 namespace Game.Core.Combat.Log
 {
@@ -22,6 +23,11 @@ namespace Game.Core.Combat.Log
     /// <see cref="CombatEventKind.CardCast"/> event, then the effects in the card's order. For each effect: its
     /// damage, then a <see cref="CombatEventKind.Death"/> if that damage brought the target to zero health, then
     /// its healing, then its shield gain. Parts that changed nothing (zero amount) produce no event.
+    /// </para>
+    /// <para>
+    /// Neighbour bonuses: the <see cref="CombatEventKind.CardCast"/> event carries the bonus the cast received and
+    /// the part it wasted (<see cref="CombatEvent.Bonus"/>, <see cref="CombatEvent.WastedBonus"/>, from
+    /// <see cref="CastRecord"/>). The used part is already in the amounts of the effect events.
     /// </para>
     /// </remarks>
     public sealed class CombatLog
@@ -109,7 +115,14 @@ namespace Game.Core.Combat.Log
                         nameof(result));
                 }
 
-                void Add(CombatEventKind kind, int subject, int amount, int absorbed, int lost)
+                void Add(
+                    CombatEventKind kind,
+                    int subject,
+                    int amount,
+                    int absorbed,
+                    int lost,
+                    EffectBonus bonus = default,
+                    EffectBonus wastedBonus = default)
                 {
                     events.Add(new CombatEvent(
                         events.Count,
@@ -123,10 +136,12 @@ namespace Game.Core.Combat.Log
                         absorbed,
                         lost,
                         health[subject],
-                        shield[subject]));
+                        shield[subject],
+                        bonus,
+                        wastedBonus));
                 }
 
-                Add(CombatEventKind.CardCast, target, 0, 0, 0);
+                Add(CombatEventKind.CardCast, target, 0, 0, 0, cast.Bonus, cast.WastedBonus);
 
                 foreach (var outcome in cast.EffectOutcomes)
                 {
@@ -175,6 +190,10 @@ namespace Game.Core.Combat.Log
         /// <item>one line per event: <c>tick=T event=K caster=C pos=P card=ID target=X</c>, followed for damage by
         /// <c>amount=A absorbed=B healthLost=L</c>, for heal and shield by <c>amount=A</c>, and for every kind but
         /// cast by the target's state after the event, <c>health=H shield=S</c>;</item>
+        /// <item>a cast that received a neighbour bonus also has, for each kind with a bonus, in the order damage,
+        /// heal, shield: <c>bonusK=N</c> (received), followed by <c>wastedK=W</c> when part of it was wasted, with
+        /// <c>K</c> one of <c>Damage</c>, <c>Heal</c>, <c>Shield</c> (for example
+        /// <c>bonusDamage=3 bonusHeal=4 wastedHeal=4</c>). A cast without bonus has none of these fields;</item>
         /// <item>a last line <c>winner=W ticks=N</c>.</item>
         /// </list>
         /// <para>Event names: <c>cast</c>, <c>damage</c>, <c>heal</c>, <c>shield</c>, <c>death</c>. Winner names:
@@ -205,6 +224,11 @@ namespace Game.Core.Combat.Log
 
                 switch (e.Kind)
                 {
+                    case CombatEventKind.CardCast:
+                        AppendBonusText(builder, e, BonusKind.Damage, "Damage");
+                        AppendBonusText(builder, e, BonusKind.Heal, "Heal");
+                        AppendBonusText(builder, e, BonusKind.Shield, "Shield");
+                        break;
                     case CombatEventKind.Damage:
                         builder.Append(" amount=").Append(Number(e.Amount))
                             .Append(" absorbed=").Append(Number(e.AbsorbedByShield))
@@ -235,8 +259,11 @@ namespace Game.Core.Combat.Log
         /// Writes the log as JSON: an object with <c>winner</c>, <c>ticks</c>, <c>combatants</c> and <c>events</c>.
         /// Every event has all its fields (<c>sequence</c>, <c>tick</c>, <c>kind</c>, <c>card</c>, <c>position</c>,
         /// <c>caster</c>, <c>target</c>, <c>amount</c>, <c>absorbed</c>, <c>healthLost</c>, <c>targetHealth</c>,
-        /// <c>targetShield</c>), with the same names as <see cref="ToText"/> for kinds and winner. One combatant or
-        /// event per line, lines end with <c>\n</c>; the output is deterministic.
+        /// <c>targetShield</c>, <c>bonus</c>, <c>wasted</c>), with the same names as <see cref="ToText"/> for kinds and
+        /// winner. <c>bonus</c> and <c>wasted</c> are objects with <c>damage</c>, <c>heal</c> and <c>shield</c>, in
+        /// that order: the neighbour bonus a cast received and the part of it wasted, all zero on other events and on
+        /// casts without bonus, so every event has the same shape. One combatant or event per line, lines end with
+        /// <c>\n</c>; the output is deterministic.
         /// </summary>
         public string ToJson()
         {
@@ -307,6 +334,10 @@ namespace Game.Core.Combat.Log
                 JsonWriter.AppendField(builder, "targetHealth", e.TargetHealth);
                 builder.Append(',');
                 JsonWriter.AppendField(builder, "targetShield", e.TargetShield);
+                builder.Append(',');
+                AppendBonusJson(builder, "bonus", e.Bonus);
+                builder.Append(',');
+                AppendBonusJson(builder, "wasted", e.WastedBonus);
                 builder.Append('}');
             }
 
@@ -354,6 +385,34 @@ namespace Game.Core.Combat.Log
         }
 
         private static string Number(int value) => value.ToString(CultureInfo.InvariantCulture);
+
+        private static void AppendBonusText(StringBuilder builder, CombatEvent e, BonusKind kind, string name)
+        {
+            var received = e.Bonus.Get(kind);
+            if (received == 0)
+            {
+                return;
+            }
+
+            builder.Append(" bonus").Append(name).Append('=').Append(Number(received));
+            var wasted = e.WastedBonus.Get(kind);
+            if (wasted > 0)
+            {
+                builder.Append(" wasted").Append(name).Append('=').Append(Number(wasted));
+            }
+        }
+
+        private static void AppendBonusJson(StringBuilder builder, string name, EffectBonus bonus)
+        {
+            JsonWriter.AppendName(builder, name);
+            builder.Append('{');
+            JsonWriter.AppendField(builder, "damage", bonus.Damage);
+            builder.Append(',');
+            JsonWriter.AppendField(builder, "heal", bonus.Heal);
+            builder.Append(',');
+            JsonWriter.AppendField(builder, "shield", bonus.Shield);
+            builder.Append('}');
+        }
 
         private static void Check(bool consistent, CastRecord cast, int combatant)
         {

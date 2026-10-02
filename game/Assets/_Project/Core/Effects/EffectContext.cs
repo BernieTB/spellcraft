@@ -53,6 +53,12 @@ namespace Game.Core.Effects
         public EffectBonus Bonus { get; }
 
         /// <summary>
+        /// The part of <see cref="Bonus"/> not consumed yet by <see cref="ConsumeBonus"/>. Once the card has
+        /// resolved, this is the wasted bonus: kinds for which the card has no matching effect.
+        /// </summary>
+        public EffectBonus RemainingBonus => _remainingBonus;
+
+        /// <summary>
         /// Takes the bonus of <paramref name="kind"/> not consumed yet in this context. An effect calls it to get
         /// the extra amount to add; later calls for the same kind return zero.
         /// </summary>

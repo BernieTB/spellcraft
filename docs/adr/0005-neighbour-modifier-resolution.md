@@ -54,8 +54,8 @@ We will carry the bonus of a cast in **`EffectContext`** and let effects read it
 - "Once per cast, on the first effect of that kind" is an interpretation: on a card with two damage effects, a
   +X damage bonus adds X once, not X per effect. If the owner prefers X per effect, only `EffectContext` changes.
 - `EffectContext` is now stateful (the remaining bonus), so it must not be reused across casts.
-- Cast records do not say which part of an outcome came from a bonus. The combat log may need the bonus of each
-  cast (available as `EffectContext.Bonus`) to explain it.
+- Outcomes do not say which part came from a bonus. Cast records and the combat log carry the bonus each cast
+  received and the part it wasted (#56), not how the used part split across effects.
 
 ## Alternatives considered
 
