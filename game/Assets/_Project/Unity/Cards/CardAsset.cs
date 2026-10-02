@@ -27,7 +27,7 @@ namespace Game.Unity.Cards
         private List<EffectEntry> _effects = new List<EffectEntry>();
 
         [SerializeField]
-        [Tooltip("Test-only content. A build fails if a scene or Resources asset references a placeholder card.")]
+        [Tooltip("Test-only content. Tests and builds fail if an asset outside the placeholder and test folders references it.")]
         private bool _isPlaceholder;
 
         /// <summary>

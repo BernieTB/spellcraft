@@ -87,8 +87,7 @@ defined in `PlaceholderCardGenerator`) instead of editing their YAML. Close the 
 ```
 
 Placeholder cards are flagged `_isPlaceholder`. Only `Unity/Content/Placeholders/` and `Tests/` may reference
-them: an EditMode test fails otherwise, and `PlaceholderBuildCheck` fails any build whose scenes or `Resources`
-reference one.
+them: otherwise an EditMode test fails, and `PlaceholderBuildCheck` fails any player build.
 
 ## Code conventions
 

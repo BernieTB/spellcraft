@@ -19,14 +19,6 @@ namespace Game.Unity.Tests.Content
         }
 
         [Test]
-        public void FindBuildViolations_CurrentBuildSettings_IsEmpty()
-        {
-            var violations = PlaceholderGuard.FindBuildViolations();
-
-            Assert.IsEmpty(violations, string.Join("\n", violations));
-        }
-
-        [Test]
         public void FindPlaceholderReferences_PlaceholderCard_ReportsIt()
         {
             var path = PlaceholderCardGenerator.AssetPath(PlaceholderCardGenerator.CardIds[0]);

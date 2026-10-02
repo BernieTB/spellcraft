@@ -4,7 +4,8 @@ using UnityEditor.Build.Reporting;
 namespace Game.Unity.EditorTools.Content
 {
     /// <summary>
-    /// Fails any player build whose scenes or Resources reference a placeholder card.
+    /// Fails any player build while an asset outside the placeholder and test folders is or references a
+    /// placeholder card (same check as the EditMode test).
     /// </summary>
     public sealed class PlaceholderBuildCheck : IPreprocessBuildWithReport
     {
@@ -12,7 +13,7 @@ namespace Game.Unity.EditorTools.Content
 
         public void OnPreprocessBuild(BuildReport report)
         {
-            var violations = PlaceholderGuard.FindBuildViolations();
+            var violations = PlaceholderGuard.FindProjectViolations();
             if (violations.Count > 0)
             {
                 throw new BuildFailedException(

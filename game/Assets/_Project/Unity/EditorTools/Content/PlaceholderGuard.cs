@@ -12,7 +12,9 @@ namespace Game.Unity.EditorTools.Content
     /// </summary>
     /// <remarks>
     /// Only the placeholder folder and the test folder may hold or reference placeholders. Any other asset that
-    /// is a placeholder card or depends on one (directly or through other assets) is a violation.
+    /// is a placeholder card or depends on one (directly or through other assets) is a violation. This is
+    /// stricter than checking only what a build includes, and needs no knowledge of how content gets into a build
+    /// (scenes, Resources, later Addressables).
     /// </remarks>
     public static class PlaceholderGuard
     {
@@ -77,22 +79,6 @@ namespace Game.Unity.EditorTools.Content
                 .Where(path => !AssetDatabase.IsValidFolder(path))
                 .Where(path => !IsInPlaceholderArea(path));
             return FindPlaceholderReferences(roots);
-        }
-
-        /// <summary>
-        /// Checks what a player build includes: the enabled scenes of the build settings and every asset in a
-        /// Resources folder.
-        /// </summary>
-        public static IReadOnlyList<string> FindBuildViolations()
-        {
-            var scenes = EditorBuildSettings.scenes
-                .Where(scene => scene.enabled)
-                .Select(scene => scene.path);
-            var resources = AssetDatabase.GetAllAssetPaths()
-                .Where(path => path.StartsWith("Assets/", StringComparison.Ordinal))
-                .Where(path => path.Contains("/Resources/"))
-                .Where(path => !AssetDatabase.IsValidFolder(path));
-            return FindPlaceholderReferences(scenes.Concat(resources));
         }
     }
 }
