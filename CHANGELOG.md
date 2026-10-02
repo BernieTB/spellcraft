@@ -42,6 +42,9 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
 - Debug fight viewer: an editor-only scene (`Unity/DebugTools/DebugFight.unity`) that simulates the fight set
   in a `DebugFightSetup` asset and replays its combat log with plain UI, with pause, step, restart and
   adjustable speed. A build check keeps it and its placeholder cards out of player builds.
+- Neighbour bonuses in the combat log: each cast records the bonus it received and the part it wasted (a bonus
+  of a kind the card has no effect for), shown on the cast event in the text and JSON log and in the debug fight
+  viewer.
 
 ### Changed
 
