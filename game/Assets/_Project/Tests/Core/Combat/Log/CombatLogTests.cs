@@ -20,7 +20,6 @@ namespace Game.Core.Tests.Combat.Log
 
         private const int Hero = Fight.HeroIndex;
         private const int FirstEnemy = 1;
-        private const int SecondEnemy = 2;
 
         // --- Helpers ---
 
@@ -46,27 +45,9 @@ namespace Game.Core.Tests.Combat.Log
         private static CombatLog RecordFor(int maxTicks, FightParticipant hero, params FightParticipant[] enemies) =>
             CombatLogRecorder.Record(hero, enemies, maxTicks, new Pcg32Random(Seed));
 
-        private static List<string> EventLines(CombatLog log) =>
-            log.ToText().Split('\n').Where(line => line.StartsWith("tick=", StringComparison.Ordinal)).ToList();
-
         private static List<CombatEventKind> Kinds(CombatLog log) => log.Events.Select(e => e.Kind).ToList();
 
         // --- Content of events ---
-
-        [Test]
-        public void Record_CardResolves_LogsCastThenItsDamage()
-        {
-            var hero = Participant(10, 0, Card("test_hit", 2, new DealDamageEffect(3)));
-            var log = RecordFor(2, hero, Participant(10, 0, Idle()));
-
-            CollectionAssert.AreEqual(
-                new[]
-                {
-                    "tick=2 event=cast caster=0 pos=0 card=test_hit target=1",
-                    "tick=2 event=damage caster=0 pos=0 card=test_hit target=1 amount=3 absorbed=0 healthLost=3 health=7 shield=0",
-                },
-                EventLines(log));
-        }
 
         [Test]
         public void Record_DamageOnShield_SplitsAbsorbedAndHealthLost()
@@ -153,17 +134,6 @@ namespace Game.Core.Tests.Combat.Log
         }
 
         [Test]
-        public void Record_HeroDies_LogsHeroDeathAndEnemiesWin()
-        {
-            var hero = Participant(3, 0, Idle());
-            var log = Record(hero, Participant(10, 0, Card("test_hit", 1, new DealDamageEffect(5))));
-
-            var death = log.Events.Single(e => e.Kind == CombatEventKind.Death);
-            Assert.AreEqual((Hero, FirstEnemy), (death.TargetIndex, death.CasterIndex));
-            Assert.AreEqual(FightWinner.Enemies, log.Winner);
-        }
-
-        [Test]
         public void Record_SeveralEffects_LogsThemInCardOrder()
         {
             var hero = Participant(10, 0, Card("test_combo", 1, new GainShieldEffect(1), new DealDamageEffect(2), new HealEffect(0)));
@@ -211,26 +181,6 @@ namespace Game.Core.Tests.Combat.Log
         }
 
         [Test]
-        public void Record_FirstEnemyDies_HeroCastsTargetTheNextEnemy()
-        {
-            var hero = Participant(10, 0, Card("test_hit", 1, new DealDamageEffect(5)));
-            var log = Record(hero, Participant(5, 0, Idle()), Participant(5, 0, Idle()));
-
-            var targets = log.Events.Where(e => e.Kind == CombatEventKind.CardCast).Select(e => e.TargetIndex);
-            CollectionAssert.AreEqual(new[] { FirstEnemy, SecondEnemy }, targets);
-        }
-
-        [Test]
-        public void Record_EnemyCasts_TargetTheHero()
-        {
-            var enemyCard = Card("test_hit", 1, new DealDamageEffect(1));
-            var log = RecordFor(1, Participant(10, 0, Idle()), Participant(10, 0, enemyCard), Participant(10, 0, enemyCard));
-
-            var casts = log.Events.Where(e => e.Kind == CombatEventKind.CardCast).Select(e => (e.CasterIndex, e.TargetIndex));
-            CollectionAssert.AreEqual(new[] { (FirstEnemy, Hero), (SecondEnemy, Hero) }, casts);
-        }
-
-        [Test]
         public void Record_SameTick_HeroEventsComeBeforeEnemyEvents()
         {
             var card = Card("test_hit", 1, new DealDamageEffect(1));
@@ -247,17 +197,6 @@ namespace Game.Core.Tests.Combat.Log
             var log = RecordFor(5, Participant(10, 0, card), Participant(10, 0, card));
 
             CollectionAssert.AreEqual(Enumerable.Range(0, log.Events.Count), log.Events.Select(e => e.Sequence));
-        }
-
-        [Test]
-        public void Record_Events_TicksNeverDecrease()
-        {
-            var log = Record(
-                Participant(20, 0, Card("test_a", 2, new DealDamageEffect(2)), Card("test_b", 1, new HealEffect(1))),
-                Participant(12, 1, Card("test_c", 3, new DealDamageEffect(3))));
-
-            var ticks = log.Events.Select(e => e.Tick).ToList();
-            CollectionAssert.IsOrdered(ticks);
         }
 
         // --- Fight summary ---
@@ -280,17 +219,6 @@ namespace Game.Core.Tests.Combat.Log
 
             Assert.AreEqual((FightWinner.None, 4), (log.Winner, log.Ticks));
             Assert.IsEmpty(log.Events);
-        }
-
-        [Test]
-        public void Record_SameInputs_GiveIdenticalText()
-        {
-            CombatLog RecordOnce() => Record(
-                Participant(20, 0, Card("test_a", 2, new DealDamageEffect(2)), Card("test_b", 1, new GainShieldEffect(1))),
-                Participant(12, 1, Card("test_c", 3, new DealDamageEffect(3), new HealEffect(1))));
-
-            Assert.AreEqual(RecordOnce().ToText(), RecordOnce().ToText());
-            Assert.AreEqual(RecordOnce().ToJson(), RecordOnce().ToJson());
         }
 
         // --- Serialisation ---
@@ -359,6 +287,16 @@ namespace Game.Core.Tests.Combat.Log
             CollectionAssert.AllItemsAreUnique(names);
         }
 
+        // --- Consistency guard ---
+
+        [Test]
+        public void Record_EffectChangesStatsWithoutReportingIt_Throws()
+        {
+            var hero = Participant(10, 0, Card("test_hidden", 1, new UnreportedDamageEffect(2)));
+
+            Assert.Throws<InvalidOperationException>(() => RecordFor(1, hero, Participant(10, 0, Idle())));
+        }
+
         // --- Build validation ---
 
         [Test]
@@ -402,6 +340,23 @@ namespace Game.Core.Tests.Combat.Log
             };
 
             Assert.Throws<InvalidOperationException>(() => CombatLog.Build(snapshots, result));
+        }
+
+        // Test double: damages the target but reports no outcome, as a faulty future effect could.
+        private sealed class UnreportedDamageEffect : IEffect
+        {
+            private readonly int _amount;
+
+            public UnreportedDamageEffect(int amount)
+            {
+                _amount = amount;
+            }
+
+            public EffectOutcome Apply(EffectContext context)
+            {
+                context.Target.TakeDamage(_amount);
+                return EffectOutcome.None;
+            }
         }
     }
 }

@@ -178,7 +178,8 @@ namespace Game.Core.Combat.Log
         /// <item>a last line <c>winner=W ticks=N</c>.</item>
         /// </list>
         /// <para>Event names: <c>cast</c>, <c>damage</c>, <c>heal</c>, <c>shield</c>, <c>death</c>. Winner names:
-        /// <c>none</c>, <c>hero</c>, <c>enemies</c>. Numbers use the invariant culture.</para>
+        /// <c>none</c>, <c>hero</c>, <c>enemies</c>. Numbers use the invariant culture. Card ids are written as
+        /// they are, unescaped: the text is for reading and golden diffs; parse <see cref="ToJson"/> instead.</para>
         /// </remarks>
         public string ToText()
         {
