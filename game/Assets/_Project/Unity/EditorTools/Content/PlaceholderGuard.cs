@@ -4,7 +4,7 @@ using System.Linq;
 using Game.Unity.Cards;
 using UnityEditor;
 
-namespace Game.Unity.Editor.Content
+namespace Game.Unity.EditorTools.Content
 {
     /// <summary>
     /// Finds references to placeholder cards (<see cref="CardAsset.IsPlaceholder"/>) so test-only content cannot

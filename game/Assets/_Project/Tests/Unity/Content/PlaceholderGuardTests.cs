@@ -1,4 +1,4 @@
-using Game.Unity.Editor.Content;
+using Game.Unity.EditorTools.Content;
 using NUnit.Framework;
 
 namespace Game.Unity.Tests.Content

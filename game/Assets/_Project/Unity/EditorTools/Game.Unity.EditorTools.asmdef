@@ -1,6 +1,6 @@
 {
-    "name": "Game.Unity.Editor",
-    "rootNamespace": "Game.Unity.Editor",
+    "name": "Game.Unity.EditorTools",
+    "rootNamespace": "Game.Unity.EditorTools",
     "references": [
         "Game.Unity",
         "Game.Core"

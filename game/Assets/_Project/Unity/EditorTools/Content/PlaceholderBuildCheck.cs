@@ -1,7 +1,7 @@
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
 
-namespace Game.Unity.Editor.Content
+namespace Game.Unity.EditorTools.Content
 {
     /// <summary>
     /// Fails any player build whose scenes or Resources reference a placeholder card.

@@ -6,7 +6,7 @@ using Game.Core.Effects;
 using Game.Core.Randomness;
 using Game.Core.SpellLines;
 using Game.Unity.Cards;
-using Game.Unity.Editor.Content;
+using Game.Unity.EditorTools.Content;
 using NUnit.Framework;
 using UnityEditor;
 

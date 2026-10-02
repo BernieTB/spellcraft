@@ -4,7 +4,7 @@ using Game.Unity.Cards;
 using UnityEditor;
 using UnityEngine;
 
-namespace Game.Unity.Editor.Content
+namespace Game.Unity.EditorTools.Content
 {
     /// <summary>
     /// Creates or updates the placeholder card assets used by tests, in <see cref="PlaceholderGuard.PlaceholderFolder"/>.
@@ -16,7 +16,7 @@ namespace Game.Unity.Editor.Content
     /// </para>
     /// <para>
     /// Run from the menu <c>Tools &gt; Game &gt; Regenerate Placeholder Cards</c>, or headless with
-    /// <c>-executeMethod Game.Unity.Editor.Content.PlaceholderCardGenerator.Generate</c>. Existing assets are
+    /// <c>-executeMethod Game.Unity.EditorTools.Content.PlaceholderCardGenerator.Generate</c>. Existing assets are
     /// updated in place, so their GUIDs and references survive a regeneration.
     /// </para>
     /// </remarks>
