@@ -77,6 +77,8 @@ Keep one logical change per commit. Mention any change to `game/ProjectSettings/
   purpose, regenerate the file with the `[Explicit]` test `Run_GoldenFight_RegenerateStoredTrace` (Test Runner:
   select it and Run Selected, or add `--filter Run_GoldenFight_RegenerateStoredTrace` to the command below),
   review the diff line by line and commit it with the change. Never regenerate just to make a failure go away.
+  The combat log has its own golden file (`Golden/basic_fight_log.txt`), regenerated the same way with
+  `Record_GoldenFight_RegenerateStoredLog`.
 - Run the tests before committing:
 
   ```powershell

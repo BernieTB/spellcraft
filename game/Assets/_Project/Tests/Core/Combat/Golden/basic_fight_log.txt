@@ -1,0 +1,40 @@
+combatant=0 maxHealth=24 health=24 shield=1 line=test_card_01,test_card_02,test_card_03
+combatant=1 maxHealth=9 health=9 shield=3 line=test_card_04
+combatant=2 maxHealth=8 health=8 shield=0 line=test_card_05,test_card_06
+tick=2 event=cast caster=0 pos=0 card=test_card_01 target=1
+tick=2 event=damage caster=0 pos=0 card=test_card_01 target=1 amount=4 absorbed=3 healthLost=1 health=8 shield=0
+tick=2 event=cast caster=1 pos=0 card=test_card_04 target=0
+tick=2 event=damage caster=1 pos=0 card=test_card_04 target=0 amount=3 absorbed=1 healthLost=2 health=22 shield=0
+tick=3 event=cast caster=0 pos=1 card=test_card_02 target=1
+tick=3 event=shield caster=0 pos=1 card=test_card_02 target=0 amount=2 health=22 shield=2
+tick=3 event=heal caster=0 pos=1 card=test_card_02 target=0 amount=2 health=24 shield=2
+tick=3 event=cast caster=2 pos=0 card=test_card_05 target=0
+tick=3 event=damage caster=2 pos=0 card=test_card_05 target=0 amount=4 absorbed=2 healthLost=2 health=22 shield=0
+tick=4 event=cast caster=1 pos=0 card=test_card_04 target=0
+tick=4 event=damage caster=1 pos=0 card=test_card_04 target=0 amount=3 absorbed=0 healthLost=3 health=19 shield=0
+tick=4 event=cast caster=2 pos=1 card=test_card_06 target=0
+tick=4 event=shield caster=2 pos=1 card=test_card_06 target=2 amount=1 health=8 shield=1
+tick=6 event=cast caster=0 pos=2 card=test_card_03 target=1
+tick=6 event=damage caster=0 pos=2 card=test_card_03 target=1 amount=7 absorbed=0 healthLost=7 health=1 shield=0
+tick=6 event=cast caster=1 pos=0 card=test_card_04 target=0
+tick=6 event=damage caster=1 pos=0 card=test_card_04 target=0 amount=3 absorbed=0 healthLost=3 health=16 shield=0
+tick=7 event=cast caster=2 pos=0 card=test_card_05 target=0
+tick=7 event=damage caster=2 pos=0 card=test_card_05 target=0 amount=4 absorbed=0 healthLost=4 health=12 shield=0
+tick=8 event=cast caster=0 pos=0 card=test_card_01 target=1
+tick=8 event=damage caster=0 pos=0 card=test_card_01 target=1 amount=1 absorbed=0 healthLost=1 health=0 shield=0
+tick=8 event=death caster=0 pos=0 card=test_card_01 target=1 health=0 shield=0
+tick=8 event=cast caster=2 pos=1 card=test_card_06 target=0
+tick=8 event=shield caster=2 pos=1 card=test_card_06 target=2 amount=1 health=8 shield=2
+tick=9 event=cast caster=0 pos=1 card=test_card_02 target=2
+tick=9 event=shield caster=0 pos=1 card=test_card_02 target=0 amount=2 health=12 shield=2
+tick=9 event=heal caster=0 pos=1 card=test_card_02 target=0 amount=3 health=15 shield=2
+tick=11 event=cast caster=2 pos=0 card=test_card_05 target=0
+tick=11 event=damage caster=2 pos=0 card=test_card_05 target=0 amount=4 absorbed=2 healthLost=2 health=13 shield=0
+tick=12 event=cast caster=0 pos=2 card=test_card_03 target=2
+tick=12 event=damage caster=0 pos=2 card=test_card_03 target=2 amount=7 absorbed=2 healthLost=5 health=3 shield=0
+tick=12 event=cast caster=2 pos=1 card=test_card_06 target=0
+tick=12 event=shield caster=2 pos=1 card=test_card_06 target=2 amount=1 health=3 shield=1
+tick=14 event=cast caster=0 pos=0 card=test_card_01 target=2
+tick=14 event=damage caster=0 pos=0 card=test_card_01 target=2 amount=4 absorbed=1 healthLost=3 health=0 shield=0
+tick=14 event=death caster=0 pos=0 card=test_card_01 target=2 health=0 shield=0
+winner=hero ticks=14
