@@ -36,5 +36,6 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
 ### Changed
 
 - CI: both workflows log the runner's free disk space after cleanup and after the Unity step.
+- CI: Git LFS objects are cached between runs, so each one is downloaded only once.
 
 [Unreleased]: https://github.com/BernieTB/spellcraft/commits/main
