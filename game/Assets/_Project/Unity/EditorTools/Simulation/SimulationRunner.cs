@@ -48,18 +48,16 @@ namespace Game.Unity.EditorTools.Simulation
             }
             catch (Exception exception)
             {
+                // Logged once, not rethrown: from the menu a rethrow would only log the same error a second time.
                 Debug.LogError($"[Simulation] Failed: {exception}");
                 ExitIfBatchMode(1);
-                if (!Application.isBatchMode)
-                {
-                    throw;
-                }
             }
         }
 
         /// <summary>
         /// Runs the simulation described by <paramref name="arguments"/>, writes the summary and returns the full path
-        /// of the file written.
+        /// of the file written. A relative output path is resolved from the current directory, which the editor sets
+        /// to the Unity project folder (<c>game/</c>).
         /// </summary>
         /// <exception cref="InvalidOperationException">The setup asset is missing or invalid.</exception>
         public static string Execute(SimulationArguments arguments)
