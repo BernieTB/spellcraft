@@ -10,8 +10,9 @@ card of its own spell line. The owner confirmed its details on 2026-10-02
 ([ADR 0004](0004-confirm-first-pass-combat-rules.md)): a modifier applies to one cast of the neighbour, then is
 used up; several modifiers on the same cast add up; in a single-card line the card is its own neighbour. The
 prototype kinds are **+X damage, +X heal and +X shield**, each with its own direction (next or previous) and X
-from data. A bonus adds only to an effect of the matching kind of the receiving card; a "previous" bonus applies
-to the previous position's next cast, so on the next loop.
+from data. "A bonus only adds to effects of the same kind on the receiving card"; how much it adds when that card
+has several effects of the kind is not specified. A "previous" bonus applies to the previous position's next
+cast, so on the next loop.
 
 [ADR 0003](0003-effect-representation.md) requires that modifiers are applied without mutating effects or card
 definitions (they are shared and immutable), that pending modifiers belong to a spell-line position rather than

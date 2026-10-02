@@ -11,8 +11,8 @@ namespace Game.Core.Cards
     /// Rules (<c>docs/adr/0002-first-pass-combat-rules.md</c>, confirmed in
     /// <c>docs/adr/0004-confirm-first-pass-combat-rules.md</c>; mechanism in
     /// <c>docs/adr/0005-neighbour-modifier-resolution.md</c>): the bonus waits on the neighbour's position and is
-    /// used up by that position's next cast; bonuses waiting on the same cast add up; it only adds to effects of
-    /// the matching kind, so a damage bonus on a card without a damage effect does nothing.
+    /// used up by that position's next cast; bonuses waiting on the same cast add up; it only adds to the first
+    /// effect of the matching kind in that cast, so a damage bonus on a card without a damage effect does nothing.
     /// </remarks>
     public sealed class NeighbourModifier
     {

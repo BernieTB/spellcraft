@@ -23,6 +23,7 @@ namespace Game.Core.Cards
         {
         }
 
+        /// <summary>Creates a card that grants neighbour modifiers.</summary>
         /// <param name="id">Stable identifier from data. Not empty or whitespace.</param>
         /// <param name="castTime">Simulation ticks needed to cast the card, from data. Greater than zero.</param>
         /// <param name="effects">Effects applied, in this order, when the card resolves. May be empty.</param>

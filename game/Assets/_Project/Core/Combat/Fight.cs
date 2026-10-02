@@ -42,7 +42,8 @@ namespace Game.Core.Combat
     /// a position of one combatant, not to a card, so the same card at two positions or in two lines is tracked
     /// separately. A position's pending bonuses add up and are all used up by its next cast, which first takes
     /// them and then grants its own modifiers; a "previous" bonus therefore applies on the next loop. A bonus only
-    /// adds to effects of its kind. Bonuses waiting for a dead combatant are never used.
+    /// adds to the first effect of its kind in the cast (<see cref="EffectContext.ConsumeBonus"/>). Bonuses waiting
+    /// for a dead combatant are never used.
     /// </para>
     /// <para>
     /// Spell lines are copied when the fight is created, so editing a line afterwards does not change the fight.
