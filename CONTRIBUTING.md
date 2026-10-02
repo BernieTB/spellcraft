@@ -72,6 +72,11 @@ Keep one logical change per commit. Mention any change to `game/ProjectSettings/
 - Every change to `Game.Core` comes with EditMode tests in `game/Assets/_Project/Tests/Core/`.
 - Bug fixes in Core start with a failing test that reproduces the bug.
 - Tests must be deterministic: fixed seeds, no wall-clock time.
+- Golden tests compare a fight against a stored trace (e.g.
+  `game/Assets/_Project/Tests/Core/Combat/Golden/basic_fight.txt`). When a rule change alters the outcome on
+  purpose, regenerate the file with the `[Explicit]` test `Run_GoldenFight_RegenerateStoredTrace` (Test Runner:
+  select it and Run Selected, or add `--filter Run_GoldenFight_RegenerateStoredTrace` to the command below),
+  review the diff line by line and commit it with the change. Never regenerate just to make a failure go away.
 - Run the tests before committing:
 
   ```powershell

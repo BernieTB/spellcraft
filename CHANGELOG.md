@@ -27,6 +27,8 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
   heal and gain shield effects, authored as `CardAsset` ScriptableObjects (ADR 0003).
 - Spell line in Core: an ordered sequence of cards with a capacity set from data, played in a loop, whose
   cards can be added, removed, swapped and moved.
+- Deterministic combat loop in Core: a hero against one or more enemies, each casting its spell line in ticks,
+  with a seeded random source, a maximum-tick guard, effect outcomes per cast and a golden-trace test.
 
 ### Changed
 
