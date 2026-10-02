@@ -20,6 +20,7 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
 - This changelog.
 - CI: EditMode tests on every pull request to `main` (GameCI), required to merge.
 - CI: Windows 64-bit player built on every push to `main`, downloadable as a workflow artifact.
+- ADR 0002: first-pass combat rules (cast time in ticks, neighbour modifiers, health and shield).
 - Core combat model: combatants with health and shield (shield absorbs damage first, healing capped at max
   health, death at zero).
 
