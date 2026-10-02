@@ -26,6 +26,16 @@ namespace Game.Unity.Cards
         [Tooltip("Effects applied in this order when the card resolves.")]
         private List<EffectEntry> _effects = new List<EffectEntry>();
 
+        [SerializeField]
+        [Tooltip("Test-only content. A build fails if a scene or Resources asset references a placeholder card.")]
+        private bool _isPlaceholder;
+
+        /// <summary>
+        /// True for test-only placeholder cards, which must never ship. Checked by the editor placeholder guard
+        /// (a build check and an EditMode test); not used by the simulation.
+        /// </summary>
+        public bool IsPlaceholder => _isPlaceholder;
+
         /// <summary>
         /// Converts this asset to an immutable Core card definition.
         /// </summary>

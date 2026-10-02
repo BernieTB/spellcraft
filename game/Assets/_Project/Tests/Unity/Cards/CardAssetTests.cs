@@ -161,6 +161,22 @@ namespace Game.Unity.Tests.Cards
         }
 
         [Test]
+        public void IsPlaceholder_NewAsset_IsFalse()
+        {
+            Assert.IsFalse(_asset.IsPlaceholder);
+        }
+
+        [Test]
+        public void IsPlaceholder_FlagSet_IsTrue()
+        {
+            var serialized = new SerializedObject(_asset);
+            serialized.FindProperty("_isPlaceholder").boolValue = true;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+
+            Assert.IsTrue(_asset.IsPlaceholder);
+        }
+
+        [Test]
         public void ToDefinition_NewAsset_IsInvalidUntilAuthored()
         {
             Assert.Throws<InvalidOperationException>(() => _asset.ToDefinition());
