@@ -315,6 +315,16 @@ namespace Game.Core.Tests.Combat
         }
 
         [Test]
+        public void CastRecord_SingleCardLine_OnlyLaterCastsCarryTheSelfBonus()
+        {
+            var result = RunHero(2, Card("test_card_01", Damage(1), Next(BonusKind.Damage, Bonus)));
+
+            Assert.AreEqual(
+                (EffectBonus.None, EffectBonus.Of(BonusKind.Damage, Bonus), EffectBonus.None),
+                (result.Casts[0].Bonus, result.Casts[1].Bonus, result.Casts[1].WastedBonus));
+        }
+
+        [Test]
         public void CastRecord_WastedBonusExceedsBonus_Throws()
         {
             var card = Card("test_card_01", NoEffect());
