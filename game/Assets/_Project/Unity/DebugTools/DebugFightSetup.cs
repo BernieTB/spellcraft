@@ -1,0 +1,107 @@
+using System;
+using System.Collections.Generic;
+using Game.Core.Cards;
+using Game.Core.Combat;
+using Game.Core.Combat.Log;
+using Game.Core.Randomness;
+using Game.Core.SpellLines;
+using Game.Unity.Cards;
+using UnityEngine;
+
+namespace Game.Unity.DebugTools
+{
+    /// <summary>
+    /// Data for the debug fight viewer: the hero, the enemies, the seed, the tick limit and the playback rate.
+    /// Every number of the debug fight lives in this asset. <see cref="Simulate"/> maps it to Core and records the
+    /// fight's <see cref="CombatLog"/>; the rules are entirely in Core.
+    /// </summary>
+    /// <remarks>
+    /// Debug only: the asset may reference placeholder cards, so it must stay in
+    /// <c>Assets/_Project/Unity/DebugTools/</c> and out of player builds (enforced by the placeholder build check).
+    /// </remarks>
+    [CreateAssetMenu(fileName = "DebugFightSetup", menuName = "Game/Debug/Fight Setup")]
+    public sealed class DebugFightSetup : ScriptableObject
+    {
+        [SerializeField]
+        [Tooltip("The player's side.")]
+        private CombatantSetup _hero = new CombatantSetup();
+
+        [SerializeField]
+        [Tooltip("The enemies, in resolution order. At least one.")]
+        private List<CombatantSetup> _enemies = new List<CombatantSetup>();
+
+        [SerializeField]
+        [Tooltip("Seed of the fight's random source.")]
+        private long _seed;
+
+        [SerializeField]
+        [Min(1)]
+        [Tooltip("The fight stops with no winner after this many ticks.")]
+        private int _maxTicks = 1;
+
+        [SerializeField]
+        [Min(0.01f)]
+        [Tooltip("Playback rate at speed x1, in ticks per second of real time.")]
+        private float _ticksPerSecond = 1f;
+
+        /// <summary>Playback rate at speed x1, in ticks per second of real time.</summary>
+        public float TicksPerSecond => _ticksPerSecond;
+
+        /// <summary>
+        /// Builds the fight described by this asset, runs it in Core and returns its log.
+        /// </summary>
+        /// <exception cref="InvalidOperationException">The asset data is invalid; the message names the asset.</exception>
+        public CombatLog Simulate()
+        {
+            try
+            {
+                var hero = _hero.ToParticipant("hero");
+                var enemies = new List<FightParticipant>(_enemies.Count);
+                for (var i = 0; i < _enemies.Count; i++)
+                {
+                    enemies.Add(_enemies[i].ToParticipant($"enemy {i + 1}"));
+                }
+
+                return CombatLogRecorder.Record(hero, enemies, _maxTicks, new Pcg32Random(unchecked((ulong)_seed)));
+            }
+            catch (Exception exception) when (exception is ArgumentException || exception is InvalidOperationException)
+            {
+                throw new InvalidOperationException($"Debug fight setup '{name}' is invalid: {exception.Message}", exception);
+            }
+        }
+
+        /// <summary>Stats and spell line of one combatant of the debug fight.</summary>
+        [Serializable]
+        public sealed class CombatantSetup
+        {
+            [SerializeField]
+            [Min(1)]
+            private int _maxHealth = 1;
+
+            [SerializeField]
+            [Min(0)]
+            private int _startingShield;
+
+            [SerializeField]
+            [Tooltip("Cards of the spell line, in order. At least one.")]
+            private List<CardAsset> _spellLine = new List<CardAsset>();
+
+            internal FightParticipant ToParticipant(string label)
+            {
+                var line = new SpellLine<CardDefinition>(Math.Max(1, _spellLine.Count));
+                for (var i = 0; i < _spellLine.Count; i++)
+                {
+                    var card = _spellLine[i];
+                    if (card == null)
+                    {
+                        throw new InvalidOperationException($"The {label}'s spell line has an empty slot at position {i}.");
+                    }
+
+                    line.Add(card.ToDefinition());
+                }
+
+                return new FightParticipant(new Combatant(_maxHealth, _startingShield), line);
+            }
+        }
+    }
+}

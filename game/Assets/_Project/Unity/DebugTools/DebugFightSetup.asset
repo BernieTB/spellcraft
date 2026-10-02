@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ed9b741dd9f751645b9636bda95883ac, type: 3}
+  m_Name: DebugFightSetup
+  m_EditorClassIdentifier: Game.Unity::Game.Unity.DebugTools.DebugFightSetup
+  _hero:
+    _maxHealth: 50
+    _startingShield: 0
+    _spellLine:
+    - {fileID: 11400000, guid: 8603167df2c360542b79b44b6d230667, type: 2}
+    - {fileID: 11400000, guid: 0cdf082d4f1daad4d89e4e096cb460f9, type: 2}
+    - {fileID: 11400000, guid: 8603167df2c360542b79b44b6d230667, type: 2}
+    - {fileID: 11400000, guid: 43f50fc67932b0f4da06397f413066c0, type: 2}
+  _enemies:
+  - _maxHealth: 15
+    _startingShield: 0
+    _spellLine:
+    - {fileID: 11400000, guid: 8603167df2c360542b79b44b6d230667, type: 2}
+  - _maxHealth: 10
+    _startingShield: 2
+    _spellLine:
+    - {fileID: 11400000, guid: 0cdf082d4f1daad4d89e4e096cb460f9, type: 2}
+  _seed: 1
+  _maxTicks: 500
+  _ticksPerSecond: 2

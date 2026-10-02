@@ -39,6 +39,9 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
 - Combat event log in Core: an ordered record of every card cast, damage (shield absorbed and health lost),
   healing, shield gain and death, with tick, card, position in the line, caster and target, serialisable to
   text and JSON, with a golden-log test.
+- Debug fight viewer: an editor-only scene (`Unity/DebugTools/DebugFight.unity`) that simulates the fight set
+  in a `DebugFightSetup` asset and replays its combat log with plain UI, with pause, step, restart and
+  adjustable speed. A build check keeps it and its placeholder cards out of player builds.
 
 ### Changed
 

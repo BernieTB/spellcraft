@@ -41,6 +41,31 @@ namespace Game.Unity.Tests.Content
         }
 
         [Test]
+        public void IsInPlaceholderArea_DebugFolder_IsTrue()
+        {
+            Assert.IsTrue(PlaceholderGuard.IsInPlaceholderArea(PlaceholderGuard.DebugFolder + "/x.asset"));
+        }
+
+        [Test]
+        public void FindBuildViolations_CurrentBuildRoots_IsEmpty()
+        {
+            var violations = PlaceholderGuard.FindBuildViolations(PlaceholderGuard.FindBuildRoots());
+
+            Assert.IsEmpty(violations,
+                "A player build would start from a placeholder, test or debug tools asset:\n" + string.Join("\n", violations));
+        }
+
+        [Test]
+        public void FindBuildViolations_RootInExemptFolder_ReportsIt()
+        {
+            var path = PlaceholderCardGenerator.AssetPath(PlaceholderCardGenerator.CardIds[0]);
+
+            var violations = PlaceholderGuard.FindBuildViolations(new[] { path, "Assets/_Project/Unity/Content/x.asset" });
+
+            CollectionAssert.AreEqual(new[] { $"{path} (build root in a placeholder, test or debug tools folder)" }, violations);
+        }
+
+        [Test]
         public void IsInPlaceholderArea_OtherFolder_IsFalse()
         {
             Assert.IsFalse(PlaceholderGuard.IsInPlaceholderArea("Assets/_Project/Unity/Content/x.asset"));

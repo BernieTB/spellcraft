@@ -28,6 +28,7 @@ The Unity project lives in `game/`, not at the repo root.
 | `game/Assets/_Project/Core/` | `Game.Core` | Pure C# game logic (combat simulator, cards, effects) |
 | `game/Assets/_Project/Unity/` | `Game.Unity` | Rendering, UI, scenes, ScriptableObjects. References `Game.Core` |
 | `game/Assets/_Project/Unity/EditorTools/` | `Game.Unity.EditorTools` | Editor-only tools: content generators, build checks |
+| `game/Assets/_Project/Unity/DebugTools/` | `Game.Unity` | Debug fight viewer: scene, setup asset, playback (never in builds) |
 | `game/Assets/_Project/Tests/Core/` | `Game.Core.Tests` | EditMode tests for `Game.Core` (Editor only, NUnit) |
 | `game/Assets/_Project/Tests/Unity/` | `Game.Unity.Tests` | EditMode tests for `Game.Unity` data conversion (Editor only, NUnit) |
 
@@ -86,8 +87,19 @@ defined in `PlaceholderCardGenerator`) instead of editing their YAML. Close the 
   -executeMethod Game.Unity.EditorTools.Content.PlaceholderCardGenerator.Generate -logFile <scratch-dir>/generate.log
 ```
 
-Placeholder cards are flagged `_isPlaceholder`. Only `Unity/Content/Placeholders/` and `Tests/` may reference
-them: otherwise an EditMode test fails, and `PlaceholderBuildCheck` fails any player build.
+Placeholder cards are flagged `_isPlaceholder`. Only `Unity/Content/Placeholders/`, `Tests/` and
+`Unity/DebugTools/` may reference them: otherwise an EditMode test fails, and `PlaceholderBuildCheck` fails any
+player build. `PlaceholderBuildCheck` also fails a build whose scenes, `Resources` assets or preloaded assets lie
+in one of those three folders: never add the debug scene to the build settings.
+
+Rebuild the debug fight scene (`Unity/DebugTools/DebugFight.unity`, see README "Watch a simulated fight") with
+code, never by editing its YAML. It keeps an existing `DebugFightSetup.asset`, where the fight's numbers live.
+Close the editor on this project first (verified; menu: **Tools > Game > Rebuild Debug Fight Scene**):
+
+```powershell
+& "C:\Program Files\Unity\Hub\Editor\6000.3.24f1\Editor\Unity.exe" -batchmode -quit -projectPath <absolute path to game> `
+  -executeMethod Game.Unity.EditorTools.DebugTools.DebugFightSceneBuilder.Build -logFile <scratch-dir>/debug-scene.log
+```
 
 ## Code conventions
 

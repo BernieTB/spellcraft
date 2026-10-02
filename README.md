@@ -84,6 +84,25 @@ Exit code `0` means all tests passed, `8` means tests failed, anything else mean
 Write the results file outside the repository.
 Keep the `./`: a bare `game` is also read as a project name and can test another project called `game`.
 
+### Watch a simulated fight
+
+A debug scene replays a fight simulated by the combat code, with plain placeholder UI (no final art). It is an
+editor tool and is not part of the game build.
+
+1. Open the `game/` project in Unity.
+2. In the **Project** window, open `Assets/_Project/Unity/DebugTools/DebugFight.unity` (double-click it).
+3. Press **Play**. The fight plays in the **Game** view; its full text log is also printed in the **Console**.
+
+Controls: **Space** pause/play, **Right arrow** step to the next tick with events, **R** restart, **+** / **-**
+(or the slider) change the speed from x0.25 to x8. **Reload setup** simulates again, **Copy JSON** copies the
+combat log to the clipboard. Keyboard shortcuts need the Game view to have focus (click it once).
+
+The fight comes from `Assets/_Project/Unity/DebugTools/DebugFightSetup.asset`: select it to change the hero and
+enemies (health, shield, spell line of card assets), the seed, the tick limit and the playback rate (ticks per
+second at x1). Edits are picked up the next time you press Play, or with **Reload setup** while playing. If the
+scene or the asset is missing, use **Tools > Game > Rebuild Debug Fight Scene** (it keeps an existing setup
+asset).
+
 ### Downloading a build
 
 Every push to `main` builds the Windows player (workflow **Build**, which can also be run manually). Open the
