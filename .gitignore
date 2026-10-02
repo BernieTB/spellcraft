@@ -84,6 +84,8 @@ desktop.ini
 CLAUDE.local.md
 
 # --- Local test results and reports ---
+# Default output folder of the headless simulation runner (SimulationRunner).
+/game/[Ss]imulation[Rr]esults/
 results.xml
 TestResults/
 coverage/
