@@ -28,6 +28,7 @@ The Unity project lives in `game/`, not at the repo root.
 | `game/Assets/_Project/Core/` | `Game.Core` | Pure C# game logic (combat simulator, cards, effects) |
 | `game/Assets/_Project/Unity/` | `Game.Unity` | Rendering, UI, scenes, ScriptableObjects. References `Game.Core` |
 | `game/Assets/_Project/Tests/Core/` | `Game.Core.Tests` | EditMode tests for `Game.Core` (Editor only, NUnit) |
+| `game/Assets/_Project/Tests/Unity/` | `Game.Unity.Tests` | EditMode tests for `Game.Unity` data conversion (Editor only, NUnit) |
 
 `docs/` holds design docs and ADRs. Do not put project code outside `game/Assets/_Project/`.
 
