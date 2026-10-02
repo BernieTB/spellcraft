@@ -114,9 +114,9 @@ Close the editor on this project first (verified; menu: **Tools > Game > Run Sim
 
 Every `-sim*` option is optional: `-simSetup` (asset path, default `Assets/_Project/Unity/DebugTools/DebugFightSetup.asset`),
 `-simFights` (default 1000), `-simSeedStart` (default: the asset's seed; fight `i` uses seed + `i`), `-simOutput`
-(default `game/SimulationResults/simulation-summary.json`, ignored by Git; never commit run outputs). Exit code `0` =
-summary written, `1` = error (see the log). Durations (simulation loop, runner total) are in the log lines starting
-with `[Simulation]`, not in the summary.
+(default `game/SimulationResults/simulation-summary.json`, ignored by Git; a relative path is resolved from `game/`;
+never commit run outputs). Exit code `0` = summary written, `1` = error (see the log). Durations (simulation loop,
+runner total) are in the log lines starting with `[Simulation]`, not in the summary.
 
 ## Code conventions
 

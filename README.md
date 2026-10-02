@@ -118,8 +118,9 @@ shield gained. The same seeds always give the same file. Close the editor on the
 
 All `-sim*` options are optional: `-simSetup` (another `DebugFightSetup` asset), `-simFights` (default 1000),
 `-simSeedStart` (default: the asset's seed) and `-simOutput` (default `game/SimulationResults/simulation-summary.json`,
-ignored by Git). The exit code is `0` on success and `1` on error; timings are printed in the log. In the editor, use
-**Tools > Game > Run Simulation**. Design notes: [ADR 0006](docs/adr/0006-headless-simulation-runner.md).
+ignored by Git; a relative path is resolved from `game/`). The exit code is `0` on success and `1` on error; timings
+are printed in the log. In the editor, use **Tools > Game > Run Simulation**. Design notes:
+[ADR 0006](docs/adr/0006-headless-simulation-runner.md).
 
 ### Downloading a build
 
