@@ -215,6 +215,21 @@ namespace Game.Core.Tests.Effects
         }
 
         [Test]
+        public void EffectContext_NothingConsumed_RemainingBonusIsWholeBonus()
+        {
+            Assert.AreEqual(new EffectBonus(1, 2, 3), ContextWithBonus(1, 2, 3).RemainingBonus);
+        }
+
+        [Test]
+        public void EffectContext_ConsumeBonus_RemovesThatKindFromRemainingBonus()
+        {
+            var context = ContextWithBonus(1, 2, 3);
+            context.ConsumeBonus(BonusKind.Heal);
+
+            Assert.AreEqual(new EffectBonus(1, 0, 3), context.RemainingBonus);
+        }
+
+        [Test]
         public void DealDamageEffect_ApplyWithDamageBonus_AddsBonusToDamage()
         {
             var outcome = new DealDamageEffect(Amount).Apply(ContextWithBonus(2, 0, 0));
