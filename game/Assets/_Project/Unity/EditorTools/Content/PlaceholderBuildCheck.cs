@@ -1,11 +1,13 @@
+using System.Linq;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
 
 namespace Game.Unity.EditorTools.Content
 {
     /// <summary>
-    /// Fails any player build while an asset outside the placeholder and test folders is or references a
-    /// placeholder card (same check as the EditMode test).
+    /// Fails any player build while an asset outside the placeholder, test and debug tools folders is or
+    /// references a placeholder card (same check as the EditMode test), or while the build includes a debug-only
+    /// asset or a placeholder card (for example the debug fight scene added to the build settings).
     /// </summary>
     public sealed class PlaceholderBuildCheck : IPreprocessBuildWithReport
     {
@@ -13,11 +15,13 @@ namespace Game.Unity.EditorTools.Content
 
         public void OnPreprocessBuild(BuildReport report)
         {
-            var violations = PlaceholderGuard.FindProjectViolations();
+            var violations = PlaceholderGuard.FindProjectViolations()
+                .Concat(PlaceholderGuard.FindBuildViolations(PlaceholderGuard.FindBuildRoots()))
+                .ToList();
             if (violations.Count > 0)
             {
                 throw new BuildFailedException(
-                    "Placeholder cards are test-only and must not ship. Remove these references:\n"
+                    "Placeholder cards and debug tools are test-only and must not ship. Remove these references:\n"
                     + string.Join("\n", violations));
             }
         }
