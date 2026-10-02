@@ -149,21 +149,10 @@ namespace Game.Core.Tests.Combat
         // --- Repeated looping: used up after one cast, granted again each time ---
 
         [Test]
-        public void Looping_SourceResolvesEachLoop_NeighbourBoostedEveryLoopWithoutAccumulating()
-        {
-            var result = RunHero(
-                6,
-                Card("test_card_01", NoEffect(), Next(BonusKind.Damage, Bonus)),
-                Card("test_card_02", Damage(1)));
-
-            CollectionAssert.AreEqual(new[] { 0, 1 + Bonus, 0, 1 + Bonus, 0, 1 + Bonus }, DamageDealt(result));
-        }
-
-        [Test]
-        public void Looping_BonusUsedUp_NotAppliedToFollowingCast()
+        public void Looping_BonusUsedUpByOneCast_GrantedAgainEachLoopWithoutAccumulating()
         {
             // Position 1 is boosted once per loop: its bonus is used up by its cast and only comes back when
-            // position 0 resolves again. Position 2 never gets it.
+            // position 0 resolves again, so it never builds up. Position 2 never gets it.
             var result = RunHero(
                 6,
                 Card("test_card_01", NoEffect(), Next(BonusKind.Damage, Bonus)),
@@ -283,19 +272,6 @@ namespace Game.Core.Tests.Combat
 
             var outcomes = result.Casts[1].EffectOutcomes;
             Assert.AreEqual((1 + Bonus, 1), (outcomes[0].Damage.Total, outcomes[1].Damage.Total));
-        }
-
-        [Test]
-        public void Bonus_DoesNotChangeSharedEffectAmount()
-        {
-            var effect = new DealDamageEffect(1);
-
-            RunHero(
-                2,
-                Card("test_card_01", NoEffect(), Next(BonusKind.Damage, Bonus)),
-                Card("test_card_02", new IEffect[] { effect }));
-
-            Assert.AreEqual(1, effect.Amount);
         }
 
         // --- Per combatant, dead caster ---

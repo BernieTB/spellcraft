@@ -189,14 +189,6 @@ namespace Game.Core.Tests.Effects
         }
 
         [Test]
-        public void EffectContext_WithBonus_ExposesBonus()
-        {
-            var context = ContextWithBonus(1, 2, 3);
-
-            Assert.AreEqual(new EffectBonus(1, 2, 3), context.Bonus);
-        }
-
-        [Test]
         public void EffectContext_ConsumeBonus_ReturnsBonusOfThatKind()
         {
             var context = ContextWithBonus(1, 2, 3);
@@ -246,17 +238,6 @@ namespace Game.Core.Tests.Effects
             effect.Apply(ContextWithBonus(2, 0, 0));
 
             Assert.AreEqual(Amount, effect.Amount);
-        }
-
-        [Test]
-        public void DealDamageEffect_TwoEffectsSharingContext_OnlyFirstGetsBonus()
-        {
-            var context = ContextWithBonus(2, 0, 0);
-
-            var first = new DealDamageEffect(1).Apply(context);
-            var second = new DealDamageEffect(1).Apply(context);
-
-            Assert.AreEqual((3, 1), (first.Damage.HealthLost, second.Damage.HealthLost));
         }
 
         [Test]
