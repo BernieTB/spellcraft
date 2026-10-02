@@ -35,6 +35,10 @@ Pillars:
 ## Character and level-ups
 
 - The player controls **one character** of a chosen **class**.
+- **MVP class** (name to be decided, `CLASS_A`): a **combo weaver**. Its cards are modest alone and strong
+  through neighbour modifiers. It starts with **4 cards** (two damage cards, one card that boosts a neighbour,
+  one defensive card); the words are written by the owner. Numbers live in data. See
+  [ADR 0007](adr/0007-mvp-class-and-starting-deck.md).
 - Each level-up offers a **linked choice**: one passive upgrade paired with one card to add to the spell line.
   The player picks a package, not two independent items.
 
@@ -119,7 +123,8 @@ Warm 2D, flat colours, ink/pen look.
 
 Not decided. Do not implement a choice for these without the owner's decision.
 
-- Class identity and starting deck(s) for the MVP.
+- MVP class name and card words (owner); whether its defensive card gives shield or healing (depends on run
+  pacing); its base stats and card values (balanced with the simulator).
 - Element/tag catalogue, neighbour rules beyond the first pass (ADR 0002), and whether grammar-like roles are
   used at all.
 - Whether elements are represented as ink colours, and whether word sounds map to elements.

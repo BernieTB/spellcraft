@@ -24,3 +24,4 @@ Status values: `Proposed`, `Accepted`, `Rejected`, `Deprecated`, `Superseded by 
 | [0004](0004-confirm-first-pass-combat-rules.md) | Confirm the first-pass combat details, targeting and neighbour modifier kinds | Accepted |
 | [0005](0005-neighbour-modifier-resolution.md) | Neighbour modifier resolution | Proposed |
 | [0006](0006-headless-simulation-runner.md) | Headless simulation runner | Proposed |
+| [0007](0007-mvp-class-and-starting-deck.md) | MVP class identity and starting deck | Accepted |
