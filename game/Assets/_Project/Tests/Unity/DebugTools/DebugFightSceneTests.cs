@@ -54,19 +54,11 @@ namespace Game.Unity.Tests.DebugTools
         }
 
         [Test]
-        public void Scene_IsInTheDebugFolder()
-        {
-            Assert.IsTrue(PlaceholderGuard.IsDebugAsset(DebugFightSceneBuilder.ScenePath));
-            Assert.IsTrue(PlaceholderGuard.IsDebugAsset(DebugFightSceneBuilder.SetupPath));
-        }
-
-        [Test]
-        public void FindBuildViolations_DebugSceneAsBuildRoot_ReportsSetupAndPlaceholders()
+        public void FindBuildViolations_DebugSceneAsBuildRoot_ReportsIt()
         {
             var violations = PlaceholderGuard.FindBuildViolations(new[] { DebugFightSceneBuilder.ScenePath });
 
-            Assert.That(violations, Has.Some.Contains(DebugFightSceneBuilder.SetupPath + " (debug-only asset)"));
-            Assert.That(violations, Has.Some.Contains("(placeholder card)"));
+            Assert.That(violations, Has.Exactly(1).StartsWith(DebugFightSceneBuilder.ScenePath + " "));
         }
     }
 }

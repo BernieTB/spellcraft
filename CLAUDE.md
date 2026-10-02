@@ -89,8 +89,8 @@ defined in `PlaceholderCardGenerator`) instead of editing their YAML. Close the 
 
 Placeholder cards are flagged `_isPlaceholder`. Only `Unity/Content/Placeholders/`, `Tests/` and
 `Unity/DebugTools/` may reference them: otherwise an EditMode test fails, and `PlaceholderBuildCheck` fails any
-player build. `PlaceholderBuildCheck` also fails a build whose scenes, `Resources` or preloaded assets include a
-placeholder card or a non-script asset of `Unity/DebugTools/`: never add the debug scene to the build settings.
+player build. `PlaceholderBuildCheck` also fails a build whose scenes, `Resources` assets or preloaded assets lie
+in one of those three folders: never add the debug scene to the build settings.
 
 Rebuild the debug fight scene (`Unity/DebugTools/DebugFight.unity`, see README "Watch a simulated fight") with
 code, never by editing its YAML. It keeps an existing `DebugFightSetup.asset`, where the fight's numbers live.

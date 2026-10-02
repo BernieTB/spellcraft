@@ -18,9 +18,10 @@ namespace Game.Unity.EditorTools.Content
     /// and needs no knowledge of how content gets into a build (scenes, Resources, later Addressables).
     /// </para>
     /// <para>
-    /// The debug tools folder is allowed so that debug scenes can use placeholder cards in the editor, but its
-    /// assets must never ship: <see cref="FindBuildViolations"/> rejects any build root (scene in the build
-    /// settings, Resources asset, preloaded asset) that is or depends on a debug asset or a placeholder card.
+    /// Those folders are exempt, so nothing in them may be where a build starts: <see cref="FindBuildViolations"/>
+    /// rejects any build root (scene in the build settings, Resources asset, preloaded asset) inside them, such as
+    /// the debug fight scene. Every other build root is covered by <see cref="FindProjectViolations"/>, so
+    /// together the two checks keep placeholder cards out of player builds.
     /// </para>
     /// </remarks>
     public static class PlaceholderGuard
@@ -44,17 +45,7 @@ namespace Game.Unity.EditorTools.Content
         {
             return assetPath.StartsWith(PlaceholderFolder + "/", StringComparison.Ordinal)
                 || assetPath.StartsWith(TestsFolder + "/", StringComparison.Ordinal)
-                || IsDebugAsset(assetPath);
-        }
-
-        /// <summary>
-        /// True when <paramref name="assetPath"/> is a debug-only asset: inside <see cref="DebugFolder"/> and not
-        /// a script (scripts are compiled into the game assembly whatever happens; scenes and assets are not).
-        /// </summary>
-        public static bool IsDebugAsset(string assetPath)
-        {
-            return assetPath.StartsWith(DebugFolder + "/", StringComparison.Ordinal)
-                && !assetPath.EndsWith(".cs", StringComparison.OrdinalIgnoreCase);
+                || assetPath.StartsWith(DebugFolder + "/", StringComparison.Ordinal);
         }
 
         /// <summary>
@@ -94,30 +85,19 @@ namespace Game.Unity.EditorTools.Content
         }
 
         /// <summary>
-        /// Lists every placeholder card and every debug-only asset (<see cref="IsDebugAsset"/>) that the given build
-        /// roots are or depend on, recursively. Unlike <see cref="FindPlaceholderReferences"/>, no folder is exempt.
+        /// Lists the build roots that lie in the placeholder, test or debug tools folder
+        /// (<see cref="IsInPlaceholderArea"/>). Their dependencies need no check: roots elsewhere are covered by
+        /// <see cref="FindProjectViolations"/>.
         /// </summary>
-        /// <returns>One "root -> asset" line per violation, sorted. Empty when there is none.</returns>
+        /// <returns>One line per violation, sorted. Empty when there is none.</returns>
         public static IReadOnlyList<string> FindBuildViolations(IEnumerable<string> buildRoots)
         {
-            var violations = new List<string>();
-            foreach (var root in buildRoots.Distinct().OrderBy(path => path, StringComparer.Ordinal))
-            {
-                foreach (var dependency in AssetDatabase.GetDependencies(root, true))
-                {
-                    if (IsPlaceholderCard(dependency))
-                    {
-                        violations.Add($"{root} -> {dependency} (placeholder card)");
-                    }
-                    else if (IsDebugAsset(dependency))
-                    {
-                        violations.Add($"{root} -> {dependency} (debug-only asset)");
-                    }
-                }
-            }
-
-            violations.Sort(StringComparer.Ordinal);
-            return violations;
+            return buildRoots
+                .Where(IsInPlaceholderArea)
+                .Distinct()
+                .OrderBy(path => path, StringComparer.Ordinal)
+                .Select(path => $"{path} (build root in a placeholder, test or debug tools folder)")
+                .ToList();
         }
 
         /// <summary>

@@ -6,8 +6,8 @@ namespace Game.Unity.EditorTools.Content
 {
     /// <summary>
     /// Fails any player build while an asset outside the placeholder, test and debug tools folders is or
-    /// references a placeholder card (same check as the EditMode test), or while the build includes a debug-only
-    /// asset or a placeholder card (for example the debug fight scene added to the build settings).
+    /// references a placeholder card (same check as the EditMode test), or while a build root (scene in the build
+    /// settings, Resources asset, preloaded asset) lies in one of those folders, such as the debug fight scene.
     /// </summary>
     public sealed class PlaceholderBuildCheck : IPreprocessBuildWithReport
     {
