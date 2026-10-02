@@ -51,7 +51,8 @@ namespace Game.Core.Combat
     /// </para>
     /// <para>
     /// Every resolution produces a <see cref="CastRecord"/> in <see cref="FightResult.Casts"/>; that is the
-    /// intended hook for the combat event log. Effect outcomes include neighbour bonuses.
+    /// intended hook for the combat event log. Effect outcomes include neighbour bonuses; the record also carries the
+    /// bonus the cast received and the part of it no effect used (<see cref="CastRecord.WastedBonus"/>).
     /// </para>
     /// </remarks>
     public sealed class Fight
@@ -192,9 +193,10 @@ namespace Game.Core.Combat
 
                     var targetIndex = SelectTarget(i);
                     var bonus = TakePendingBonus(i, position);
-                    var outcomes = card.Resolve(new EffectContext(_combatants[i], _combatants[targetIndex], bonus));
+                    var context = new EffectContext(_combatants[i], _combatants[targetIndex], bonus);
+                    var outcomes = card.Resolve(context);
                     GrantNeighbourBonuses(i, position, card);
-                    casts.Add(new CastRecord(tick, i, position, card, targetIndex, outcomes));
+                    casts.Add(new CastRecord(tick, i, position, card, targetIndex, outcomes, bonus, context.RemainingBonus));
 
                     _positions[i] = _spellLines[i].PositionAfter(position);
                     _elapsedTicks[i] = 0;

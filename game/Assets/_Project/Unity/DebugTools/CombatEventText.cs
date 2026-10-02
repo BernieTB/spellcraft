@@ -1,7 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using Game.Core.Combat;
 using Game.Core.Combat.Log;
+using Game.Core.Effects;
 
 namespace Game.Unity.DebugTools
 {
@@ -18,7 +20,11 @@ namespace Game.Unity.DebugTools
                 : string.Format(CultureInfo.InvariantCulture, "Enemy {0}", index);
         }
 
-        /// <summary>One line describing <paramref name="e"/>, prefixed with its tick.</summary>
+        /// <summary>
+        /// One line describing <paramref name="e"/>, prefixed with its tick. A cast that received neighbour bonuses
+        /// lists them, marking the wasted ones (for example "casts at Enemy 1 with +3 damage bonus, +4 heal bonus
+        /// (wasted)").
+        /// </summary>
         /// <exception cref="ArgumentNullException"><paramref name="e"/> is null.</exception>
         public static string Describe(CombatEvent e)
         {
@@ -39,7 +45,7 @@ namespace Game.Unity.DebugTools
             switch (e.Kind)
             {
                 case CombatEventKind.CardCast:
-                    return string.Format(CultureInfo.InvariantCulture, "{0} casts at {1}", source, target);
+                    return string.Format(CultureInfo.InvariantCulture, "{0} casts at {1}{2}", source, target, BonusText(e));
                 case CombatEventKind.Damage:
                     return string.Format(
                         CultureInfo.InvariantCulture,
@@ -72,6 +78,38 @@ namespace Game.Unity.DebugTools
                 default:
                     return string.Format(CultureInfo.InvariantCulture, "{0} {1} {2}", source, e.Kind, target);
             }
+        }
+
+        // " with +3 damage bonus, +4 heal bonus (wasted)" for a cast that received bonuses, empty otherwise.
+        private static string BonusText(CombatEvent e)
+        {
+            if (e.Bonus.IsNone)
+            {
+                return string.Empty;
+            }
+
+            var parts = new List<string>(3);
+            AddBonusPart(parts, e, BonusKind.Damage, "damage");
+            AddBonusPart(parts, e, BonusKind.Heal, "heal");
+            AddBonusPart(parts, e, BonusKind.Shield, "shield");
+            return " with " + string.Join(", ", parts);
+        }
+
+        private static void AddBonusPart(List<string> parts, CombatEvent e, BonusKind kind, string name)
+        {
+            var received = e.Bonus.Get(kind);
+            if (received == 0)
+            {
+                return;
+            }
+
+            var wasted = e.WastedBonus.Get(kind);
+            var suffix = wasted == 0
+                ? string.Empty
+                : wasted == received
+                    ? " (wasted)"
+                    : string.Format(CultureInfo.InvariantCulture, " ({0} wasted)", wasted);
+            parts.Add(string.Format(CultureInfo.InvariantCulture, "+{0} {1} bonus{2}", received, name, suffix));
         }
 
         /// <summary>"Hero wins", "Enemies win" or "Timeout (no winner)".</summary>

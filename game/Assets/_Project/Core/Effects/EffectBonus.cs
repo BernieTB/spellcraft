@@ -35,6 +35,9 @@ namespace Game.Core.Effects
         /// <summary>No bonus.</summary>
         public static EffectBonus None => default;
 
+        /// <summary>True when every value is zero.</summary>
+        public bool IsNone => Damage == 0 && Heal == 0 && Shield == 0;
+
         /// <summary>Extra damage for a <see cref="DealDamageEffect"/>.</summary>
         public int Damage { get; }
 
