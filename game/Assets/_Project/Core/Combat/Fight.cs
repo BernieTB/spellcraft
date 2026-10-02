@@ -15,7 +15,8 @@ namespace Game.Core.Combat
     /// </summary>
     /// <remarks>
     /// <para>
-    /// Rules (<c>docs/adr/0002-first-pass-combat-rules.md</c>, including its provisional details):
+    /// Rules (<c>docs/adr/0002-first-pass-combat-rules.md</c>; its provisional details are confirmed by the owner in
+    /// <c>docs/adr/0004-confirm-first-pass-combat-rules.md</c>):
     /// </para>
     /// <list type="bullet">
     /// <item>The fight advances in discrete ticks, numbered from 1. Nothing reads wall-clock time.</item>
@@ -30,8 +31,18 @@ namespace Game.Core.Combat
     /// <item>If neither happens within the maximum number of ticks, the fight ends with no winner (timeout).</item>
     /// </list>
     /// <para>
-    /// Targeting (provisional, not specified by the owner yet): the hero aims at the first living enemy in order;
-    /// every enemy aims at the hero. Effects that act on the caster (heal, shield) ignore the target.
+    /// Targeting (confirmed by the owner, <c>docs/adr/0004-confirm-first-pass-combat-rules.md</c>): the hero aims at
+    /// the first living enemy in order; every enemy aims at the hero. Effects that act on the caster (heal, shield)
+    /// ignore the target.
+    /// </para>
+    /// <para>
+    /// Neighbour modifiers (<see cref="NeighbourModifier"/>, <c>docs/adr/0005-neighbour-modifier-resolution.md</c>):
+    /// when a card resolves, each of its modifiers adds a pending bonus to the next or previous position of the
+    /// caster's own spell line, following the loop (a single card is its own neighbour). Pending bonuses belong to
+    /// a position of one combatant, not to a card, so the same card at two positions or in two lines is tracked
+    /// separately. A position's pending bonuses add up and are all used up by its next cast, which first takes
+    /// them and then grants its own modifiers; a "previous" bonus therefore applies on the next loop. A bonus only
+    /// adds to effects of its kind. Bonuses waiting for a dead combatant are never used.
     /// </para>
     /// <para>
     /// Spell lines are copied when the fight is created, so editing a line afterwards does not change the fight.
@@ -39,7 +50,7 @@ namespace Game.Core.Combat
     /// </para>
     /// <para>
     /// Every resolution produces a <see cref="CastRecord"/> in <see cref="FightResult.Casts"/>; that is the
-    /// intended hook for the combat event log. Neighbour modifiers are not applied yet.
+    /// intended hook for the combat event log. Effect outcomes include neighbour bonuses.
     /// </para>
     /// </remarks>
     public sealed class Fight
@@ -51,6 +62,7 @@ namespace Game.Core.Combat
         private readonly SpellLine<CardDefinition>[] _spellLines;
         private readonly int[] _positions;
         private readonly int[] _elapsedTicks;
+        private readonly EffectBonus[][] _pendingBonuses;
         private readonly int _maxTicks;
         private bool _hasRun;
 
@@ -111,6 +123,7 @@ namespace Game.Core.Combat
             _spellLines = new SpellLine<CardDefinition>[count];
             _positions = new int[count];
             _elapsedTicks = new int[count];
+            _pendingBonuses = new EffectBonus[count][];
 
             for (var i = 0; i < count; i++)
             {
@@ -134,6 +147,7 @@ namespace Game.Core.Combat
 
                 _combatants[i] = participant.Combatant;
                 _spellLines[i] = Copy(participant.SpellLine);
+                _pendingBonuses[i] = new EffectBonus[_spellLines[i].Count];
             }
         }
 
@@ -176,7 +190,9 @@ namespace Game.Core.Combat
                     }
 
                     var targetIndex = SelectTarget(i);
-                    var outcomes = card.Resolve(new EffectContext(_combatants[i], _combatants[targetIndex]));
+                    var bonus = TakePendingBonus(i, position);
+                    var outcomes = card.Resolve(new EffectContext(_combatants[i], _combatants[targetIndex], bonus));
+                    GrantNeighbourBonuses(i, position, card);
                     casts.Add(new CastRecord(tick, i, position, card, targetIndex, outcomes));
 
                     _positions[i] = _spellLines[i].PositionAfter(position);
@@ -193,7 +209,7 @@ namespace Game.Core.Combat
             return new FightResult(winner, tick, new ReadOnlyCollection<CastRecord>(casts));
         }
 
-        // Provisional targeting rule: the hero aims at the first living enemy, enemies aim at the hero.
+        // Targeting rule (ADR 0004): the hero aims at the first living enemy, enemies aim at the hero.
         // Only called while the fight is not over, so a living enemy always exists.
         private int SelectTarget(int casterIndex)
         {
@@ -211,6 +227,28 @@ namespace Game.Core.Combat
             }
 
             throw new InvalidOperationException("No living enemy to target.");
+        }
+
+        // Every bonus waiting on this position is used up by this cast.
+        private EffectBonus TakePendingBonus(int combatantIndex, int position)
+        {
+            var bonus = _pendingBonuses[combatantIndex][position];
+            _pendingBonuses[combatantIndex][position] = EffectBonus.None;
+            return bonus;
+        }
+
+        // Called after the card's own pending bonus was taken, so in a single-card line the card boosts its next cast.
+        private void GrantNeighbourBonuses(int combatantIndex, int position, CardDefinition card)
+        {
+            var line = _spellLines[combatantIndex];
+            var pending = _pendingBonuses[combatantIndex];
+            foreach (var modifier in card.NeighbourModifiers)
+            {
+                var neighbour = modifier.Direction == NeighbourDirection.Next
+                    ? line.PositionAfter(position)
+                    : line.PositionBefore(position);
+                pending[neighbour] = pending[neighbour].Plus(modifier.ToBonus());
+            }
         }
 
         private FightWinner CurrentWinner()

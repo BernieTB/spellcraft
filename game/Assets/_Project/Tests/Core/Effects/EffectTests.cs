@@ -177,6 +177,124 @@ namespace Game.Core.Tests.Effects
             Assert.AreEqual((0, 0, 0, Amount), ToTuple(outcome));
         }
 
+        // --- Neighbour bonus through the context ---
+
+        private EffectContext ContextWithBonus(int damage, int heal, int shield) =>
+            new EffectContext(_caster, _target, new EffectBonus(damage, heal, shield));
+
+        [Test]
+        public void EffectContext_WithoutBonus_HasNoBonus()
+        {
+            Assert.AreEqual(EffectBonus.None, _context.Bonus);
+        }
+
+        [Test]
+        public void EffectContext_WithBonus_ExposesBonus()
+        {
+            var context = ContextWithBonus(1, 2, 3);
+
+            Assert.AreEqual(new EffectBonus(1, 2, 3), context.Bonus);
+        }
+
+        [Test]
+        public void EffectContext_ConsumeBonus_ReturnsBonusOfThatKind()
+        {
+            var context = ContextWithBonus(1, 2, 3);
+
+            Assert.AreEqual(2, context.ConsumeBonus(BonusKind.Heal));
+        }
+
+        [Test]
+        public void EffectContext_ConsumeBonusTwice_SecondCallReturnsZero()
+        {
+            var context = ContextWithBonus(1, 2, 3);
+            context.ConsumeBonus(BonusKind.Damage);
+
+            Assert.AreEqual(0, context.ConsumeBonus(BonusKind.Damage));
+        }
+
+        [Test]
+        public void EffectContext_ConsumeBonus_LeavesOtherKindsAndBonusUnchanged()
+        {
+            var context = ContextWithBonus(1, 2, 3);
+            context.ConsumeBonus(BonusKind.Damage);
+
+            Assert.AreEqual((3, new EffectBonus(1, 2, 3)), (context.ConsumeBonus(BonusKind.Shield), context.Bonus));
+        }
+
+        [Test]
+        public void DealDamageEffect_ApplyWithDamageBonus_AddsBonusToDamage()
+        {
+            var outcome = new DealDamageEffect(Amount).Apply(ContextWithBonus(2, 0, 0));
+
+            Assert.AreEqual((Amount + 2, MaxHealth - Amount - 2), (outcome.Damage.HealthLost, _target.CurrentHealth));
+        }
+
+        [Test]
+        public void DealDamageEffect_ApplyWithOtherBonuses_IgnoresThem()
+        {
+            var outcome = new DealDamageEffect(Amount).Apply(ContextWithBonus(0, 2, 2));
+
+            Assert.AreEqual((0, Amount, 0, 0), ToTuple(outcome));
+        }
+
+        [Test]
+        public void DealDamageEffect_ApplyWithDamageBonus_KeepsAmount()
+        {
+            var effect = new DealDamageEffect(Amount);
+
+            effect.Apply(ContextWithBonus(2, 0, 0));
+
+            Assert.AreEqual(Amount, effect.Amount);
+        }
+
+        [Test]
+        public void DealDamageEffect_TwoEffectsSharingContext_OnlyFirstGetsBonus()
+        {
+            var context = ContextWithBonus(2, 0, 0);
+
+            var first = new DealDamageEffect(1).Apply(context);
+            var second = new DealDamageEffect(1).Apply(context);
+
+            Assert.AreEqual((3, 1), (first.Damage.HealthLost, second.Damage.HealthLost));
+        }
+
+        [Test]
+        public void HealEffect_ApplyWithHealBonus_AddsBonusToHealing()
+        {
+            _caster.TakeDamage(MaxHealth - 1);
+
+            var outcome = new HealEffect(Amount).Apply(ContextWithBonus(0, 2, 0));
+
+            Assert.AreEqual(Amount + 2, outcome.Healed);
+        }
+
+        [Test]
+        public void HealEffect_ApplyWithOtherBonuses_IgnoresThem()
+        {
+            _caster.TakeDamage(MaxHealth - 1);
+
+            var outcome = new HealEffect(Amount).Apply(ContextWithBonus(2, 0, 2));
+
+            Assert.AreEqual((0, 0, Amount, 0), ToTuple(outcome));
+        }
+
+        [Test]
+        public void GainShieldEffect_ApplyWithShieldBonus_AddsBonusToShield()
+        {
+            var outcome = new GainShieldEffect(Amount).Apply(ContextWithBonus(0, 0, 2));
+
+            Assert.AreEqual((Amount + 2, Amount + 2), (outcome.ShieldGained, _caster.Shield));
+        }
+
+        [Test]
+        public void GainShieldEffect_ApplyWithOtherBonuses_IgnoresThem()
+        {
+            var outcome = new GainShieldEffect(Amount).Apply(ContextWithBonus(2, 2, 0));
+
+            Assert.AreEqual((0, 0, 0, Amount), ToTuple(outcome));
+        }
+
         // --- EffectOutcome ---
 
         [Test]

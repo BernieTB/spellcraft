@@ -4,6 +4,8 @@ namespace Game.Core.Effects
 {
     /// <summary>
     /// Placeholder effect: heals the context's caster by a fixed amount, from data.
+    /// The cast's neighbour bonus of the matching kind, if any and not consumed by an earlier effect of the
+    /// card, is added to the amount (<see cref="EffectContext.ConsumeBonus"/>).
     /// </summary>
     public sealed class HealEffect : IEffect
     {
@@ -20,7 +22,7 @@ namespace Game.Core.Effects
         }
 
         /// <summary>
-        /// Healing applied each time the effect is applied.
+        /// Healing applied each time the effect is applied, before any neighbour bonus.
         /// </summary>
         public int Amount { get; }
 
@@ -33,7 +35,8 @@ namespace Game.Core.Effects
                 throw new ArgumentNullException(nameof(context));
             }
 
-            return EffectOutcome.FromHeal(context.Caster.Heal(Amount));
+            var amount = checked(Amount + context.ConsumeBonus(BonusKind.Heal));
+            return EffectOutcome.FromHeal(context.Caster.Heal(amount));
         }
     }
 }

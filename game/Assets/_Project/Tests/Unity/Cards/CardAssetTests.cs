@@ -1,4 +1,5 @@
 using System;
+using Game.Core.Cards;
 using Game.Core.Effects;
 using Game.Unity.Cards;
 using NUnit.Framework;
@@ -44,6 +45,25 @@ namespace Game.Unity.Tests.Cards
                 var entry = list.GetArrayElementAtIndex(i);
                 entry.FindPropertyRelative("_kind").intValue = effects[i].kind;
                 entry.FindPropertyRelative("_amount").intValue = effects[i].amount;
+            }
+
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        /// <summary>
+        /// Writes the neighbour modifier list through its serialized fields, as the inspector would.
+        /// </summary>
+        private void AuthorModifiers(params (int kind, int direction, int amount)[] modifiers)
+        {
+            var serialized = new SerializedObject(_asset);
+            var list = serialized.FindProperty("_neighbourModifiers");
+            list.arraySize = modifiers.Length;
+            for (var i = 0; i < modifiers.Length; i++)
+            {
+                var entry = list.GetArrayElementAtIndex(i);
+                entry.FindPropertyRelative("_kind").intValue = modifiers[i].kind;
+                entry.FindPropertyRelative("_direction").intValue = modifiers[i].direction;
+                entry.FindPropertyRelative("_amount").intValue = modifiers[i].amount;
             }
 
             serialized.ApplyModifiedPropertiesWithoutUndo();
@@ -158,6 +178,70 @@ namespace Game.Unity.Tests.Cards
             var exception = Assert.Throws<InvalidOperationException>(() => _asset.ToDefinition());
 
             StringAssert.Contains(_asset.name, exception.Message);
+        }
+
+        [Test]
+        public void ToDefinition_NoModifiers_HasEmptyNeighbourModifiers()
+        {
+            Author(Id, CastTime);
+
+            Assert.IsEmpty(_asset.ToDefinition().NeighbourModifiers);
+        }
+
+        [TestCase(BonusKind.Damage, NeighbourDirection.Next, 2)]
+        [TestCase(BonusKind.Heal, NeighbourDirection.Previous, 3)]
+        [TestCase(BonusKind.Shield, NeighbourDirection.Next, 4)]
+        public void ToDefinition_ModifierEntry_CreatesModifierWithKindDirectionAndAmount(
+            BonusKind kind, NeighbourDirection direction, int amount)
+        {
+            Author(Id, CastTime);
+            AuthorModifiers(((int)kind, (int)direction, amount));
+
+            var modifier = _asset.ToDefinition().NeighbourModifiers[0];
+
+            Assert.AreEqual((kind, direction, amount), (modifier.Kind, modifier.Direction, modifier.Amount));
+        }
+
+        [Test]
+        public void ToDefinition_SeveralModifierEntries_KeepsOrder()
+        {
+            Author(Id, CastTime);
+            AuthorModifiers(
+                ((int)BonusKind.Shield, (int)NeighbourDirection.Previous, 1),
+                ((int)BonusKind.Damage, (int)NeighbourDirection.Next, 2));
+
+            var modifiers = _asset.ToDefinition().NeighbourModifiers;
+
+            CollectionAssert.AreEqual(
+                new[] { (BonusKind.Shield, 1), (BonusKind.Damage, 2) },
+                new[] { (modifiers[0].Kind, modifiers[0].Amount), (modifiers[1].Kind, modifiers[1].Amount) });
+        }
+
+        [Test]
+        public void ToDefinition_NegativeModifierAmount_Throws()
+        {
+            Author(Id, CastTime);
+            AuthorModifiers(((int)BonusKind.Damage, (int)NeighbourDirection.Next, -1));
+
+            Assert.Throws<InvalidOperationException>(() => _asset.ToDefinition());
+        }
+
+        [Test]
+        public void ToDefinition_UnknownModifierKind_Throws()
+        {
+            Author(Id, CastTime);
+            AuthorModifiers((999, (int)NeighbourDirection.Next, 1));
+
+            Assert.Throws<InvalidOperationException>(() => _asset.ToDefinition());
+        }
+
+        [Test]
+        public void ToDefinition_UnknownModifierDirection_Throws()
+        {
+            Author(Id, CastTime);
+            AuthorModifiers(((int)BonusKind.Damage, 999, 1));
+
+            Assert.Throws<InvalidOperationException>(() => _asset.ToDefinition());
         }
 
         [Test]

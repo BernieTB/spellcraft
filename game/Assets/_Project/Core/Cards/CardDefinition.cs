@@ -6,11 +6,12 @@ using Game.Core.Effects;
 namespace Game.Core.Cards
 {
     /// <summary>
-    /// Immutable description of a card, built from data: a stable id, a cast time and an ordered list of
-    /// effects. The card's word, neighbour rules and evolution are not modelled yet.
+    /// Immutable description of a card, built from data: a stable id, a cast time, an ordered list of effects
+    /// and the neighbour modifiers it grants. The card's word and evolution are not modelled yet.
     /// </summary>
     public sealed class CardDefinition
     {
+        /// <summary>Creates a card with no neighbour modifiers.</summary>
         /// <param name="id">Stable identifier from data. Not empty or whitespace.</param>
         /// <param name="castTime">Simulation ticks needed to cast the card, from data. Greater than zero.</param>
         /// <param name="effects">Effects applied, in this order, when the card resolves. May be empty.</param>
@@ -18,6 +19,26 @@ namespace Game.Core.Cards
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="castTime"/> is zero or negative.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="effects"/> or one of its items is null.</exception>
         public CardDefinition(string id, int castTime, IEnumerable<IEffect> effects)
+            : this(id, castTime, effects, Array.Empty<NeighbourModifier>())
+        {
+        }
+
+        /// <param name="id">Stable identifier from data. Not empty or whitespace.</param>
+        /// <param name="castTime">Simulation ticks needed to cast the card, from data. Greater than zero.</param>
+        /// <param name="effects">Effects applied, in this order, when the card resolves. May be empty.</param>
+        /// <param name="neighbourModifiers">
+        /// Bonuses granted to neighbours each time the card resolves, applied by the combat loop. May be empty.
+        /// </param>
+        /// <exception cref="ArgumentException"><paramref name="id"/> is null, empty or whitespace.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="castTime"/> is zero or negative.</exception>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="effects"/>, <paramref name="neighbourModifiers"/> or one of their items is null.
+        /// </exception>
+        public CardDefinition(
+            string id,
+            int castTime,
+            IEnumerable<IEffect> effects,
+            IEnumerable<NeighbourModifier> neighbourModifiers)
         {
             if (string.IsNullOrWhiteSpace(id))
             {
@@ -40,9 +61,21 @@ namespace Game.Core.Cards
                 throw new ArgumentNullException(nameof(effects), "A card cannot contain a null effect.");
             }
 
+            if (neighbourModifiers == null)
+            {
+                throw new ArgumentNullException(nameof(neighbourModifiers));
+            }
+
+            var modifiers = new List<NeighbourModifier>(neighbourModifiers);
+            if (modifiers.Contains(null))
+            {
+                throw new ArgumentNullException(nameof(neighbourModifiers), "A card cannot contain a null neighbour modifier.");
+            }
+
             Id = id;
             CastTime = castTime;
             Effects = new ReadOnlyCollection<IEffect>(copy);
+            NeighbourModifiers = new ReadOnlyCollection<NeighbourModifier>(modifiers);
         }
 
         /// <summary>
@@ -59,6 +92,12 @@ namespace Game.Core.Cards
         /// Effects of the card, in resolution order.
         /// </summary>
         public IReadOnlyList<IEffect> Effects { get; }
+
+        /// <summary>
+        /// Bonuses this card grants to its neighbours in the spell line each time it resolves. Applied by the combat
+        /// loop, not by <see cref="Resolve"/>: they belong to positions in a spell line, which a card does not know.
+        /// </summary>
+        public IReadOnlyList<NeighbourModifier> NeighbourModifiers { get; }
 
         /// <summary>
         /// Applies every effect of the card, in order, to the combatants of <paramref name="context"/>.
