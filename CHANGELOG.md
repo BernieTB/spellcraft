@@ -25,5 +25,7 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
   health, death at zero).
 - Data-driven cards: Core card definition (id, cast time, ordered effects) with placeholder deal damage,
   heal and gain shield effects, authored as `CardAsset` ScriptableObjects (ADR 0003).
+- Spell line in Core: an ordered sequence of cards with a capacity set from data, played in a loop, whose
+  cards can be added, removed, swapped and moved.
 
 [Unreleased]: https://github.com/BernieTB/spellcraft/commits/main
