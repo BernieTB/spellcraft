@@ -25,7 +25,22 @@ namespace Game.Core.Tests.Cards
                 _log = log;
             }
 
-            public void Apply(EffectContext context) => _log.Add(_name);
+            public EffectOutcome Apply(EffectContext context)
+            {
+                _log.Add(_name);
+                return EffectOutcome.None;
+            }
+        }
+
+        private static List<(int, int, int, int)> ToTuples(IReadOnlyList<EffectOutcome> outcomes)
+        {
+            var tuples = new List<(int, int, int, int)>();
+            foreach (var outcome in outcomes)
+            {
+                tuples.Add((outcome.Damage.AbsorbedByShield, outcome.Damage.HealthLost, outcome.Healed, outcome.ShieldGained));
+            }
+
+            return tuples;
         }
 
         private static EffectContext CreateContext() =>
@@ -121,6 +136,33 @@ namespace Game.Core.Tests.Cards
             card.Resolve(context);
 
             Assert.AreEqual(MaxHealth - 3, context.Target.CurrentHealth);
+        }
+
+        [Test]
+        public void Resolve_SeveralEffects_ReturnsOutcomesInOrder()
+        {
+            var context = CreateContext();
+            context.Caster.TakeDamage(2);
+            var card = new CardDefinition(Id, CastTime, new IEffect[]
+            {
+                new DealDamageEffect(3),
+                new HealEffect(1),
+                new GainShieldEffect(4),
+            });
+
+            var outcomes = card.Resolve(context);
+
+            CollectionAssert.AreEqual(
+                new[] { (0, 3, 0, 0), (0, 0, 1, 0), (0, 0, 0, 4) },
+                ToTuples(outcomes));
+        }
+
+        [Test]
+        public void Resolve_NoEffects_ReturnsEmptyOutcomes()
+        {
+            var card = new CardDefinition(Id, CastTime, new IEffect[0]);
+
+            Assert.IsEmpty(card.Resolve(CreateContext()));
         }
 
         [Test]

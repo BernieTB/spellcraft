@@ -12,6 +12,7 @@ namespace Game.Core.Effects
         /// <summary>
         /// Applies the effect to the combatants of <paramref name="context"/>.
         /// </summary>
-        void Apply(EffectContext context);
+        /// <returns>What the effect actually changed, after the combatant rules (shield, caps, death).</returns>
+        EffectOutcome Apply(EffectContext context);
     }
 }
