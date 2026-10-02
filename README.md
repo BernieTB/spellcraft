@@ -77,11 +77,12 @@ In Unity: **Window > General > Test Runner > EditMode > Run All**.
 From the command line, from the repository root, with the Unity CLI (`unity`, beta):
 
 ```bash
-unity test game --editor-version 6000.3.24f1 --mode EditMode --output <scratch-dir>/results.xml
+unity test ./game --editor-version 6000.3.24f1 --mode EditMode --output <scratch-dir>/results.xml
 ```
 
 Exit code `0` means all tests passed, `8` means tests failed, anything else means the run itself failed.
 Write the results file outside the repository.
+Keep the `./`: a bare `game` is also read as a project name and can test another project called `game`.
 
 ### Downloading a build
 

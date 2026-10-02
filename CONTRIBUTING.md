@@ -75,10 +75,11 @@ Keep one logical change per commit. Mention any change to `game/ProjectSettings/
 - Run the tests before committing:
 
   ```powershell
-  unity test game --editor-version 6000.3.24f1 --mode EditMode --output <scratch-dir>/results.xml
+  unity test ./game --editor-version 6000.3.24f1 --mode EditMode --output <scratch-dir>/results.xml
   ```
 
-  This uses the Unity CLI (`unity`, beta). From the editor: **Window > General > Test Runner > EditMode > Run All**.
+  This uses the Unity CLI (`unity`, beta). Keep the `./` so `game` is read as a path, not a project name.
+  From the editor: **Window > General > Test Runner > EditMode > Run All**.
 
 ## Code style
 
