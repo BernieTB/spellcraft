@@ -1,7 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using Game.Core.Cards;
+using Game.Core.Combat;
 using Game.Core.Effects;
+using Game.Core.Randomness;
 using Game.Core.SpellLines;
 using Game.Unity.Cards;
 using Game.Unity.Editor.Content;
@@ -108,7 +110,42 @@ namespace Game.Unity.Tests.Content
                 line.Cards.Select(card => card.Id));
         }
 
-        // TODO(#12): add PlaceholderLine_RunsFight here once the combat loop exists: run a fight between a
-        // combatant casting BuildPlaceholderLine() and a test enemy, and assert it ends deterministically.
+        [Test]
+        public void PlaceholderLine_RunsFight_EndsWithAWinner()
+        {
+            var result = RunPlaceholderFight();
+
+            Assert.AreNotEqual(FightWinner.None, result.Winner);
+            Assert.IsNotEmpty(result.Casts);
+        }
+
+        [Test]
+        public void PlaceholderLine_RunsFightTwice_GivesIdenticalOutcome()
+        {
+            var first = RunPlaceholderFight();
+            var second = RunPlaceholderFight();
+
+            Assert.AreEqual(first.Winner, second.Winner);
+            Assert.AreEqual(first.Ticks, second.Ticks);
+            CollectionAssert.AreEqual(
+                first.Casts.Select(cast => (cast.Tick, cast.CasterIndex, cast.Position, cast.Card.Id)),
+                second.Casts.Select(cast => (cast.Tick, cast.CasterIndex, cast.Position, cast.Card.Id)));
+        }
+
+        /// <summary>
+        /// The hero casts the full placeholder line against an enemy casting only the first placeholder card.
+        /// All numbers are test data.
+        /// </summary>
+        private static FightResult RunPlaceholderFight()
+        {
+            var enemyLine = new SpellLine<CardDefinition>(1);
+            enemyLine.Add(LoadPlaceholderDefinitions()[0]);
+
+            var hero = new FightParticipant(new Combatant(30, 0), BuildPlaceholderLine());
+            var enemy = new FightParticipant(new Combatant(20, 0), enemyLine);
+            var fight = new Fight(hero, new[] { enemy }, 1000, new Pcg32Random(1));
+
+            return fight.Run();
+        }
     }
 }
