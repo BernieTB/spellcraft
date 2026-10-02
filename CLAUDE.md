@@ -27,6 +27,7 @@ The Unity project lives in `game/`, not at the repo root.
 |---|---|---|
 | `game/Assets/_Project/Core/` | `Game.Core` | Pure C# game logic (combat simulator, cards, effects) |
 | `game/Assets/_Project/Unity/` | `Game.Unity` | Rendering, UI, scenes, ScriptableObjects. References `Game.Core` |
+| `game/Assets/_Project/Unity/EditorTools/` | `Game.Unity.EditorTools` | Editor-only tools: content generators, build checks |
 | `game/Assets/_Project/Tests/Core/` | `Game.Core.Tests` | EditMode tests for `Game.Core` (Editor only, NUnit) |
 | `game/Assets/_Project/Tests/Unity/` | `Game.Unity.Tests` | EditMode tests for `Game.Unity` data conversion (Editor only, NUnit) |
 
@@ -75,6 +76,18 @@ named `game` (for example the main checkout when working in a git worktree), sil
   Needs the `UNITY_LICENSE`, `UNITY_EMAIL` and `UNITY_PASSWORD` repository secrets.
   `game/Library` is cached with the key `Library-EditMode-<hash of Assets, Packages, ProjectSettings>`; on a
   miss it falls back to any `Library-` cache, such as the one `build.yml` saves on `main`.
+
+Regenerate the placeholder test cards (`test_card_01`...`05` in `game/Assets/_Project/Unity/Content/Placeholders/`,
+defined in `PlaceholderCardGenerator`) instead of editing their YAML. Close the editor on this project first
+(verified; menu equivalent: **Tools > Game > Regenerate Placeholder Cards**):
+
+```powershell
+& "C:\Program Files\Unity\Hub\Editor\6000.3.24f1\Editor\Unity.exe" -batchmode -quit -projectPath <absolute path to game> `
+  -executeMethod Game.Unity.EditorTools.Content.PlaceholderCardGenerator.Generate -logFile <scratch-dir>/generate.log
+```
+
+Placeholder cards are flagged `_isPlaceholder`. Only `Unity/Content/Placeholders/` and `Tests/` may reference
+them: otherwise an EditMode test fails, and `PlaceholderBuildCheck` fails any player build.
 
 ## Code conventions
 
