@@ -47,6 +47,16 @@ Keep one logical change per commit. Mention any change to `game/ProjectSettings/
   build workflow (`.github/workflows/build.yml`) runs on push to `main`.
 - Merge only after review.
 
+### GitHub settings
+
+- `main` is protected by a ruleset: pull request required (0 approvals), required check `EditMode tests`, no
+  force push, no deletion.
+- Rulesets are only enforced on public repositories with GitHub Free. The repository is public for that
+  reason: making it private silently disables the protection, unless the account moves to GitHub Pro.
+- The ruleset does not require branches to be up to date, so GitHub shows no **Update branch** button. To
+  bring a PR branch up to date with `main` (for example a PR opened before a required workflow existed, which
+  never gets the required check), run `gh pr update-branch <number>`; this re-triggers the checks.
+
 ## Changelog
 
 [`CHANGELOG.md`](CHANGELOG.md) follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).

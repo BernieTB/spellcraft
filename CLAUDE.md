@@ -15,8 +15,8 @@ the biomes of a magic school, each biome ending with a professor boss. The full 
 - Target: Windows PC only.
 - Git LFS for images, audio, fonts and 3D models (see `.gitattributes`).
 - CI/CD: GitHub Actions with GameCI. `.github/workflows/tests.yml` runs the EditMode tests on every PR to
-  `main` (make it a required check in the `main` branch protection); `.github/workflows/build.yml` builds on
-  push to `main`.
+  `main` (required check `EditMode tests` in the `main` repository ruleset, see
+  [GitHub settings](CONTRIBUTING.md#github-settings)); `.github/workflows/build.yml` builds on push to `main`.
 - Sprints of 2 weeks, tracked in GitHub Issues + GitHub Projects.
 
 ## Layout
@@ -91,6 +91,8 @@ license, crash). Write results outside the repo.
   `refactor`, `test`, `spike`. Never merge a `spike/` branch: report findings in the issue or an ADR.
 - Commits: [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/), one logical change each.
 - One PR per ticket, body contains `Closes #<issue>`. Never merge a PR yourself unless asked.
+- A PR missing the required check or behind `main`: `gh pr update-branch <number>` (no Update branch button;
+  see [GitHub settings](CONTRIBUTING.md#github-settings)).
 - **Run the EditMode tests before every commit** that touches code. Do not commit with failing tests.
 - Do not push or open PRs without the owner's go-ahead unless the task says so.
 - Full workflow and Definition of Done: [`CONTRIBUTING.md`](CONTRIBUTING.md).
