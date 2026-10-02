@@ -33,6 +33,9 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
   as placeholders; a test and a build check stop them from shipping.
 - ADR 0004: owner confirmation of the first-pass combat details, targeting and neighbour modifier kinds;
   ADR 0003 accepted.
+- Neighbour modifiers: a card can give +X damage, heal or shield to the next or previous card in its spell line
+  for one cast (bonuses add up, a single card boosts itself), authored on `CardAsset`, with a second golden
+  fight trace.
 
 ### Changed
 

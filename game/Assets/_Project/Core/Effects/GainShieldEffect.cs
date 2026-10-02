@@ -4,6 +4,8 @@ namespace Game.Core.Effects
 {
     /// <summary>
     /// Placeholder effect: gives the context's caster a fixed amount of shield, from data.
+    /// The cast's neighbour bonus of the matching kind, if any and not consumed by an earlier effect of the
+    /// card, is added to the amount (<see cref="EffectContext.ConsumeBonus"/>).
     /// </summary>
     public sealed class GainShieldEffect : IEffect
     {
@@ -20,7 +22,7 @@ namespace Game.Core.Effects
         }
 
         /// <summary>
-        /// Shield gained each time the effect is applied.
+        /// Shield gained each time the effect is applied, before any neighbour bonus.
         /// </summary>
         public int Amount { get; }
 
@@ -33,7 +35,8 @@ namespace Game.Core.Effects
                 throw new ArgumentNullException(nameof(context));
             }
 
-            return EffectOutcome.FromShieldGain(context.Caster.GainShield(Amount));
+            var amount = checked(Amount + context.ConsumeBonus(BonusKind.Shield));
+            return EffectOutcome.FromShieldGain(context.Caster.GainShield(amount));
         }
     }
 }
