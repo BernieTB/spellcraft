@@ -44,9 +44,6 @@ namespace Game.Core.Effects
         /// <summary>Extra shield for a <see cref="GainShieldEffect"/>.</summary>
         public int Shield { get; }
 
-        /// <summary>True when every value is zero.</summary>
-        public bool IsNone => Damage == 0 && Heal == 0 && Shield == 0;
-
         /// <summary>Creates a bonus holding <paramref name="amount"/> for <paramref name="kind"/> only.</summary>
         /// <exception cref="ArgumentOutOfRangeException">
         /// <paramref name="kind"/> is not a defined kind, or <paramref name="amount"/> is negative.

@@ -27,13 +27,7 @@ namespace Game.Core.Tests.Effects
         [Test]
         public void None_IsAllZero()
         {
-            Assert.AreEqual((0, 0, 0, true), (EffectBonus.None.Damage, EffectBonus.None.Heal, EffectBonus.None.Shield, EffectBonus.None.IsNone));
-        }
-
-        [Test]
-        public void IsNone_AnyValueSet_IsFalse()
-        {
-            Assert.IsFalse(new EffectBonus(0, 0, 1).IsNone);
+            Assert.AreEqual(new EffectBonus(0, 0, 0), EffectBonus.None);
         }
 
         [TestCase(BonusKind.Damage, 4, 0, 0)]
