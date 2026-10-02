@@ -28,4 +28,9 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
 - Spell line in Core: an ordered sequence of cards with a capacity set from data, played in a loop, whose
   cards can be added, removed, swapped and moved.
 
+### Changed
+
+- Git ignores Claude Code local state (`.claude/worktrees/`, `.claude/settings.local.json`, `CLAUDE.local.md`);
+  shared `.claude/` config can still be committed.
+
 [Unreleased]: https://github.com/BernieTB/spellcraft/commits/main

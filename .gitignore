@@ -77,8 +77,11 @@ crashlytics-build.properties
 Thumbs.db
 desktop.ini
 
-# --- Claude Code (local settings only) ---
-.claude/settings.local.json
+# --- Claude Code (local state only) ---
+# Shared project config (.claude/settings.json, commands/, agents/, skills/) stays versionable.
+/.claude/worktrees/
+/.claude/settings.local.json
+CLAUDE.local.md
 
 # --- Local test results and reports ---
 results.xml
