@@ -73,6 +73,16 @@ namespace Game.Core.Tests.Effects
             Assert.Throws<ArgumentNullException>(() => new DealDamageEffect(Amount).Apply(null));
         }
 
+        [Test]
+        public void DealDamageEffect_Apply_ReturnsDamageSplitBetweenShieldAndHealth()
+        {
+            _target.GainShield(1);
+
+            var outcome = new DealDamageEffect(Amount).Apply(_context);
+
+            Assert.AreEqual((1, Amount - 1, 0, 0), ToTuple(outcome));
+        }
+
         // --- HealEffect ---
 
         [Test]
@@ -113,6 +123,16 @@ namespace Game.Core.Tests.Effects
             Assert.Throws<ArgumentNullException>(() => new HealEffect(Amount).Apply(null));
         }
 
+        [Test]
+        public void HealEffect_Apply_ReturnsHealthActuallyRestored()
+        {
+            _caster.TakeDamage(1);
+
+            var outcome = new HealEffect(Amount).Apply(_context);
+
+            Assert.AreEqual((0, 0, 1, 0), ToTuple(outcome));
+        }
+
         // --- GainShieldEffect ---
 
         [Test]
@@ -148,5 +168,33 @@ namespace Game.Core.Tests.Effects
         {
             Assert.Throws<ArgumentNullException>(() => new GainShieldEffect(Amount).Apply(null));
         }
+
+        [Test]
+        public void GainShieldEffect_Apply_ReturnsShieldGained()
+        {
+            var outcome = new GainShieldEffect(Amount).Apply(_context);
+
+            Assert.AreEqual((0, 0, 0, Amount), ToTuple(outcome));
+        }
+
+        // --- EffectOutcome ---
+
+        [Test]
+        public void EffectOutcome_None_IsAllZero()
+        {
+            Assert.AreEqual((0, 0, 0, 0), ToTuple(EffectOutcome.None));
+        }
+
+        [Test]
+        public void EffectOutcome_Plus_SumsEachField()
+        {
+            var first = new EffectOutcome(new DamageResult(1, 2), 3, 4);
+            var second = new EffectOutcome(new DamageResult(5, 6), 7, 8);
+
+            Assert.AreEqual((6, 8, 10, 12), ToTuple(first.Plus(second)));
+        }
+
+        private static (int, int, int, int) ToTuple(EffectOutcome outcome) =>
+            (outcome.Damage.AbsorbedByShield, outcome.Damage.HealthLost, outcome.Healed, outcome.ShieldGained);
     }
 }

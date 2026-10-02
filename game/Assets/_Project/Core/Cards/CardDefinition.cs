@@ -63,18 +63,22 @@ namespace Game.Core.Cards
         /// <summary>
         /// Applies every effect of the card, in order, to the combatants of <paramref name="context"/>.
         /// </summary>
+        /// <returns>The outcome of each effect, in the same order as <see cref="Effects"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="context"/> is null.</exception>
-        public void Resolve(EffectContext context)
+        public IReadOnlyList<EffectOutcome> Resolve(EffectContext context)
         {
             if (context == null)
             {
                 throw new ArgumentNullException(nameof(context));
             }
 
-            foreach (var effect in Effects)
+            var outcomes = new EffectOutcome[Effects.Count];
+            for (var i = 0; i < Effects.Count; i++)
             {
-                effect.Apply(context);
+                outcomes[i] = Effects[i].Apply(context);
             }
+
+            return new ReadOnlyCollection<EffectOutcome>(outcomes);
         }
     }
 }

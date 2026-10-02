@@ -45,6 +45,9 @@ ProjectVersion.txt text eol=lf
 *.md             text eol=lf
 *.sh             text eol=lf
 
+# --- Test data compared byte for byte (golden fight traces) ---
+game/Assets/_Project/Tests/**/Golden/*.txt text eol=lf
+
 # --- Code ---
 *.cs             text eol=lf diff=csharp
 *.shader         text eol=lf

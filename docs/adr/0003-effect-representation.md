@@ -23,8 +23,12 @@ see the inspector, so authoring must work with Unity's default inspector and pla
 We will represent effects in Core as **small immutable objects implementing `IEffect`**
 (`Game.Core.Effects`), one class per effect kind, each with its parameters (amounts) passed in from data and
 validated in its constructor. `IEffect.Apply(EffectContext)` performs the effect against an `EffectContext`
-that currently holds only the caster and the target. A `CardDefinition` (`Game.Core.Cards`) holds an id, a cast
-time and an ordered list of `IEffect`, and `Resolve` applies them in order.
+that currently holds only the caster and the target, and returns an `EffectOutcome`: what the effect actually
+changed after the combatant rules (damage absorbed by shield and health lost, health restored, shield gained).
+A `CardDefinition` (`Game.Core.Cards`) holds an id, a cast time and an ordered list of `IEffect`, and `Resolve`
+applies them in order and returns their outcomes in the same order. Returning outcomes (rather than having
+effects write to a log) keeps effects free of any logging dependency: the combat loop (#12) collects them into
+its result, and the combat event log (#14) can build on the same values.
 
 In the Unity layer we will author effects as a **flat list of `EffectEntry` (kind enum + amount)** on a
 `CardAsset` ScriptableObject. `CardAsset.ToDefinition()` maps each entry to its Core effect with one `switch`.

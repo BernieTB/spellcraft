@@ -26,14 +26,14 @@ namespace Game.Core.Effects
 
         /// <inheritdoc />
         /// <exception cref="ArgumentNullException"><paramref name="context"/> is null.</exception>
-        public void Apply(EffectContext context)
+        public EffectOutcome Apply(EffectContext context)
         {
             if (context == null)
             {
                 throw new ArgumentNullException(nameof(context));
             }
 
-            context.Caster.GainShield(Amount);
+            return EffectOutcome.FromShieldGain(context.Caster.GainShield(Amount));
         }
     }
 }
