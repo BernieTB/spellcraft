@@ -21,6 +21,10 @@ namespace Game.Core.Tests.Combat.Log
         private const int Hero = Fight.HeroIndex;
         private const int FirstEnemy = 1;
 
+        // The bonus fields every JSON event ends with when there is no neighbour bonus.
+        private const string NoBonusJson =
+            ",\"bonus\":{\"damage\":0,\"heal\":0,\"shield\":0},\"wasted\":{\"damage\":0,\"heal\":0,\"shield\":0}";
+
         // --- Helpers ---
 
         private static CardDefinition Card(string id, int castTime, params IEffect[] effects) =>
@@ -310,9 +314,9 @@ namespace Game.Core.Tests.Combat.Log
                 + "    {\"index\":1,\"maxHealth\":5,\"health\":5,\"shield\":1,\"spellLine\":[\"test_heal\"]}\n"
                 + "  ],\n"
                 + "  \"events\":[\n"
-                + "    {\"sequence\":0,\"tick\":1,\"kind\":\"cast\",\"card\":\"test_hit\",\"position\":0,\"caster\":0,\"target\":1,\"amount\":0,\"absorbed\":0,\"healthLost\":0,\"targetHealth\":5,\"targetShield\":1},\n"
-                + "    {\"sequence\":1,\"tick\":1,\"kind\":\"damage\",\"card\":\"test_hit\",\"position\":0,\"caster\":0,\"target\":1,\"amount\":6,\"absorbed\":1,\"healthLost\":5,\"targetHealth\":0,\"targetShield\":0},\n"
-                + "    {\"sequence\":2,\"tick\":1,\"kind\":\"death\",\"card\":\"test_hit\",\"position\":0,\"caster\":0,\"target\":1,\"amount\":0,\"absorbed\":0,\"healthLost\":0,\"targetHealth\":0,\"targetShield\":0}\n"
+                + "    {\"sequence\":0,\"tick\":1,\"kind\":\"cast\",\"card\":\"test_hit\",\"position\":0,\"caster\":0,\"target\":1,\"amount\":0,\"absorbed\":0,\"healthLost\":0,\"targetHealth\":5,\"targetShield\":1" + NoBonusJson + "},\n"
+                + "    {\"sequence\":1,\"tick\":1,\"kind\":\"damage\",\"card\":\"test_hit\",\"position\":0,\"caster\":0,\"target\":1,\"amount\":6,\"absorbed\":1,\"healthLost\":5,\"targetHealth\":0,\"targetShield\":0" + NoBonusJson + "},\n"
+                + "    {\"sequence\":2,\"tick\":1,\"kind\":\"death\",\"card\":\"test_hit\",\"position\":0,\"caster\":0,\"target\":1,\"amount\":0,\"absorbed\":0,\"healthLost\":0,\"targetHealth\":0,\"targetShield\":0" + NoBonusJson + "}\n"
                 + "  ]\n"
                 + "}\n";
             Assert.AreEqual(expected, log.ToJson());
@@ -335,7 +339,7 @@ namespace Game.Core.Tests.Combat.Log
         }
 
         [Test]
-        public void ToJson_CastWithBonus_AppendsBonusAndWastedToThatCastOnly()
+        public void ToJson_CastWithBonus_WritesReceivedAndWastedBonusOnThatCast()
         {
             var booster = Booster(Next(BonusKind.Damage, 3), Next(BonusKind.Heal, 4));
             var json = RecordBoosted(booster, Card("test_hit", 1, new DealDamageEffect(1))).ToJson();
@@ -345,7 +349,6 @@ namespace Game.Core.Tests.Combat.Log
                 + "\"target\":1,\"amount\":0,\"absorbed\":0,\"healthLost\":0,\"targetHealth\":10,\"targetShield\":0,"
                 + "\"bonus\":{\"damage\":3,\"heal\":4,\"shield\":0},\"wasted\":{\"damage\":0,\"heal\":4,\"shield\":0}},\n",
                 json);
-            Assert.AreEqual(1, json.Split(new[] { "\"bonus\"" }, StringSplitOptions.None).Length - 1);
         }
 
         [Test]

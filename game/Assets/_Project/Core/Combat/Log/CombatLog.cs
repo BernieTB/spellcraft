@@ -259,10 +259,11 @@ namespace Game.Core.Combat.Log
         /// Writes the log as JSON: an object with <c>winner</c>, <c>ticks</c>, <c>combatants</c> and <c>events</c>.
         /// Every event has all its fields (<c>sequence</c>, <c>tick</c>, <c>kind</c>, <c>card</c>, <c>position</c>,
         /// <c>caster</c>, <c>target</c>, <c>amount</c>, <c>absorbed</c>, <c>healthLost</c>, <c>targetHealth</c>,
-        /// <c>targetShield</c>), with the same names as <see cref="ToText"/> for kinds and winner. A cast event that
-        /// received a neighbour bonus also has, last, <c>bonus</c> and <c>wasted</c>: objects with <c>damage</c>,
-        /// <c>heal</c> and <c>shield</c>, in that order; other events never have them. One combatant or event per
-        /// line, lines end with <c>\n</c>; the output is deterministic.
+        /// <c>targetShield</c>, <c>bonus</c>, <c>wasted</c>), with the same names as <see cref="ToText"/> for kinds and
+        /// winner. <c>bonus</c> and <c>wasted</c> are objects with <c>damage</c>, <c>heal</c> and <c>shield</c>, in
+        /// that order: the neighbour bonus a cast received and the part of it wasted, all zero on other events and on
+        /// casts without bonus, so every event has the same shape. One combatant or event per line, lines end with
+        /// <c>\n</c>; the output is deterministic.
         /// </summary>
         public string ToJson()
         {
@@ -333,14 +334,10 @@ namespace Game.Core.Combat.Log
                 JsonWriter.AppendField(builder, "targetHealth", e.TargetHealth);
                 builder.Append(',');
                 JsonWriter.AppendField(builder, "targetShield", e.TargetShield);
-                if (!e.Bonus.IsNone)
-                {
-                    builder.Append(',');
-                    AppendBonusJson(builder, "bonus", e.Bonus);
-                    builder.Append(',');
-                    AppendBonusJson(builder, "wasted", e.WastedBonus);
-                }
-
+                builder.Append(',');
+                AppendBonusJson(builder, "bonus", e.Bonus);
+                builder.Append(',');
+                AppendBonusJson(builder, "wasted", e.WastedBonus);
                 builder.Append('}');
             }
 
