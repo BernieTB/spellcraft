@@ -9,6 +9,7 @@ words. Use these terms consistently in code, docs and issues.
 | **Biome** | One section of a run, representing one year at the magic school. Contains regular monsters, secret rooms and a professor. See [Run structure](GAME_DESIGN.md#run-structure). |
 | **Card** | One element of the spell line. Each card is a word. Cards react to their neighbours and evolve through use. See [Spell line](GAME_DESIGN.md#spell-line). |
 | **Cast time** | The number of ticks a card takes to cast. Its effects resolve when the cast ends. See [ADR 0002](adr/0002-first-pass-combat-rules.md). |
+| **Combat log** | The ordered list of events of a fight (card cast, damage, healing, shield gain, death), each tied to its tick, card, position in the line, caster and target. Read by tests, the debug fight viewer and, later, the recap. In code: `Game.Core.Combat.Log.CombatLog`. |
 | **Combatant** | A participant in a fight: the player character or an enemy. Holds the combat stats: health and shield. Starting values come from data. In code: `Game.Core.Combat.Combatant`. |
 | **Dead** | State of a combatant whose current health has reached zero. A dead combatant takes no damage, cannot be healed and gains no shield (placeholder rule: no revival mechanic is designed). |
 | **Evolution** | A card growing stronger the more it is cast, for example by gaining letters up to a 5-letter maximum. |

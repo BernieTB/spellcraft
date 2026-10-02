@@ -6,7 +6,8 @@ namespace Game.Core.Tests.Combat
 {
     /// <summary>
     /// Compact textual trace of a fight, for determinism and golden tests: one line per resolved cast, then one
-    /// line with the result. Test-only; the real combat event log is separate work (#14).
+    /// line with the result. Test-only; the combat event log is
+    /// <see cref="Game.Core.Combat.Log.CombatLog"/>.
     /// </summary>
     /// <remarks>
     /// Cast line: <c>tick=T caster=C pos=P card=ID target=X absorbed=A healthLost=H healed=E shieldGained=S</c>,

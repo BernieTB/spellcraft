@@ -36,6 +36,9 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
 - Neighbour modifiers: a card can give +X damage, heal or shield to the next or previous card in its spell line
   for one cast (bonuses add up, a single card boosts itself), authored on `CardAsset`, with a second golden
   fight trace.
+- Combat event log in Core: an ordered record of every card cast, damage (shield absorbed and health lost),
+  healing, shield gain and death, with tick, card, position in the line, caster and target, serialisable to
+  text and JSON, with a golden-log test.
 
 ### Changed
 
