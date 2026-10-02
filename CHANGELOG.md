@@ -33,4 +33,8 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
 - Git ignores Claude Code local state (`.claude/worktrees/`, `.claude/settings.local.json`, `CLAUDE.local.md`);
   shared `.claude/` config can still be committed.
 
+### Changed
+
+- CI: both workflows log the runner's free disk space after cleanup and after the Unity step.
+
 [Unreleased]: https://github.com/BernieTB/spellcraft/commits/main

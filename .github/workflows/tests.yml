@@ -19,11 +19,16 @@ jobs:
         runs-on: ubuntu-latest
         timeout-minutes: 60
         steps:
-            # The Unity editor image is large; reclaim space on the hosted runner first.
+            # The Unity editor image is ~11 GB and the job needs ~14 GB in total. Hosted runner disks vary;
+            # this step reclaims ~22 GB (Android SDK, .NET, Haskell, Docker images) in 1-2 min, which
+            # covers the smaller hosts. The df steps log the margin so a shrinking one is visible.
             - name: Free disk space
               uses: jlumbroso/free-disk-space@v2
               with:
                   large-packages: false
+
+            - name: Disk space after cleanup
+              run: df -h /
 
             - name: Checkout
               uses: actions/checkout@v7
@@ -58,6 +63,11 @@ jobs:
                   artifactsPath: test-results
                   githubToken: ${{ secrets.GITHUB_TOKEN }}
                   checkName: EditMode Test Results
+
+            # Runs even when the Unity step fails, e.g. with "no space left on device".
+            - name: Disk space after Unity
+              if: always()
+              run: df -h /
 
             - name: Upload test results
               if: always()
