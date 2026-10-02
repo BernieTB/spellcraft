@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using Game.Core.Cards;
 using Game.Core.Combat;
 using Game.Core.Effects;
@@ -76,12 +77,13 @@ namespace Game.Core.Tests.Simulation
         }
 
         [Test]
-        public void Build_SeedRange_FollowsFightCount()
+        public void Build_SeedRangeOverflows_Throws()
         {
-            var summary = Summarise(Result(FightWinner.Hero, 1), Result(FightWinner.Hero, 1), Result(FightWinner.Hero, 1));
+            var builder = new SimulationSummaryBuilder();
+            builder.Add(Result(FightWinner.Hero, 1));
+            builder.Add(Result(FightWinner.Hero, 1));
 
-            Assert.AreEqual(10L, summary.FirstSeed);
-            Assert.AreEqual(12L, summary.LastSeed);
+            Assert.Throws<ArgumentOutOfRangeException>(() => builder.Build(long.MaxValue));
         }
 
         [Test]
@@ -162,6 +164,29 @@ namespace Game.Core.Tests.Simulation
                 + "  ]\n"
                 + "}\n";
             Assert.AreEqual(expected, summary.ToJson());
+        }
+
+        [Test]
+        public void ToJson_RoundsHalfAwayFromZero_WithInvariantCulture()
+        {
+            // 1 win in 32 fights: a rate of exactly 0.03125, a midpoint at 4 decimals.
+            var results = new FightResult[32];
+            results[0] = Result(FightWinner.Hero, 1);
+            for (var i = 1; i < results.Length; i++)
+            {
+                results[i] = Result(FightWinner.Enemies, 1);
+            }
+
+            var previous = CultureInfo.CurrentCulture;
+            try
+            {
+                CultureInfo.CurrentCulture = new CultureInfo("fr-FR");
+                StringAssert.Contains("\"hero\":{\"count\":1,\"rate\":0.0313}", Summarise(results).ToJson());
+            }
+            finally
+            {
+                CultureInfo.CurrentCulture = previous;
+            }
         }
 
         [Test]

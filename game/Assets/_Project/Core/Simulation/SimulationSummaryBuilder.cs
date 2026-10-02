@@ -77,11 +77,17 @@ namespace Game.Core.Simulation
         /// </summary>
         /// <param name="firstSeed">Seed of the first fight added; the others are assumed to follow, one apart.</param>
         /// <exception cref="InvalidOperationException">No fight was added.</exception>
+        /// <exception cref="ArgumentOutOfRangeException">The last seed would overflow.</exception>
         public SimulationSummary Build(long firstSeed)
         {
             if (_fightCount == 0)
             {
                 throw new InvalidOperationException("A simulation summary needs at least one fight.");
+            }
+
+            if (firstSeed > long.MaxValue - (_fightCount - 1))
+            {
+                throw new ArgumentOutOfRangeException(nameof(firstSeed), firstSeed, "The seed range would overflow.");
             }
 
             // Sorted explicitly: dictionary order is unspecified, and the JSON must be identical run after run.
