@@ -69,6 +69,9 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
 - ADR 0014: boss preparation and recap (unlimited reserve, professor information hidden except mini-boss
   revelations kept in the bestiary, recap with per-card output, used and wasted bonuses, and the turning point
   and cause of a defeat).
+- Passive upgrades: `PassiveUpgrade` (+X max health, +X starting shield, +X to every effect of one kind, +X to
+  every neighbour modifier) authored as `PassiveUpgradeAsset`, and `PassiveUpgradeSet`, which stacks the upgrades
+  taken and applies them to the hero's participant before a fight (upgraded combatant and cards).
 
 ### Changed
 
