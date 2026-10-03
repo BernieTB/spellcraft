@@ -74,6 +74,9 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
   unlocked secret room, professor after a minimum of regular fights); every fight starts at max health; any defeat,
   including the global fight time limit, ends the run. Core class, enemy, encounter and biome definitions; enemy
   and encounter assets convert to them (`ToDefinition`). Spell lines can gain slots (`SpellLine.IncreaseCapacity`).
+- Passive upgrades: `PassiveUpgrade` (+X max health, +X starting shield, +X to every effect of one kind, +X to
+  every neighbour modifier) authored as `PassiveUpgradeAsset`, and `PassiveUpgradeSet`, which stacks the upgrades
+  taken and applies them to the hero's participant before a fight (upgraded combatant and cards).
 
 ### Changed
 
