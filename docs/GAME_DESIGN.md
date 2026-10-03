@@ -1,6 +1,6 @@
 # Spellcraft: Game Design Document
 
-> **Status:** living document, last updated 2026-10-01.
+> **Status:** living document, last updated 2026-10-03.
 > Only decided design goes in the body. Anything undecided goes in [Open questions](#open-questions).
 > Terms are defined in [`GLOSSARY.md`](GLOSSARY.md).
 
@@ -20,17 +20,28 @@ Pillars:
 ## Core loop
 
 1. The character auto-fights regular monsters in a biome and earns XP.
-2. On each level-up, the player takes a [linked choice](#character-and-level-ups) and grows the spell line.
-3. Objectives unlock [secret rooms](#mini-bosses-and-secret-rooms) with mini-bosses.
-4. Before the biome's professor, the player [prepares](#boss-preparation-phase-and-recap), then watches the fight.
-5. Win: move to the next biome. Lose: the run ends.
+2. On each level-up, the player takes a [linked choice](#character-and-level-ups) and gains a card.
+3. Objectives unlock [secret rooms](#mini-bosses-and-secret-rooms) with mini-bosses, which widen the spell line.
+4. Once the professor is available, the player chooses when to face them: [prepare](#boss-preparation-phase-and-recap),
+   then watch the fight.
+5. Win: move to the next biome. Lose any fight: the run ends.
 
 ## Run structure
 
 - A run lasts **20 to 30 minutes**. There is no offline progression.
 - A run is made of several **biomes**. Each biome is one year at a magic school.
 - Per biome: auto-fights against regular monsters (XP), secret rooms with mini-bosses, and a **professor** as the boss.
-- **Strict roguelike:** losing ends the run.
+- **Strict roguelike:** losing any fight (regular monster, mini-boss or professor) ends the run.
+
+Pacing (see [ADR 0009](adr/0009-vertical-slice-run-pacing.md); numbers live in data):
+
+- A biome targets **about 8 minutes** when the player goes to the professor as soon as possible, so a run holds
+  about three biomes.
+- Between fights the player picks the next step: a regular fight, an unlocked secret room, or the professor.
+- The professor becomes available after a **minimum number of regular fights** (about 8). The player may then
+  keep fighting regular monsters and mini-bosses before facing the professor.
+- Regular fights are drawn with the run's seed from the biome's pool of encounters.
+- **Each fight starts fresh:** the hero has max health and the starting shield at the start of every fight.
 
 ## Character and level-ups
 
@@ -41,10 +52,17 @@ Pillars:
   [ADR 0007](adr/0007-mvp-class-and-starting-deck.md).
 - Each level-up offers a **linked choice**: one passive upgrade paired with one card to add to the spell line.
   The player picks a package, not two independent items.
+- XP comes from defeated enemies (mini-bosses give more). Each level costs more XP than the previous one,
+  tuned for **about 5 level-ups** per biome on the shortest path; farming brings further levels more and more
+  slowly, with no hard cap. See [ADR 0009](adr/0009-vertical-slice-run-pacing.md).
+- The MVP class's defensive card **gives shield** (health resets every fight).
 
 ## Spell line
 
 - The spell line is an **ordered sequence of cards** that plays automatically, **in a loop**.
+- **Capacity:** the spell line starts with **4 slots** and gains a slot the first time each mini-boss is
+  defeated. A card gained while the line is full goes to the **reserve**, or replaces a line card, which then
+  goes to the reserve. See [ADR 0009](adr/0009-vertical-slice-run-pacing.md).
 - **Cards are words.** Words are 2 to 5 letters, ancient-sounding and mostly meaningless (Latin-like).
   Final words are written by the project owner.
 - **Cast time:** each card takes a number of ticks to cast (from data). Its effects resolve when the cast
@@ -88,6 +106,8 @@ broke, so a defeat feels fair.
 - Secret rooms are unlocked by **objectives** (e.g. defeat N of monster X). The player clicks to enter.
 - Secret rooms hide **mini-bosses**, which are **mythical creatures**.
 - Mini-bosses and secret rooms are a source of information about the biome's professor.
+- The first victory over each mini-boss gives **+1 spell line slot**. Each mini-boss also has its own unique
+  loot (not designed yet). A mini-boss can be fought again for XP, but its slot is given once.
 
 ## Meta-progression
 
@@ -123,11 +143,11 @@ Warm 2D, flat colours, ink/pen look.
 
 Not decided. Do not implement a choice for these without the owner's decision.
 
-- MVP class name and card words (owner); whether its defensive card gives shield or healing (depends on run
-  pacing); its base stats and card values (balanced with the simulator).
+- MVP class name and card words (owner); its base stats and card values (balanced with the simulator).
 - Element/tag catalogue, neighbour rules beyond the first pass (ADR 0002), and whether grammar-like roles are
   used at all.
 - Whether elements are represented as ink colours, and whether word sounds map to elements.
-- Exact level-up pacing, deck size, spell line length per biome, number of biomes.
+- Number of biomes in the full game; pacing of biomes after the first.
+- Number of secret rooms per biome, their objectives and the unique loot of mini-bosses.
 - Number and design of professors and mini-bosses.
 - Audio direction, final title (working title: Spellcraft), art pipeline.
