@@ -1,0 +1,36 @@
+/* Shared placeholder palette and sizes (ADR 0008): flat colours until the art pipeline is decided. */
+:root {
+    --color-background: rgb(38, 33, 30);
+    --color-panel: rgb(58, 51, 46);
+    --color-ink: rgb(240, 228, 210);
+    --color-ink-muted: rgb(170, 158, 142);
+    --color-accent: rgb(214, 150, 72);
+    --font-size-title: 72px;
+    --font-size-body: 28px;
+}
+
+.screen {
+    flex-grow: 1;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--color-background);
+}
+
+.title {
+    font-size: var(--font-size-title);
+    -unity-font-style: bold;
+    color: var(--color-ink);
+}
+
+.subtitle {
+    margin-top: 16px;
+    font-size: var(--font-size-body);
+    color: var(--color-ink-muted);
+}
+
+.accent-bar {
+    width: 240px;
+    height: 8px;
+    margin-top: 24px;
+    background-color: var(--color-accent);
+}

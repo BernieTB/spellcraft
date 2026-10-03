@@ -126,7 +126,8 @@ are printed in the log. In the editor, use **Tools > Game > Run Simulation**. De
 
 Every push to `main` builds the Windows player (workflow **Build**, which can also be run manually). Open the
 run in the **Actions** tab and download the `Spellcraft-Windows64-<short-sha>` artifact. Artifacts are kept for
-7 days. Unzip it and run `Spellcraft.exe`.
+7 days. Unzip it and run `Spellcraft.exe`. The build opens on a placeholder title screen, the only screen so far
+([ADR 0008](docs/adr/0008-ui-toolkit-and-placeholder-visuals.md)).
 
 ## Contributing
 

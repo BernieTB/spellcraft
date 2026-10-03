@@ -28,6 +28,8 @@ The Unity project lives in `game/`, not at the repo root.
 | `game/Assets/_Project/Core/` | `Game.Core` | Pure C# game logic (combat simulator, cards, effects) |
 | `game/Assets/_Project/Unity/` | `Game.Unity` | Rendering, UI, scenes, ScriptableObjects. References `Game.Core` |
 | `game/Assets/_Project/Unity/EditorTools/` | `Game.Unity.EditorTools` | Editor-only tools: content generators, build checks, headless simulation runner |
+| `game/Assets/_Project/Unity/UI/` | `Game.Unity` | Game screens (UI Toolkit): views (`Game.Unity.UI`), `Screens/*.uxml`, `Styles/*.uss`, `Themes/`, panel settings |
+| `game/Assets/_Project/Unity/Scenes/` | `Game.Unity` | `Bootstrap.unity`, the only scene in the build (generated) |
 | `game/Assets/_Project/Unity/DebugTools/` | `Game.Unity` | Debug fight viewer: scene, setup asset, playback (never in builds) |
 | `game/Assets/_Project/Tests/Core/` | `Game.Core.Tests` | EditMode tests for `Game.Core` (Editor only, NUnit) |
 | `game/Assets/_Project/Tests/Unity/` | `Game.Unity.Tests` | EditMode tests for `Game.Unity` data conversion (Editor only, NUnit) |
@@ -99,6 +101,20 @@ Close the editor on this project first (verified; menu: **Tools > Game > Rebuild
 ```powershell
 & "C:\Program Files\Unity\Hub\Editor\6000.3.24f1\Editor\Unity.exe" -batchmode -quit -projectPath <absolute path to game> `
   -executeMethod Game.Unity.EditorTools.DebugTools.DebugFightSceneBuilder.Build -logFile <scratch-dir>/debug-scene.log
+```
+
+Game screens follow [ADR 0008](docs/adr/0008-ui-toolkit-and-placeholder-visuals.md): UI Toolkit only, one UXML file
+per screen in `Unity/UI/Screens/`, styles in USS (`Unity/UI/Styles/Common.uss` holds the shared colour and size
+variables; no colours or sizes in C#), a view in `Game.Unity.UI` that queries elements by name and only displays
+Core state. Placeholder visuals are flat-colour shapes, no sprites. Write UXML/USS as text; the debug viewer stays
+on IMGUI. The game runs in one scene, `Unity/Scenes/Bootstrap.unity`, and screens are switched in code, not by
+loading scenes. Rebuild that scene with code, never by editing its YAML: the builder also makes it the only scene in
+the build settings and keeps an existing `Unity/UI/GamePanelSettings.asset`. Close the editor on this project first
+(verified; menu: **Tools > Game > Rebuild Bootstrap Scene**):
+
+```powershell
+& "C:\Program Files\Unity\Hub\Editor\6000.3.24f1\Editor\Unity.exe" -batchmode -quit -projectPath <absolute path to game> `
+  -executeMethod Game.Unity.EditorTools.UI.BootstrapSceneBuilder.Build -logFile <scratch-dir>/bootstrap-scene.log
 ```
 
 Run the headless simulation runner ([ADR 0006](docs/adr/0006-headless-simulation-runner.md)): plays the fight of a

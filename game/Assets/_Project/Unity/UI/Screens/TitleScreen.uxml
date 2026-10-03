@@ -1,0 +1,8 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <Style src="../Styles/Common.uss" />
+    <ui:VisualElement name="screen" class="screen">
+        <ui:Label name="title" class="title" text="Title" />
+        <ui:VisualElement name="accent-bar" class="accent-bar" />
+        <ui:Label name="subtitle" class="subtitle" text="Work in progress" />
+    </ui:VisualElement>
+</ui:UXML>
