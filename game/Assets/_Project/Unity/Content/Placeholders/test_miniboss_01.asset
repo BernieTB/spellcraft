@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1c736aab181460d40abe330e43714e9a, type: 3}
+  m_Name: test_miniboss_01
+  m_EditorClassIdentifier: Game.Unity::Game.Unity.Enemies.EnemyAsset
+  _id: test_miniboss_01
+  _rank: 1
+  _maxHealth: 25
+  _startingShield: 3
+  _spellLine:
+  - {fileID: 11400000, guid: 0cdf082d4f1daad4d89e4e096cb460f9, type: 2}
+  - {fileID: 11400000, guid: 1606d55c6e2212e459c8cc67ce87cc7a, type: 2}
+  _isPlaceholder: 1

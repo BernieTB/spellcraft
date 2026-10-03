@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Game.Core.Cards;
 using Game.Core.Effects;
+using Game.Unity.Content;
 using UnityEngine;
 
 namespace Game.Unity.Cards
@@ -11,7 +12,7 @@ namespace Game.Unity.Cards
     /// <see cref="CardDefinition"/> used by the simulation. Ids are placeholders until the owner writes content.
     /// </summary>
     [CreateAssetMenu(fileName = "NewCard", menuName = "Game/Card")]
-    public sealed class CardAsset : ScriptableObject
+    public sealed class CardAsset : ScriptableObject, IPlaceholderContent
     {
         [SerializeField]
         [Tooltip("Stable identifier, unique among cards (placeholder ids such as test_card_01 until content exists).")]

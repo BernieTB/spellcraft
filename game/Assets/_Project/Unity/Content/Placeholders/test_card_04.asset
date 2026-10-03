@@ -19,4 +19,5 @@ MonoBehaviour:
     _amount: 2
   - _kind: 2
     _amount: 1
+  _neighbourModifiers: []
   _isPlaceholder: 1

@@ -1,11 +1,10 @@
 using System;
 using System.Collections.Generic;
-using Game.Core.Cards;
 using Game.Core.Combat;
 using Game.Core.Combat.Log;
 using Game.Core.Randomness;
-using Game.Core.SpellLines;
 using Game.Unity.Cards;
+using Game.Unity.Combat;
 using UnityEngine;
 
 namespace Game.Unity.DebugTools
@@ -122,19 +121,7 @@ namespace Game.Unity.DebugTools
 
             internal FightParticipant ToParticipant(string label)
             {
-                var line = new SpellLine<CardDefinition>(Math.Max(1, _spellLine.Count));
-                for (var i = 0; i < _spellLine.Count; i++)
-                {
-                    var card = _spellLine[i];
-                    if (card == null)
-                    {
-                        throw new InvalidOperationException($"The {label}'s spell line has an empty slot at position {i}.");
-                    }
-
-                    line.Add(card.ToDefinition());
-                }
-
-                return new FightParticipant(new Combatant(_maxHealth, _startingShield), line);
+                return FightParticipantBuilder.Create(_maxHealth, _startingShield, _spellLine, label);
             }
         }
     }

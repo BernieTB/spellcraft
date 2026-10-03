@@ -1,19 +1,20 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Game.Unity.Cards;
+using Game.Unity.Content;
 using UnityEditor;
 
 namespace Game.Unity.EditorTools.Content
 {
     /// <summary>
-    /// Finds references to placeholder cards (<see cref="CardAsset.IsPlaceholder"/>) so test-only content cannot
+    /// Finds references to placeholder content (any asset implementing <see cref="IPlaceholderContent"/> with
+    /// <see cref="IPlaceholderContent.IsPlaceholder"/> set: cards, enemies, encounters) so test-only content cannot
     /// ship by accident. Used by <see cref="PlaceholderBuildCheck"/> before every build and by an EditMode test.
     /// </summary>
     /// <remarks>
     /// <para>
     /// Only the placeholder folder, the test folder and the debug tools folder may hold or reference placeholders.
-    /// Any other asset that is a placeholder card or depends on one (directly or through other assets) is a
+    /// Any other asset that is placeholder content or depends on some (directly or through other assets) is a
     /// violation (<see cref="FindProjectViolations"/>). This is stricter than checking only what a build includes,
     /// and needs no knowledge of how content gets into a build (scenes, Resources, later Addressables).
     /// </para>
@@ -21,12 +22,12 @@ namespace Game.Unity.EditorTools.Content
     /// Those folders are exempt, so nothing in them may be where a build starts: <see cref="FindBuildViolations"/>
     /// rejects any build root (scene in the build settings, Resources asset, preloaded asset) inside them, such as
     /// the debug fight scene. Every other build root is covered by <see cref="FindProjectViolations"/>, so
-    /// together the two checks keep placeholder cards out of player builds.
+    /// together the two checks keep placeholder content out of player builds.
     /// </para>
     /// </remarks>
     public static class PlaceholderGuard
     {
-        /// <summary>Folder holding the placeholder card assets.</summary>
+        /// <summary>Folder holding the placeholder content assets (cards, enemies, encounters).</summary>
         public const string PlaceholderFolder = "Assets/_Project/Unity/Content/Placeholders";
 
         /// <summary>Folder holding the tests, which may reference placeholders.</summary>
@@ -49,21 +50,21 @@ namespace Game.Unity.EditorTools.Content
         }
 
         /// <summary>
-        /// True when the main asset at <paramref name="assetPath"/> is a card flagged as placeholder.
+        /// True when the main asset at <paramref name="assetPath"/> is content flagged as placeholder.
         /// </summary>
-        public static bool IsPlaceholderCard(string assetPath)
+        public static bool IsPlaceholderAsset(string assetPath)
         {
-            if (AssetDatabase.GetMainAssetTypeAtPath(assetPath) != typeof(CardAsset))
+            var type = AssetDatabase.GetMainAssetTypeAtPath(assetPath);
+            if (type == null || !typeof(IPlaceholderContent).IsAssignableFrom(type))
             {
                 return false;
             }
 
-            var card = AssetDatabase.LoadAssetAtPath<CardAsset>(assetPath);
-            return card != null && card.IsPlaceholder;
+            return AssetDatabase.LoadMainAssetAtPath(assetPath) is IPlaceholderContent content && content.IsPlaceholder;
         }
 
         /// <summary>
-        /// Lists every placeholder card that the given assets are or depend on, recursively.
+        /// Lists every placeholder asset that the given assets are or depend on, recursively.
         /// </summary>
         /// <returns>One "root -> placeholder" line per violation, sorted. Empty when there is none.</returns>
         public static IReadOnlyList<string> FindPlaceholderReferences(IEnumerable<string> rootPaths)
@@ -73,7 +74,7 @@ namespace Game.Unity.EditorTools.Content
             {
                 foreach (var dependency in AssetDatabase.GetDependencies(root, true))
                 {
-                    if (IsPlaceholderCard(dependency))
+                    if (IsPlaceholderAsset(dependency))
                     {
                         violations.Add($"{root} -> {dependency}");
                     }

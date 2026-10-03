@@ -9,13 +9,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3d1591df8068ed044b3d9337ed66f6de, type: 3}
-  m_Name: test_card_01
-  m_EditorClassIdentifier: Game.Unity::Game.Unity.Cards.CardAsset
-  _id: test_card_01
-  _castTime: 1
-  _effects:
-  - _kind: 0
-    _amount: 1
-  _neighbourModifiers: []
+  m_Script: {fileID: 11500000, guid: ba13aa610c507ee469d073e42d149ca6, type: 3}
+  m_Name: test_encounter_04
+  m_EditorClassIdentifier: Game.Unity::Game.Unity.Enemies.EncounterAsset
+  _id: test_encounter_04
+  _enemies:
+  - {fileID: 11400000, guid: 2b0e7ede1a513d847aa1588909a07374, type: 2}
   _isPlaceholder: 1

@@ -89,10 +89,20 @@ defined in `PlaceholderCardGenerator`) instead of editing their YAML. Close the 
   -executeMethod Game.Unity.EditorTools.Content.PlaceholderCardGenerator.Generate -logFile <scratch-dir>/generate.log
 ```
 
-Placeholder cards are flagged `_isPlaceholder`. Only `Unity/Content/Placeholders/`, `Tests/` and
-`Unity/DebugTools/` may reference them: otherwise an EditMode test fails, and `PlaceholderBuildCheck` fails any
-player build. `PlaceholderBuildCheck` also fails a build whose scenes, `Resources` assets or preloaded assets lie
-in one of those three folders: never add the debug scene to the build settings.
+Regenerate the placeholder enemies and encounters (`test_enemy_*`, `test_miniboss_01`, `test_professor_01`,
+`test_encounter_*`, same folder, defined in `PlaceholderEnemyGenerator`; it regenerates the cards first). Close the
+editor on this project first (verified; menu: **Tools > Game > Regenerate Placeholder Enemies**):
+
+```powershell
+& "C:\Program Files\Unity\Hub\Editor\6000.3.24f1\Editor\Unity.exe" -batchmode -quit -projectPath <absolute path to game> `
+  -executeMethod Game.Unity.EditorTools.Content.PlaceholderEnemyGenerator.Generate -logFile <scratch-dir>/generate.log
+```
+
+Placeholder cards, enemies and encounters are flagged `_isPlaceholder` (`IPlaceholderContent`). Only
+`Unity/Content/Placeholders/`, `Tests/` and `Unity/DebugTools/` may reference them: otherwise an EditMode test
+fails, and `PlaceholderBuildCheck` fails any player build. `PlaceholderBuildCheck` also fails a build whose scenes,
+`Resources` assets or preloaded assets lie in one of those three folders: never add the debug scene to the build
+settings.
 
 Rebuild the debug fight scene (`Unity/DebugTools/DebugFight.unity`, see README "Watch a simulated fight") with
 code, never by editing its YAML. It keeps an existing `DebugFightSetup.asset`, where the fight's numbers live.

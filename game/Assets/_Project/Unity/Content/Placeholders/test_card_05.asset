@@ -21,4 +21,5 @@ MonoBehaviour:
     _amount: 1
   - _kind: 2
     _amount: 1
+  _neighbourModifiers: []
   _isPlaceholder: 1
