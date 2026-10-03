@@ -27,7 +27,6 @@ The Unity project lives in `game/`, not at the repo root.
 |---|---|---|
 | `game/Assets/_Project/Core/` | `Game.Core` | Pure C# game logic (combat simulator, cards, effects) |
 | `game/Assets/_Project/Unity/` | `Game.Unity` | Rendering, UI, scenes, ScriptableObjects. References `Game.Core` |
-| `game/Assets/_Project/Unity/Enemies/` | `Game.Unity` | Enemy and encounter assets, converted to Core fight participants |
 | `game/Assets/_Project/Unity/EditorTools/` | `Game.Unity.EditorTools` | Editor-only tools: content generators, build checks, headless simulation runner |
 | `game/Assets/_Project/Unity/DebugTools/` | `Game.Unity` | Debug fight viewer: scene, setup asset, playback (never in builds) |
 | `game/Assets/_Project/Tests/Core/` | `Game.Core.Tests` | EditMode tests for `Game.Core` (Editor only, NUnit) |
