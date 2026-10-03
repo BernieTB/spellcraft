@@ -69,6 +69,9 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
 - ADR 0014: boss preparation and recap (unlimited reserve, professor information hidden except mini-boss
   revelations kept in the bestiary, recap with per-card output, used and wasted bonuses, and the turning point
   and cause of a defeat).
+- Fight recap in Core, built only from the combat log: per-card casts, damage, healing and shield for every
+  side, neighbour bonuses used and wasted (with the reason), and for a lost fight the turning point and its
+  causes (wasted bonuses, broken shield, weakest card), or a time-limit outcome.
 
 ### Changed
 
