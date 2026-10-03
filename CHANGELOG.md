@@ -48,6 +48,8 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
 - Headless simulation runner: a batch-mode command plays the debug fight setup over a range of seeds and writes a
   reproducible JSON summary (win, loss and timeout rates, fight length in ticks, damage per card), with ADR 0006.
 - ADR 0007: MVP class identity (combo weaver) and 4-card starting deck.
+- ADR 0009: run pacing for the Vertical slice biome (about 8 minutes, professor available after a minimum
+  of regular fights, health reset every fight, rising XP curve, spell line slots from mini-bosses, reserve).
 
 ### Changed
 
