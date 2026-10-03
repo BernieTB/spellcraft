@@ -25,3 +25,5 @@ Status values: `Proposed`, `Accepted`, `Rejected`, `Deprecated`, `Superseded by 
 | [0005](0005-neighbour-modifier-resolution.md) | Neighbour modifier resolution | Proposed |
 | [0006](0006-headless-simulation-runner.md) | Headless simulation runner | Proposed |
 | [0007](0007-mvp-class-and-starting-deck.md) | MVP class identity and starting deck | Accepted |
+| [0008](0008-ui-toolkit-and-placeholder-visuals.md) | UI Toolkit screens, placeholder 2D shapes and a single bootstrap scene | Accepted |
+| [0009](0009-vertical-slice-run-pacing.md) | Run pacing for the Vertical slice biome | Accepted |

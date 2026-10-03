@@ -24,10 +24,11 @@ words. Use these terms consistently in code, docs and issues.
 | **Passive upgrade** | The non-card half of a linked choice: an improvement to the character. Its catalogue is not designed yet. |
 | **Preparation phase** | The step before a professor fight where the player studies the boss, rearranges the spell line and may swap cards from a limited reserve. See [Boss preparation phase and recap](GAME_DESIGN.md#boss-preparation-phase-and-recap). |
 | **Professor** | The boss of a biome. In code: `EnemyRank.Professor`. |
+| **Reserve** | The cards the player owns that are not in the spell line, for example a card gained while the line is full. Cards are swapped between the reserve and the line during the preparation phase. See [ADR 0009](adr/0009-vertical-slice-run-pacing.md). |
 | **Recap** | The detailed report after a boss fight explaining the result (e.g. damage per card, where the chain broke). |
-| **Run** | One attempt, from start to defeat or victory, lasting 20 to 30 minutes across several biomes. Losing ends the run. |
+| **Run** | One attempt, from start to defeat or victory, lasting 20 to 30 minutes across several biomes. Losing any fight ends the run. |
 | **Secret room** | A room unlocked by completing an objective (e.g. defeat N of monster X), entered by clicking. Hides a mini-boss. |
 | **Shield** | Combat stat that absorbs damage before health: damage first reduces shield, and only the remainder reduces health. Starts at a value from data (can be zero) and can be gained during a fight. Healing does not restore it. No maximum. |
-| **Spell line** | The player's build: an ordered sequence of cards that plays automatically in a loop. Position matters. |
+| **Spell line** | The player's build: an ordered sequence of cards that plays automatically in a loop. Position matters. Its **capacity** (number of slots) starts at 4 and grows by one the first time each mini-boss is defeated. |
 | **Tick** | The discrete unit of time in a fight. The simulation advances tick by tick, never by real time. |
 | **Word** | The text of a card: 2 to 5 letters, ancient-sounding, mostly meaningless (Latin-like). Final words are written by the project owner. |
