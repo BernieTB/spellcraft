@@ -47,6 +47,7 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
   viewer.
 - Headless simulation runner: a batch-mode command plays the debug fight setup over a range of seeds and writes a
   reproducible JSON summary (win, loss and timeout rates, fight length in ticks, damage per card), with ADR 0006.
+- ADR 0007: MVP class identity (combo weaver) and 4-card starting deck.
 
 ### Changed
 
