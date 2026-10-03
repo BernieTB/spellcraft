@@ -4,7 +4,7 @@ using NUnit.Framework;
 namespace Game.Unity.Tests.Content
 {
     /// <summary>
-    /// Keeps placeholder cards out of shipped content.
+    /// Keeps placeholder content out of shipped content.
     /// </summary>
     public class PlaceholderGuardTests
     {
@@ -26,6 +26,18 @@ namespace Game.Unity.Tests.Content
             var violations = PlaceholderGuard.FindPlaceholderReferences(new[] { path });
 
             CollectionAssert.AreEqual(new[] { $"{path} -> {path}" }, violations);
+        }
+
+        [Test]
+        public void FindPlaceholderReferences_PlaceholderEncounter_ReportsItsEnemyAndCards()
+        {
+            var path = PlaceholderEnemyGenerator.AssetPath(PlaceholderEnemyGenerator.EncounterIds[0]);
+
+            var violations = PlaceholderGuard.FindPlaceholderReferences(new[] { path });
+
+            CollectionAssert.Contains(violations, $"{path} -> {path}");
+            CollectionAssert.Contains(violations, $"{path} -> {PlaceholderEnemyGenerator.AssetPath(PlaceholderEnemyGenerator.EnemyIds[0])}");
+            CollectionAssert.Contains(violations, $"{path} -> {PlaceholderCardGenerator.AssetPath(PlaceholderCardGenerator.CardIds[0])}");
         }
 
         [Test]

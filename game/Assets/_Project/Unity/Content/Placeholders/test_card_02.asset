@@ -17,4 +17,5 @@ MonoBehaviour:
   _effects:
   - _kind: 1
     _amount: 2
+  _neighbourModifiers: []
   _isPlaceholder: 1
