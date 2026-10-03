@@ -61,6 +61,9 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
   victory gives a line slot, a unique card and revealed professor cards).
 - ADR 0011: enemy tiers (single-card regular monsters, worked mini-boss and professor lines) and a global fight
   time limit that counts as a defeat.
+- ADR 0012: level-up linked choices (3 packages from a card pool and a passive pool, duplicates allowed, stacking
+  passives), new cards added at the end of the line, live line editing during regular fights and a preparation
+  phase before mini-boss and professor fights.
 
 ### Changed
 

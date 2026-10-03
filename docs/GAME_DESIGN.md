@@ -1,6 +1,6 @@
 # Spellcraft: Game Design Document
 
-> **Status:** living document, last updated 2026-10-03.
+> **Status:** living document, last updated 2026-10-04.
 > Only decided design goes in the body. Anything undecided goes in [Open questions](#open-questions).
 > Terms are defined in [`GLOSSARY.md`](GLOSSARY.md).
 
@@ -51,7 +51,13 @@ Pacing (see [ADR 0009](adr/0009-vertical-slice-run-pacing.md); numbers live in d
   one defensive card); the words are written by the owner. Numbers live in data. See
   [ADR 0007](adr/0007-mvp-class-and-starting-deck.md).
 - Each level-up offers a **linked choice**: one passive upgrade paired with one card to add to the spell line.
-  The player picks a package, not two independent items.
+  The player picks a package, not two independent items. See
+  [ADR 0012](adr/0012-linked-choices-and-spell-line-editing.md).
+  - **3 packages** are offered; each pairs a card drawn from the class's card pool with a passive drawn from the
+    passive pool (run seed, no rarity in the Vertical slice). Owned cards can be offered again (duplicates).
+  - **Passive upgrades** last for the run and stack: +X max health or +X starting shield; +X to every effect of
+    one kind (damage, heal or shield); +X to the neighbour bonuses the hero's cards give.
+  - The chosen card is **added at the end** of the spell line, or goes to the reserve when the line is full.
 - XP comes from defeated enemies (mini-bosses give more). Each level costs more XP than the previous one,
   tuned for **about 5 level-ups** per biome on the shortest path; farming brings further levels more and more
   slowly, with no hard cap. See [ADR 0009](adr/0009-vertical-slice-run-pacing.md).
@@ -76,7 +82,15 @@ Pacing (see [ADR 0009](adr/0009-vertical-slice-run-pacing.md); numbers live in d
 
 ## Combat
 
-- Combat is **automatic**. The player does not act during a fight.
+- Combat is **automatic**. The player's only action during a fight is editing the spell line, and only in
+  regular fights:
+  - **Regular fights:** the player may rearrange the line and swap cards with the reserve at any time; the
+    change applies immediately. The card being cast finishes its cast, the line continues from the card now
+    after its position, and pending neighbour bonuses stay at their position in the line. See
+    [ADR 0012](adr/0012-linked-choices-and-spell-line-editing.md).
+  - **Mini-boss and professor fights:** the line is fixed once the fight starts; it is prepared beforehand.
+  - Line changes are fight inputs stamped with their tick, so fights stay deterministic and the combat log
+    records them.
 - Time advances in **ticks**. The hero and each enemy cast their own spell line in a loop; enemies use the
   same system as the hero.
 - First-pass stats: **health** and **shield**. Shield absorbs damage before health. The first effects are deal
@@ -95,7 +109,7 @@ Pacing (see [ADR 0009](adr/0009-vertical-slice-run-pacing.md); numbers live in d
 
 ## Boss preparation phase and recap
 
-**Preparation phase** (before each professor fight):
+**Preparation phase** (before each mini-boss and professor fight):
 
 - The player studies the boss. Information is **partial**, gathered through mini-bosses, secret rooms and the
   permanent bestiary.
