@@ -30,7 +30,7 @@ namespace Game.Core.Effects
         public BonusKind Kind => BonusKind.Damage;
 
         /// <inheritdoc />
-        public IEffect WithAmount(int amount) => new DealDamageEffect(amount);
+        public IAmountEffect WithAmount(int amount) => new DealDamageEffect(amount);
 
         /// <inheritdoc />
         /// <exception cref="ArgumentNullException"><paramref name="context"/> is null.</exception>

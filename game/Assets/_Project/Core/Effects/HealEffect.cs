@@ -30,7 +30,7 @@ namespace Game.Core.Effects
         public BonusKind Kind => BonusKind.Heal;
 
         /// <inheritdoc />
-        public IEffect WithAmount(int amount) => new HealEffect(amount);
+        public IAmountEffect WithAmount(int amount) => new HealEffect(amount);
 
         /// <inheritdoc />
         /// <exception cref="ArgumentNullException"><paramref name="context"/> is null.</exception>

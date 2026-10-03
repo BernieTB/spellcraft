@@ -99,6 +99,15 @@ namespace Game.Unity.Tests.Upgrades
         }
 
         [Test]
+        public void ToUpgrade_EffectAmountWithUnknownEffectKind_ThrowsNamingTheAsset()
+        {
+            Author(Id, (int)PassiveUpgradeKind.EffectAmount, 99, Amount);
+
+            var exception = Assert.Throws<InvalidOperationException>(() => _asset.ToUpgrade());
+            StringAssert.Contains(_asset.name, exception.Message);
+        }
+
+        [Test]
         public void IsPlaceholder_ReadsTheFlag()
         {
             Author(Id, (int)PassiveUpgradeKind.MaxHealth, 0, Amount, isPlaceholder: true);

@@ -38,7 +38,7 @@ namespace Game.Core.Tests.Effects
         {
             var original = Create(kind);
 
-            var changed = (IAmountEffect)original.WithAmount(NewAmount);
+            var changed = original.WithAmount(NewAmount);
 
             Assert.AreEqual(original.GetType(), changed.GetType());
             Assert.AreEqual(NewAmount, changed.Amount);

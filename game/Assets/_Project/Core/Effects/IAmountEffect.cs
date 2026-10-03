@@ -15,6 +15,6 @@ namespace Game.Core.Effects
 
         /// <summary>The same effect with <paramref name="amount"/> instead of <see cref="Amount"/>.</summary>
         /// <exception cref="System.ArgumentOutOfRangeException"><paramref name="amount"/> is negative.</exception>
-        IEffect WithAmount(int amount);
+        IAmountEffect WithAmount(int amount);
     }
 }

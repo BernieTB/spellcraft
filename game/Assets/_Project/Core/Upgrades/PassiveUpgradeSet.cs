@@ -21,15 +21,16 @@ namespace Game.Core.Upgrades
     /// <list type="bullet">
     /// <item>max health and starting shield raise the hero's combatant stats;</item>
     /// <item>an effect amount upgrade raises the amount of <b>every</b> effect of its kind on the hero's cards (a card
-    /// with two damage effects gets the bonus on each), unlike a neighbour bonus, which only adds to the first effect
-    /// of its kind in one cast;</item>
+    /// with two damage effects gets the bonus on each, so +2X; provisional reading of ADR 0012), unlike a neighbour
+    /// bonus, which only adds to the first effect of its kind in one cast;</item>
     /// <item>a neighbour bonus upgrade raises the amount of every neighbour modifier on the hero's cards, whatever
     /// its kind (provisional reading of ADR 0012), so a raised bonus that lands on a card without a matching effect
     /// is wasted like any other.</item>
     /// </list>
     /// <para>
     /// Upgraded cards keep their id and cast time, so the combat log shows the card with its upgraded amounts and the
-    /// outcomes it really produced. Effects that are not <see cref="IAmountEffect"/> are kept unchanged.
+    /// outcomes it really produced. An effect or neighbour modifier whose amount is 0 in data becomes X once upgraded.
+    /// Effects that are not <see cref="IAmountEffect"/> are kept unchanged.
     /// </para>
     /// </remarks>
     public sealed class PassiveUpgradeSet

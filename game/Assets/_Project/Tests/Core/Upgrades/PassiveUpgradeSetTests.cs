@@ -185,6 +185,15 @@ namespace Game.Core.Tests.Upgrades
         }
 
         [Test]
+        public void ApplyTo_EmptySetOnWoundedHero_Throws()
+        {
+            var hero = Hero(MixedCard());
+            hero.Combatant.TakeDamage(Shield + 1);
+
+            Assert.Throws<ArgumentException>(() => PassiveUpgradeSet.Empty.ApplyTo(hero));
+        }
+
+        [Test]
         public void ApplyTo_NullHero_Throws()
         {
             Assert.Throws<ArgumentNullException>(() => Set(MaxHealth(X)).ApplyTo((FightParticipant)null));
@@ -201,6 +210,40 @@ namespace Game.Core.Tests.Upgrades
             Assert.AreEqual(Heal, AmountOf(card.Effects[1]));
             Assert.AreEqual(GainShield, AmountOf(card.Effects[2]));
             Assert.AreEqual(Damage + X, AmountOf(card.Effects[3]));
+        }
+
+        [TestCase(BonusKind.Damage)]
+        [TestCase(BonusKind.Heal)]
+        [TestCase(BonusKind.Shield)]
+        public void ApplyTo_EffectAmount_LeavesEffectsOfOtherKindsUnchanged(BonusKind kind)
+        {
+            var original = MixedCard();
+
+            var card = Set(EffectAmount(kind, X)).ApplyTo(original);
+
+            for (var i = 0; i < original.Effects.Count; i++)
+            {
+                var effect = (IAmountEffect)original.Effects[i];
+                if (effect.Kind != kind)
+                {
+                    Assert.AreEqual(effect.Amount, AmountOf(card.Effects[i]), $"Effect {i} ({effect.Kind}) changed.");
+                }
+            }
+        }
+
+        [Test]
+        public void ApplyTo_ZeroAmounts_BecomeX()
+        {
+            var original = new CardDefinition(
+                "test_card_03",
+                1,
+                new IEffect[] { new DealDamageEffect(0) },
+                new[] { new NeighbourModifier(BonusKind.Heal, NeighbourDirection.Previous, 0) });
+
+            var card = Set(EffectAmount(BonusKind.Damage, X), NeighbourBonus(X)).ApplyTo(original);
+
+            Assert.AreEqual(X, AmountOf(card.Effects.Single()));
+            Assert.AreEqual(X, card.NeighbourModifiers.Single().Amount);
         }
 
         [TestCase(BonusKind.Heal, 1)]
@@ -320,6 +363,22 @@ namespace Game.Core.Tests.Upgrades
             var damage = result.Casts.Single().Outcome.Damage;
             Assert.AreEqual(Shield + X, damage.AbsorbedByShield);
             Assert.AreEqual(Health + X - 1, hero.Combatant.CurrentHealth);
+        }
+
+        [Test]
+        public void Fight_CardSharedWithEnemy_EnemyKeepsTheBaseAmount()
+        {
+            var strike = new CardDefinition("test_card_01", 1, new IEffect[] { new DealDamageEffect(Damage) });
+            var hero = Set(EffectAmount(BonusKind.Damage, X)).ApplyTo(Hero(strike));
+            var enemy = new FightParticipant(new Combatant(1000, 0), Line(strike));
+
+            var result = new Fight(hero, new[] { enemy }, 1, new Pcg32Random(Seed)).Run();
+
+            Assert.AreEqual(Damage, AmountOf(strike.Effects.Single()));
+            var heroCast = result.Casts.Single(cast => cast.CasterIndex == Fight.HeroIndex);
+            var enemyCast = result.Casts.Single(cast => cast.CasterIndex != Fight.HeroIndex);
+            Assert.AreEqual(Damage + X, heroCast.Outcome.Damage.HealthLost);
+            Assert.AreEqual(Damage, enemyCast.Outcome.Damage.AbsorbedByShield + enemyCast.Outcome.Damage.HealthLost);
         }
 
         // An effect with no amount, standing for future effect types that are not IAmountEffect.

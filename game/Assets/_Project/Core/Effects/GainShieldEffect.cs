@@ -30,7 +30,7 @@ namespace Game.Core.Effects
         public BonusKind Kind => BonusKind.Shield;
 
         /// <inheritdoc />
-        public IEffect WithAmount(int amount) => new GainShieldEffect(amount);
+        public IAmountEffect WithAmount(int amount) => new GainShieldEffect(amount);
 
         /// <inheritdoc />
         /// <exception cref="ArgumentNullException"><paramref name="context"/> is null.</exception>
