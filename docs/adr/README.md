@@ -30,3 +30,4 @@ Status values: `Proposed`, `Accepted`, `Rejected`, `Deprecated`, `Superseded by 
 | [0010](0010-secret-rooms-and-mini-boss-rewards.md) | Secret rooms, objectives and mini-boss rewards for the Vertical slice | Accepted |
 | [0011](0011-enemy-tiers-and-fight-time-limit.md) | Enemy tiers and the fight time limit | Accepted |
 | [0012](0012-linked-choices-and-spell-line-editing.md) | Level-up linked choices, passive upgrades and spell line editing | Accepted |
+| [0013](0013-card-evolution.md) | Card evolution through use | Accepted |

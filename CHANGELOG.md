@@ -64,6 +64,8 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
 - ADR 0012: level-up linked choices (3 packages from a card pool and a passive pool, duplicates allowed, stacking
   passives), new cards added at the end of the line, live line editing during regular fights and a preparation
   phase before mini-boss and professor fights.
+- ADR 0013: card evolution (two stages per card from data, word and cast time unchanged, counted per card
+  instance over the run and kept in the reserve, shown by a stage mark and in the combat log).
 
 ### Changed
 
