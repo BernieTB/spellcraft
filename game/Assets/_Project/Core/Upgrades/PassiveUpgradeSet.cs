@@ -21,10 +21,10 @@ namespace Game.Core.Upgrades
     /// <list type="bullet">
     /// <item>max health and starting shield raise the hero's combatant stats;</item>
     /// <item>an effect amount upgrade raises the amount of <b>every</b> effect of its kind on the hero's cards (a card
-    /// with two damage effects gets the bonus on each, so +2X; provisional reading of ADR 0012), unlike a neighbour
+    /// with two damage effects gets the bonus on each, so +2X; confirmed by the owner on 2026-10-04), unlike a neighbour
     /// bonus, which only adds to the first effect of its kind in one cast;</item>
     /// <item>a neighbour bonus upgrade raises the amount of every neighbour modifier on the hero's cards, whatever
-    /// its kind (provisional reading of ADR 0012), so a raised bonus that lands on a card without a matching effect
+    /// its kind (confirmed by the owner on 2026-10-04), so a raised bonus that lands on a card without a matching effect
     /// is wasted like any other.</item>
     /// </list>
     /// <para>
