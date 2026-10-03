@@ -12,6 +12,25 @@ namespace Game.Core.Tests.Randomness
         private const int Draws = 100;
 
         [Test]
+        public void Clone_GivesTheSameNumbersAndStaysIndependent()
+        {
+            var random = new Pcg32Random(Seed);
+            random.NextUInt();
+            var clone = random.Clone();
+
+            var fromClone = new uint[Draws];
+            for (var i = 0; i < Draws; i++)
+            {
+                fromClone[i] = clone.NextUInt();
+            }
+
+            for (var i = 0; i < Draws; i++)
+            {
+                Assert.AreEqual(fromClone[i], random.NextUInt());
+            }
+        }
+
+        [Test]
         public void NextUInt_ReferenceSeed_MatchesPublishedPcg32Output()
         {
             // First outputs of the reference pcg32-demo (pcg-c-basic) for seed 42, sequence 54. Guards against any

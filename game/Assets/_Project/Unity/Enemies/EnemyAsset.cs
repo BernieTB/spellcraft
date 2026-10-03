@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
+using Game.Core.Cards;
 using Game.Core.Combat;
+using Game.Core.Enemies;
 using Game.Unity.Cards;
-using Game.Unity.Combat;
 using Game.Unity.Content;
 using UnityEngine;
 
@@ -50,11 +51,11 @@ namespace Game.Unity.Enemies
         public bool IsPlaceholder => _isPlaceholder;
 
         /// <summary>
-        /// Builds a new combatant with this enemy's stats and spell line. Each call returns an independent
-        /// participant, so the same enemy can appear several times in one fight.
+        /// Converts the asset to an immutable Core <see cref="EnemyDefinition"/>, which runs use to create a fresh
+        /// participant for every fight.
         /// </summary>
         /// <exception cref="InvalidOperationException">The asset data is invalid; the message names the asset.</exception>
-        public FightParticipant ToParticipant()
+        public EnemyDefinition ToDefinition()
         {
             try
             {
@@ -68,12 +69,34 @@ namespace Game.Unity.Enemies
                     throw new InvalidOperationException("The enemy's spell line has no card.");
                 }
 
-                return FightParticipantBuilder.Create(_maxHealth, _startingShield, _spellLine, "enemy");
+                var cards = new List<CardDefinition>(_spellLine.Count);
+                for (var i = 0; i < _spellLine.Count; i++)
+                {
+                    var card = _spellLine[i];
+                    if (card == null)
+                    {
+                        throw new InvalidOperationException($"The enemy's spell line has an empty slot at position {i}.");
+                    }
+
+                    cards.Add(card.ToDefinition());
+                }
+
+                return new EnemyDefinition(_id, _maxHealth, _startingShield, cards);
             }
             catch (Exception exception) when (exception is ArgumentException || exception is InvalidOperationException)
             {
                 throw new InvalidOperationException($"Enemy asset '{name}' is invalid: {exception.Message}", exception);
             }
+        }
+
+        /// <summary>
+        /// Builds a new combatant with this enemy's stats and spell line. Each call returns an independent
+        /// participant, so the same enemy can appear several times in one fight.
+        /// </summary>
+        /// <exception cref="InvalidOperationException">The asset data is invalid; the message names the asset.</exception>
+        public FightParticipant ToParticipant()
+        {
+            return ToDefinition().CreateParticipant();
         }
     }
 }

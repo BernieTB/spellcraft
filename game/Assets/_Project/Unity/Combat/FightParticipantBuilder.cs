@@ -9,7 +9,7 @@ namespace Game.Unity.Combat
 {
     /// <summary>
     /// Converts authored combatant data (stats and a spell line of <see cref="CardAsset"/>s) to a fresh Core
-    /// <see cref="FightParticipant"/>. Shared by every asset that describes one side of a fight.
+    /// <see cref="FightParticipant"/>. Used by the debug fight setup; enemies convert through Core definitions instead.
     /// </summary>
     public static class FightParticipantBuilder
     {
