@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Game.Core.Combat;
+using Game.Core.Enemies;
 using Game.Unity.Content;
 using UnityEngine;
 
@@ -35,10 +36,11 @@ namespace Game.Unity.Enemies
         public bool IsPlaceholder => _isPlaceholder;
 
         /// <summary>
-        /// Builds a new Core participant for each enemy, in order, ready to pass to a <see cref="Fight"/>.
+        /// Converts the asset to an immutable Core <see cref="EncounterDefinition"/>, which runs use to create fresh
+        /// participants for every fight.
         /// </summary>
         /// <exception cref="InvalidOperationException">The asset data is invalid; the message names the asset.</exception>
-        public List<FightParticipant> ToParticipants()
+        public EncounterDefinition ToDefinition()
         {
             try
             {
@@ -52,7 +54,7 @@ namespace Game.Unity.Enemies
                     throw new InvalidOperationException("The encounter has no enemy.");
                 }
 
-                var participants = new List<FightParticipant>(_enemies.Count);
+                var enemies = new List<EnemyDefinition>(_enemies.Count);
                 for (var i = 0; i < _enemies.Count; i++)
                 {
                     var enemy = _enemies[i];
@@ -61,15 +63,24 @@ namespace Game.Unity.Enemies
                         throw new InvalidOperationException($"Enemy slot {i} is empty.");
                     }
 
-                    participants.Add(enemy.ToParticipant());
+                    enemies.Add(enemy.ToDefinition());
                 }
 
-                return participants;
+                return new EncounterDefinition(_id, enemies);
             }
-            catch (InvalidOperationException exception)
+            catch (Exception exception) when (exception is ArgumentException || exception is InvalidOperationException)
             {
                 throw new InvalidOperationException($"Encounter asset '{name}' is invalid: {exception.Message}", exception);
             }
+        }
+
+        /// <summary>
+        /// Builds a new Core participant for each enemy, in order, ready to pass to a <see cref="Fight"/>.
+        /// </summary>
+        /// <exception cref="InvalidOperationException">The asset data is invalid; the message names the asset.</exception>
+        public List<FightParticipant> ToParticipants()
+        {
+            return ToDefinition().CreateParticipants();
         }
     }
 }

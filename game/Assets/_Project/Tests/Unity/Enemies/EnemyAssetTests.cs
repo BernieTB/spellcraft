@@ -115,5 +115,29 @@ namespace Game.Unity.Tests.Enemies
 
             StringAssert.Contains("'test_enemy'", exception.Message);
         }
-    }
+    
+        [Test]
+        public void ToDefinition_ValidAsset_CopiesIdStatsAndLine()
+        {
+            var enemy = _assets.Enemy("test_enemy", EnemyRank.Regular, 12, 3, _assets.Card("test_card_a"), _assets.Card("test_card_b"));
+
+            var definition = enemy.ToDefinition();
+
+            Assert.AreEqual("test_enemy", definition.Id);
+            Assert.AreEqual(12, definition.MaxHealth);
+            Assert.AreEqual(3, definition.Shield);
+            CollectionAssert.AreEqual(new[] { "test_card_a", "test_card_b" }, definition.SpellLine.Select(c => c.Id));
+        }
+
+        [Test]
+        public void ToDefinition_EmptyCardSlot_ThrowsNamingTheAssetAndPosition()
+        {
+            var enemy = _assets.Enemy("test_enemy", EnemyRank.Regular, 5, 0, _assets.Card("test_card_a"), null);
+
+            var exception = Assert.Throws<InvalidOperationException>(() => enemy.ToDefinition());
+
+            StringAssert.Contains("'test_enemy'", exception.Message);
+            StringAssert.Contains("position 1", exception.Message);
+        }
+}
 }
