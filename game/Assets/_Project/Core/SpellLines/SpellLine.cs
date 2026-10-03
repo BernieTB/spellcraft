@@ -46,7 +46,7 @@ namespace Game.Core.SpellLines
         }
 
         /// <summary>Maximum number of cards the line can hold.</summary>
-        public int Capacity { get; }
+        public int Capacity { get; private set; }
 
         /// <summary>Number of cards in the line.</summary>
         public int Count => _cards.Count;
@@ -89,6 +89,22 @@ namespace Game.Core.SpellLines
         {
             ValidatePosition(position, nameof(position));
             return (position + _cards.Count - 1) % _cards.Count;
+        }
+
+        /// <summary>
+        /// Adds slots to the line. The cards and their order do not change, and <see cref="Cards"/> stays the same
+        /// live view.
+        /// </summary>
+        /// <param name="slots">Number of slots to add. At least 1.</param>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="slots"/> is less than 1.</exception>
+        public void IncreaseCapacity(int slots)
+        {
+            if (slots < 1)
+            {
+                throw new ArgumentOutOfRangeException(nameof(slots), slots, "Add at least one slot.");
+            }
+
+            Capacity = checked(Capacity + slots);
         }
 
         /// <summary>Adds a card after the last position.</summary>

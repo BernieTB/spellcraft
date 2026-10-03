@@ -101,5 +101,31 @@ namespace Game.Unity.Tests.Enemies
             StringAssert.Contains("'test_encounter'", exception.Message);
             StringAssert.Contains("'test_enemy'", exception.Message);
         }
-    }
+    
+        [Test]
+        public void ToDefinition_ValidAsset_KeepsIdAndEnemyOrder()
+        {
+            var first = _assets.Enemy("test_enemy_a", EnemyRank.Regular, 5, 0, _assets.Card("test_card_a"));
+            var second = _assets.Enemy("test_enemy_b", EnemyRank.MiniBoss, 8, 1, _assets.Card("test_card_b"));
+            var encounter = _assets.Encounter("test_encounter", first, second, first);
+
+            var definition = encounter.ToDefinition();
+
+            Assert.AreEqual("test_encounter", definition.Id);
+            CollectionAssert.AreEqual(
+                new[] { "test_enemy_a", "test_enemy_b", "test_enemy_a" }, definition.Enemies.Select(e => e.Id));
+        }
+
+        [Test]
+        public void ToDefinition_InvalidEnemy_ThrowsNamingBothAssets()
+        {
+            var enemy = _assets.Enemy("test_enemy", EnemyRank.Regular, 0, 0, _assets.Card("test_card_a"));
+            var encounter = _assets.Encounter("test_encounter", enemy);
+
+            var exception = Assert.Throws<InvalidOperationException>(() => encounter.ToDefinition());
+
+            StringAssert.Contains("'test_encounter'", exception.Message);
+            StringAssert.Contains("'test_enemy'", exception.Message);
+        }
+}
 }
