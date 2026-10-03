@@ -22,7 +22,8 @@ namespace Game.Core.Combat.Recap
     /// that has events, plus the starting state (tick 0). The hero is <i>behind</i> when the share of health it has
     /// left is lower than the enemies' share: hero health / hero max health &lt; sum of the enemies' health / sum
     /// of their max health (dead enemies count with zero health). Shares are compared, not raw health, because a
-    /// professor can have far more health than the hero. The turning point is the first tick from which the hero
+    /// professor can have far more health than the hero, and shield is not counted. A tie is not behind. Confirmed
+    /// by the owner on 2026-10-04. The turning point is the first tick from which the hero
     /// stays behind until the end. A defeat always ends behind; a fight lost on the time limit may not, and then
     /// has no turning point and no <see cref="DefeatAnalysis"/>.
     /// </para>
@@ -36,11 +37,13 @@ namespace Game.Core.Combat.Recap
     /// <list type="number">
     /// <item><see cref="DefeatCause.WastedBonuses"/>: a hero cast in the loop wasted part of its bonus;</item>
     /// <item><see cref="DefeatCause.ShieldBroken"/>: damage brought the hero's shield from above zero to zero
-    /// between the start of the loop and the turning point (the latest such hit is reported);</item>
+    /// between the start of the loop and the turning point, both included (the latest such hit is
+    /// reported);</item>
     /// <item><see cref="DefeatCause.WeakestCard"/>: always present, the hero card with the lowest output (damage
     /// plus healing plus shield) over the loop; ties go to the lowest position.</item>
     /// </list>
-    /// The priority puts first what the player controls in the spell line. No threshold is involved.
+    /// The priority puts first what the player controls in the spell line (confirmed by the owner on 2026-10-04).
+    /// No threshold is involved.
     /// </para>
     /// </remarks>
     public static class FightRecapBuilder
@@ -165,6 +168,18 @@ namespace Game.Core.Combat.Recap
                     }
                 }
 
+                wasted.Sort((a, b) =>
+                {
+                    var byPosition = a.Position.CompareTo(b.Position);
+                    if (byPosition != 0)
+                    {
+                        return byPosition;
+                    }
+
+                    var byKind = a.Kind.CompareTo(b.Kind);
+                    return byKind != 0 ? byKind : string.CompareOrdinal(a.CardId, b.CardId);
+                });
+
                 recaps[i] = new CombatantRecap(
                     i,
                     new ReadOnlyCollection<CardRecap>(cards),
@@ -254,7 +269,7 @@ namespace Game.Core.Combat.Recap
                 causes.Add(DefeatCause.WastedBonuses);
             }
 
-            var breaker = FindShieldBreak(log, Math.Min(windowStart, turningPoint), Math.Max(windowEnd, turningPoint));
+            var breaker = FindShieldBreak(log, Math.Min(windowStart, turningPoint), turningPoint);
             if (breaker != null)
             {
                 causes.Add(DefeatCause.ShieldBroken);
@@ -308,7 +323,7 @@ namespace Game.Core.Combat.Recap
                 }
 
                 // heroHealth / heroMax < enemyHealth / enemyMax, without division.
-                return health[Fight.HeroIndex] * enemyMax < enemyHealth * heroMax;
+                return checked(health[Fight.HeroIndex] * enemyMax) < checked(enemyHealth * heroMax);
             }
 
             // The tick of the latest state where the hero was not behind is followed by the turning point.

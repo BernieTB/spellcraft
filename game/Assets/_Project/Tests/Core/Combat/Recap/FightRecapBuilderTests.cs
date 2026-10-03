@@ -225,7 +225,7 @@ namespace Game.Core.Tests.Combat.Recap
         // --- Turning point ---
 
         [Test]
-        public void Build_HeroBehindFromFirstTick_TurningPointIsThatTick()
+        public void Build_FallsBehindOnTick1AndStays_TurningPointIs1()
         {
             // Tick 1: enemy 9/10, hero 6/10. Tick 2: 8 and 2. Tick 3: the hero dies.
             var recap = Recap(Participant(10, 0, Hit("test_hit", 1)), Participant(10, 0, Hit("test_enemy_hit", 4)));
@@ -301,22 +301,181 @@ namespace Game.Core.Tests.Combat.Recap
         }
 
         [Test]
-        public void Build_WastedBonusInLoop_IsMainCauseBeforeShieldAndWeakestCard()
+        public void Build_WastedBonusInLoop_IsMainCause_ShieldBrokenAfterTurningPointIgnored()
         {
             // Tick 1: booster; the enemy deals 4 (hero 6/10, behind). Tick 2: the guard wastes +2 damage and gains 1
-            // shield, broken by the enemy's 4. Tick 3: the hero dies. The loop is the hero's first two casts.
+            // shield, broken by the enemy's 4 after the turning point, so not a cause. Tick 3: the hero dies. The
+            // loop is the hero's first two casts.
             var recap = Recap(Participant(10, 0, Booster(2), Guard(1)), Participant(10, 0, Hit("test_enemy_hit", 4)));
 
             var defeat = recap.Defeat;
             Assert.AreEqual(1, defeat.TurningPointTick);
             Assert.AreEqual((1, 2), (defeat.WindowStartTick, defeat.WindowEndTick));
             Assert.AreEqual(DefeatCause.WastedBonuses, defeat.MainCause);
+            CollectionAssert.AreEqual(new[] { DefeatCause.WastedBonuses, DefeatCause.WeakestCard }, defeat.Causes);
+            Assert.AreEqual(new EffectBonus(2, 0, 0), defeat.WastedBonus);
+            Assert.AreEqual(-1, defeat.ShieldBrokenTick);
+            Assert.AreEqual((0, "test_boost", 0L), (defeat.WeakestCardPosition, defeat.WeakestCardId, defeat.WeakestCardOutput));
+        }
+
+        // --- Golden defeat against two enemies ---
+
+        [Test]
+        public void Build_GoldenDefeatAgainstTwoEnemies_FullRecap()
+        {
+            // Hero 12/12: booster (+2 damage to next) / guard (shield 3) / hit 2, each 1 tick. Enemy 1 (6): hits 1
+            // every 2 ticks. Enemy 2 (10): hits 4 every 2 ticks.
+            // T1 booster. T2 guard wastes +2, shield 3; enemy 1 takes 1 shield; enemy 2 takes 2 shield and 2 health
+            // (hero 10/12 against 16/16: behind, turning point) and breaks the shield. T3 hit: enemy 1 at 4.
+            // T4 hero 5. T5 guard. T6 hit (enemy 1 at 2), hero 3. T7 booster. T8 guard, hero 1. T9 hit kills enemy 1.
+            // T10 enemy 2 deals the last 1 health: defeat.
+            var log = CombatLogRecorder.Record(
+                Participant(12, 0, Booster(2), Guard(3), Hit("test_hit", 2)),
+                new[]
+                {
+                    Participant(6, 0, Hit("test_e1", 1, 2)),
+                    Participant(10, 0, Hit("test_e2", 4, 2)),
+                },
+                MaxTicks,
+                new Pcg32Random(Seed));
+
+            var recap = FightRecapBuilder.Build(log);
+
+            Assert.AreEqual((FightRecapOutcome.Defeat, 10), (recap.Outcome, recap.Ticks));
+
+            var hero = recap.Hero.Cards
+                .Select(c => (c.Position, c.CardId, c.Casts, c.Damage, c.Healing, c.ShieldGained, c.BonusReceived, c.BonusWasted))
+                .ToArray();
+            CollectionAssert.AreEqual(
+                new[]
+                {
+                    (0, "test_boost", 4, 0, 0, 0, EffectBonus.None, EffectBonus.None),
+                    (1, "test_guard", 3, 0, 0, 9, new EffectBonus(6, 0, 0), new EffectBonus(6, 0, 0)),
+                    (2, "test_hit", 3, 6, 0, 0, EffectBonus.None, EffectBonus.None),
+                },
+                hero);
+            var heroWaste = recap.Hero.WastedBonuses.Single();
+            Assert.AreEqual(
+                (1, "test_guard", BonusKind.Damage, 6),
+                (heroWaste.Position, heroWaste.CardId, heroWaste.Kind, heroWaste.Amount));
+
+            var e1 = recap.Combatants[1].Cards.Single();
+            var e2 = recap.Combatants[2].Cards.Single();
+            Assert.AreEqual(("test_e1", 4, 4), (e1.CardId, e1.Casts, e1.Damage));
+            Assert.AreEqual(("test_e2", 5, 17), (e2.CardId, e2.Casts, e2.Damage));
+            CollectionAssert.IsEmpty(recap.Combatants[1].WastedBonuses);
+            CollectionAssert.IsEmpty(recap.Combatants[2].WastedBonuses);
+
+            var defeat = recap.Defeat;
+            Assert.AreEqual((2, 1, 3), (defeat.TurningPointTick, defeat.WindowStartTick, defeat.WindowEndTick));
             CollectionAssert.AreEqual(
                 new[] { DefeatCause.WastedBonuses, DefeatCause.ShieldBroken, DefeatCause.WeakestCard },
                 defeat.Causes);
+            Assert.AreEqual(DefeatCause.WastedBonuses, defeat.MainCause);
             Assert.AreEqual(new EffectBonus(2, 0, 0), defeat.WastedBonus);
-            Assert.AreEqual(2, defeat.ShieldBrokenTick);
-            Assert.AreEqual((0, "test_boost", 0L), (defeat.WeakestCardPosition, defeat.WeakestCardId, defeat.WeakestCardOutput));
+            Assert.AreEqual(
+                (2, 2, 0, "test_e2"),
+                (defeat.ShieldBrokenTick, defeat.ShieldBreakerIndex, defeat.ShieldBreakerPosition, defeat.ShieldBreakerCardId));
+            Assert.AreEqual(
+                (0, "test_boost", 0L),
+                (defeat.WeakestCardPosition, defeat.WeakestCardId, defeat.WeakestCardOutput));
+        }
+
+        // --- Edge cases ---
+
+        [Test]
+        public void Build_HeroWoundedAtStart_TurningPointIsTick0()
+        {
+            // The log's starting state has the hero at 3/10: behind before any event, and it stays behind.
+            var fight = new Fight(
+                Participant(10, 0, Hit("test_hit", 1)),
+                new[] { Participant(10, 0, Hit("test_enemy_hit", 1)) },
+                2,
+                new Pcg32Random(Seed));
+            var snapshots = new[]
+            {
+                new CombatantSnapshot(Hero, 10, 3, 0, new[] { "test_hit" }),
+                new CombatantSnapshot(FirstEnemy, 10, 10, 0, new[] { "test_enemy_hit" }),
+            };
+
+            var recap = FightRecapBuilder.Build(CombatLog.Build(snapshots, fight.Run()));
+
+            Assert.AreEqual(0, recap.Defeat.TurningPointTick);
+        }
+
+        // Hero 10: hit 1 (3 ticks) / heal 8 / idle. Enemy 10: hits 8 every 3 ticks.
+        // T3: enemy 9, hero 2 (behind). T4: healed to 10 (ahead again). T6: hero 2 (behind). T9: the hero dies.
+        private static FightParticipant[] RecoveringFight() => new[]
+        {
+            Participant(
+                10,
+                0,
+                Hit("test_hit", 1, 3),
+                new CardDefinition("test_heal", 1, new IEffect[] { new HealEffect(8) }),
+                Idle(40)),
+            Participant(10, 0, Hit("test_enemy_hit", 8, 3)),
+        };
+
+        [Test]
+        public void Build_HeroRecoversThenFallsBehindAgain_TurningPointIsTheLastFall()
+        {
+            var fight = RecoveringFight();
+            var recap = Recap(fight[0], fight[1]);
+
+            Assert.AreEqual(FightRecapOutcome.Defeat, recap.Outcome);
+            Assert.AreEqual(6, recap.Defeat.TurningPointTick);
+        }
+
+        [Test]
+        public void Build_TimeLimitAfterHeroCameBack_NoDefeatAnalysis()
+        {
+            // Same fight stopped on tick 5: behind on tick 3, ahead again from tick 4.
+            var fight = RecoveringFight();
+            var recap = Recap(5, fight[0], fight[1]);
+
+            Assert.AreEqual(FightRecapOutcome.TimeLimit, recap.Outcome);
+            Assert.IsNull(recap.Defeat);
+        }
+
+        [Test]
+        public void Build_WeakestCardTie_LowestPositionWins()
+        {
+            // Both hero cards deal 1 in the loop (ticks 1 and 2); the card at position 0 wins the tie although its
+            // id sorts after the other.
+            var recap = Recap(
+                Participant(10, 0, Hit("test_hit_b", 1), Hit("test_hit_a", 1)),
+                Participant(10, 0, Hit("test_enemy_hit", 4)));
+
+            var defeat = recap.Defeat;
+            Assert.AreEqual(
+                (0, "test_hit_b", 1L),
+                (defeat.WeakestCardPosition, defeat.WeakestCardId, defeat.WeakestCardOutput));
+        }
+
+        [Test]
+        public void Build_LogWithoutEvents_TimeLimitWithZeroCasts()
+        {
+            var snapshots = new[]
+            {
+                new CombatantSnapshot(Hero, 10, 10, 0, new[] { "test_hit" }),
+                new CombatantSnapshot(FirstEnemy, 10, 10, 0, new[] { "test_enemy_hit" }),
+            };
+            var log = CombatLog.Build(snapshots, new FightResult(FightWinner.None, 0, new CastRecord[0]));
+
+            var recap = FightRecapBuilder.Build(log);
+
+            Assert.AreEqual(FightRecapOutcome.TimeLimit, recap.Outcome);
+            Assert.AreEqual(0, recap.Hero.Cards.Single().Casts);
+            Assert.IsNull(recap.Defeat);
+        }
+
+        [Test]
+        public void Build_LessThanTwoCombatants_Throws()
+        {
+            var snapshots = new[] { new CombatantSnapshot(Hero, 10, 10, 0, new[] { "test_hit" }) };
+            var log = CombatLog.Build(snapshots, new FightResult(FightWinner.None, 0, new CastRecord[0]));
+
+            Assert.Throws<ArgumentException>(() => FightRecapBuilder.Build(log));
         }
 
         [Test]

@@ -36,7 +36,9 @@ namespace Game.Core.Combat.Recap
         /// </summary>
         public IReadOnlyList<CardRecap> Cards { get; }
 
-        /// <summary>Every wasted bonus of this line, by position, then kind (damage, heal, shield).</summary>
+        /// <summary>
+        /// Every wasted bonus of this line, sorted by position, then kind (damage, heal, shield), then card id.
+        /// </summary>
         public IReadOnlyList<BonusWaste> WastedBonuses { get; }
 
         /// <summary>Total neighbour bonus received by the line's casts.</summary>
