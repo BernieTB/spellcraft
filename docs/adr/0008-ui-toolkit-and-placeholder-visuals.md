@@ -1,6 +1,6 @@
 # 0008. UI Toolkit screens, placeholder 2D shapes and a single bootstrap scene
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-10-03
 
 ## Context
