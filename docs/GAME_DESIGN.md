@@ -118,14 +118,21 @@ Pacing (see [ADR 0009](adr/0009-vertical-slice-run-pacing.md); numbers live in d
 
 **Preparation phase** (before each mini-boss and professor fight):
 
-- The player studies the boss. Information is **partial**, gathered through mini-bosses, secret rooms and the
-  permanent bestiary.
-- The player may **rearrange** the spell line and **swap cards** from a limited reserve.
+- The player studies the boss. Information is **partial**: the professor's health, shield and cards are hidden
+  except what mini-bosses have revealed. Revealed information is kept permanently in the **bestiary**, across
+  runs. See [ADR 0014](adr/0014-boss-preparation-and-recap.md).
+- The player may **rearrange** the spell line and **swap cards** with the reserve, which has **no size limit**.
+- A preparation cannot be retried: losing the fight ends the run.
 
 **Combat:** once it starts, it is fully automatic. The player watches.
 
-**Recap** (after the fight): a detailed explanation of the result, such as damage per card and where the chain
-broke, so a defeat feels fair.
+**Recap** (after every mini-boss and professor fight, and after any defeat), built only from the combat log:
+
+- per card, for both sides: damage, healing and shield produced, and number of casts;
+- neighbour bonuses used and wasted, and why a bonus was wasted;
+- on a defeat, **where the chain broke**: the turning point (the tick after which the hero's health stays below
+  the enemy's) and the most visible cause around it (wasted bonuses, weakest card, broken shield), so a defeat
+  feels fair.
 
 ## Mini-bosses and secret rooms
 
@@ -136,8 +143,8 @@ broke, so a defeat feels fair.
 - The first victory over each mini-boss gives:
   - **+1 spell line slot**;
   - its **unique card**, found nowhere else, which goes to the spell line or the reserve;
-  - **information about the professor**: some cards of the professor's spell line are revealed (from data) and
-    shown during the preparation phase;
+  - **information about the professor**: some of its cards, and/or its health or shield, are revealed (from
+    data), shown during the preparation phase and kept in the bestiary;
   - more XP than a regular fight.
 - A mini-boss can be fought again for XP only. Losing in a secret room ends the run.
 
@@ -180,7 +187,7 @@ Not decided. Do not implement a choice for these without the owner's decision.
   used at all.
 - Whether elements are represented as ink colours, and whether word sounds map to elements.
 - Number of biomes in the full game; pacing of biomes after the first.
-- Number of secret rooms in biomes after the first; whether revealed professor cards are kept across runs
-  (bestiary).
+- Number of secret rooms in biomes after the first.
+- What the player knows about a mini-boss before its own fight.
 - Design of professors and mini-bosses (creatures, spell lines, unique cards); their number in the full game.
 - Audio direction, final title (working title: Spellcraft), art pipeline.
