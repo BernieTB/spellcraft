@@ -74,6 +74,8 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
   unlocked secret room, professor after a minimum of regular fights); every fight starts at max health; any defeat,
   including the global fight time limit, ends the run. Core class, enemy, encounter and biome definitions; enemy
   and encounter assets convert to them (`ToDefinition`). Spell lines can gain slots (`SpellLine.IncreaseCapacity`).
+- Class data: `ClassAsset` (id, max health, starting shield, starting line capacity, starting deck and level-up
+  card pool) converts to the Core `ClassDefinition`, with errors that name the asset.
 
 ### Changed
 
