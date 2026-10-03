@@ -41,6 +41,21 @@ namespace Game.Core.Randomness
             }
         }
 
+        private Pcg32Random(Pcg32Random source)
+        {
+            _state = source._state;
+            _increment = source._increment;
+        }
+
+        /// <summary>
+        /// Returns an independent generator in the same state: it gives the same numbers as this one from now on,
+        /// and drawing from either does not change the other.
+        /// </summary>
+        public Pcg32Random Clone()
+        {
+            return new Pcg32Random(this);
+        }
+
         /// <inheritdoc />
         public uint NextUInt()
         {
