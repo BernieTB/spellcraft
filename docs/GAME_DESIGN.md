@@ -81,6 +81,11 @@ Pacing (see [ADR 0009](adr/0009-vertical-slice-run-pacing.md); numbers live in d
   same system as the hero.
 - First-pass stats: **health** and **shield**. Shield absorbs damage before health. The first effects are deal
   damage, heal and gain shield. See [ADR 0002](adr/0002-first-pass-combat-rules.md).
+- **Two tiers of fights.** Regular fights are the idle part: regular monsters are very simple, with a single
+  attack card. Mini-bosses and professors are the strategic part, with worked spell lines of several cards.
+  See [ADR 0011](adr/0011-enemy-tiers-and-fight-time-limit.md).
+- **Time limit:** a fight that reaches a global maximum number of ticks (from data, far above a normal fight)
+  counts as a defeat, and the recap says so. It is a safety net, not a mechanic.
 - Targeting (first pass): the hero targets the first living enemy, enemies target the hero; heal and shield
   apply to the caster. See [ADR 0004](adr/0004-confirm-first-pass-combat-rules.md).
 - Randomness is **minimised** so that preparation decides outcomes.
@@ -103,11 +108,17 @@ broke, so a defeat feels fair.
 
 ## Mini-bosses and secret rooms
 
-- Secret rooms are unlocked by **objectives** (e.g. defeat N of monster X). The player clicks to enter.
+- Secret rooms are unlocked by **objectives** of the form **defeat N of monster X** (from data), counted over
+  regular fights. The player clicks to enter. See [ADR 0010](adr/0010-secret-rooms-and-mini-boss-rewards.md).
+- The Vertical slice biome has **two secret rooms**, each with its own objective and mini-boss.
 - Secret rooms hide **mini-bosses**, which are **mythical creatures**.
-- Mini-bosses and secret rooms are a source of information about the biome's professor.
-- The first victory over each mini-boss gives **+1 spell line slot**. Each mini-boss also has its own unique
-  loot (not designed yet). A mini-boss can be fought again for XP, but its slot is given once.
+- The first victory over each mini-boss gives:
+  - **+1 spell line slot**;
+  - its **unique card**, found nowhere else, which goes to the spell line or the reserve;
+  - **information about the professor**: some cards of the professor's spell line are revealed (from data) and
+    shown during the preparation phase;
+  - more XP than a regular fight.
+- A mini-boss can be fought again for XP only. Losing in a secret room ends the run.
 
 ## Meta-progression
 
@@ -148,6 +159,7 @@ Not decided. Do not implement a choice for these without the owner's decision.
   used at all.
 - Whether elements are represented as ink colours, and whether word sounds map to elements.
 - Number of biomes in the full game; pacing of biomes after the first.
-- Number of secret rooms per biome, their objectives and the unique loot of mini-bosses.
-- Number and design of professors and mini-bosses.
+- Number of secret rooms in biomes after the first; whether revealed professor cards are kept across runs
+  (bestiary).
+- Design of professors and mini-bosses (creatures, spell lines, unique cards); their number in the full game.
 - Audio direction, final title (working title: Spellcraft), art pipeline.
