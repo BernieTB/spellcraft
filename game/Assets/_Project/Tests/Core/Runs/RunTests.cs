@@ -43,9 +43,11 @@ namespace Game.Core.Tests.Runs
             EncounterDefinition professor = null,
             CardDefinition[] deck = null,
             int capacity = 4,
-            ulong seed = 1)
+            ulong seed = 1,
+            int startingShield = 0)
         {
-            var heroClass = new ClassDefinition("TestClass", HeroHealth, 0, capacity, deck ?? new[] { Strike }, new CardDefinition[0]);
+            var heroClass = new ClassDefinition(
+                "TestClass", HeroHealth, startingShield, capacity, deck ?? new[] { Strike }, new CardDefinition[0]);
             var biome = new BiomeDefinition("TestBiome", pool ?? new[] { Weak }, minimumRegularFights, professor ?? Professor);
             return new Run(heroClass, biome, new RunRules(TimeLimit), seed);
         }
@@ -200,14 +202,46 @@ namespace Game.Core.Tests.Runs
         }
 
         [Test]
-        public void Play_AfterTheRunIsOver_Throws()
+        public void Play_SecretRoomLost_EndsTheRun()
         {
-            var run = CreateRun(pool: new[] { Strong });
+            var run = CreateRun();
+            run.UnlockSecretRoom("TestRoom", Strong);
+
+            run.Play(RunStep.SecretRoom("TestRoom"));
+
+            Assert.AreEqual(RunOutcome.Defeat, run.Outcome);
+        }
+
+        [Test]
+        public void Edits_AfterADefeat_Throw()
+        {
+            var run = CreateRun(pool: new[] { Strong }, capacity: 1);
+            run.AddCard(Guard);
             run.Play(RunStep.RegularFight);
 
+            AssertEditsRefused(run);
             Assert.Throws<InvalidOperationException>(() => run.Play(RunStep.RegularFight));
+        }
+
+        [Test]
+        public void Edits_AfterAVictory_Throw()
+        {
+            var run = CreateRun(minimumRegularFights: 0, capacity: 1);
+            run.AddCard(Guard);
+            run.Play(RunStep.Professor);
+
+            AssertEditsRefused(run);
+        }
+
+        private static void AssertEditsRefused(Run run)
+        {
             Assert.Throws<InvalidOperationException>(() => run.AddCard(Strike));
             Assert.Throws<InvalidOperationException>(() => run.MoveInLine(0, 0));
+            Assert.Throws<InvalidOperationException>(() => run.UnlockSecretRoom("TestRoom", Weak));
+            Assert.Throws<InvalidOperationException>(() => run.IncreaseLineCapacity(1));
+            Assert.Throws<InvalidOperationException>(() => run.SwapWithReserve(0, 0));
+            Assert.Throws<InvalidOperationException>(() => run.MoveToReserve(0));
+            Assert.Throws<InvalidOperationException>(() => run.MoveFromReserve(0));
         }
 
         [Test]
@@ -233,6 +267,38 @@ namespace Game.Core.Tests.Runs
             Assert.IsTrue(heroWasHit, "The first fight should damage the hero.");
             Assert.AreEqual(HeroHealth, second.Log.Combatants[0].Health);
             Assert.AreEqual(0, second.Log.Combatants[0].Shield);
+        }
+
+        [Test]
+        public void Play_EveryFightStartsWithTheStartingShield()
+        {
+            const int startingShield = 2;
+            var run = CreateRun(deck: new[] { Guard, Strike }, startingShield: startingShield);
+
+            var first = run.Play(RunStep.RegularFight);
+            var second = run.Play(RunStep.RegularFight);
+
+            var shieldGrew = false;
+            foreach (var e in first.Log.Events)
+            {
+                shieldGrew |= e.TargetIndex == 0 && e.TargetShield > startingShield;
+            }
+
+            Assert.IsTrue(shieldGrew, "The first fight should raise the hero's shield.");
+            Assert.AreEqual(startingShield, second.Log.Combatants[0].Shield);
+            Assert.AreEqual(HeroHealth, second.Log.Combatants[0].Health);
+        }
+
+        [Test]
+        public void Play_ReportsTheHeroLineAtTheStartOfTheFight()
+        {
+            var run = CreateRun();
+            var guard = run.AddCard(Guard);
+
+            var report = run.Play(RunStep.RegularFight);
+            run.MoveInLine(1, 0);
+
+            CollectionAssert.AreEqual(new[] { run.Line[1], guard }, report.HeroLine);
         }
 
         [Test]
@@ -273,6 +339,28 @@ namespace Game.Core.Tests.Runs
         }
 
         [Test]
+        public void Play_FightThatThrows_LeavesTheRunUnchanged()
+        {
+            // A card that boosts itself by int.MaxValue overflows on its second cast, so the fight throws. The run must
+            // neither count the fight nor consume a draw.
+            var overflow = new CardDefinition(
+                "TestOverflow",
+                1,
+                new IEffect[] { new DealDamageEffect(1) },
+                new[] { new NeighbourModifier(BonusKind.Damage, NeighbourDirection.Next, int.MaxValue) });
+            var normal = CreateRun(pool: new[] { Weak, OtherWeak }, seed: 7);
+            var failing = CreateRun(pool: new[] { Weak, OtherWeak }, seed: 7, deck: new[] { overflow });
+
+            Assert.Throws<OverflowException>(() => failing.Play(RunStep.RegularFight));
+
+            Assert.AreEqual(0, failing.FightsPlayed);
+            Assert.AreEqual(RunOutcome.InProgress, failing.Outcome);
+            failing.AddCard(Strike);
+            failing.MoveToReserve(0);
+            Assert.AreEqual(normal.Play(RunStep.RegularFight).Encounter.Id, failing.Play(RunStep.RegularFight).Encounter.Id);
+        }
+
+        [Test]
         public void Play_RegularFights_DrawEveryEncounterOfThePool()
         {
             var ids = PlayRegularFights(CreateRun(pool: new[] { Weak, OtherWeak }), 20);
@@ -295,14 +383,25 @@ namespace Game.Core.Tests.Runs
         }
 
         [Test]
-        public void UnlockSecretRoom_Twice_KeepsOneStep()
+        public void UnlockSecretRoom_TwiceWithTheSameEncounter_KeepsOneStep()
         {
             var run = CreateRun();
 
             run.UnlockSecretRoom("TestRoom", Weak);
-            run.UnlockSecretRoom("TestRoom", OtherWeak);
+            run.UnlockSecretRoom("TestRoom", Weak);
 
             Assert.AreEqual(2, run.AvailableSteps.Count);
+        }
+
+        [Test]
+        public void UnlockSecretRoom_AgainWithAnotherEncounter_ThrowsAndKeepsTheFirst()
+        {
+            var run = CreateRun();
+            run.UnlockSecretRoom("TestRoom", Weak);
+
+            Assert.Throws<InvalidOperationException>(() => run.UnlockSecretRoom("TestRoom", OtherWeak));
+
+            Assert.AreSame(Weak, run.Play(RunStep.SecretRoom("TestRoom")).Encounter);
         }
 
         [Test]
@@ -371,6 +470,19 @@ namespace Game.Core.Tests.Runs
             Assert.AreSame(first, run.Line[0]);
             Assert.AreSame(Guard, run.Line[1].Definition);
             Assert.IsEmpty(run.Reserve);
+        }
+
+        [Test]
+        public void IncreaseLineCapacity_LineViewCapturedBefore_SeesCardsAddedAfter()
+        {
+            var run = CreateRun(capacity: 1);
+            var line = run.Line;
+
+            run.IncreaseLineCapacity(1);
+            var guard = run.AddCard(Guard);
+
+            Assert.AreEqual(2, line.Count);
+            Assert.AreSame(guard, line[1]);
         }
 
         [Test]

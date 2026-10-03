@@ -30,8 +30,17 @@ namespace Game.Core.Runs
     /// the professor wins it.</item>
     /// </list>
     /// <para>
-    /// Determinism: draws use a generator seeded with <see cref="Seed"/> on sequence 0, and fight <c>n</c> (from 1)
-    /// gets its own generator on sequence <c>n</c>, so the same seed and the same choices give the same run.
+    /// Determinism: every random source of the run is a <see cref="Pcg32Random"/> seeded with <see cref="Seed"/>, on
+    /// its own sequence, so the same seed and the same choices give the same run:
+    /// </para>
+    /// <list type="bullet">
+    /// <item>sequence <see cref="EncounterDrawSequence"/> (0): drawing regular encounters;</item>
+    /// <item>sequence <see cref="LevelUpOfferSequence"/> (1): reserved for level-up offers (#76);</item>
+    /// <item>sequence <see cref="FirstFightSequence"/> + k (2 + k): fight number k, counted from 0.</item>
+    /// </list>
+    /// <para>
+    /// Sequences stay below 2^63: <see cref="Pcg32Random"/> shifts the sequence left by one bit, so larger values would
+    /// share a stream with smaller ones.
     /// </para>
     /// <para>Extension points for later systems, not implemented here:</para>
     /// <list type="bullet">
@@ -47,11 +56,20 @@ namespace Game.Core.Runs
     /// </remarks>
     public sealed class Run
     {
-        private readonly IRandom _drawRandom;
+        /// <summary>Generator sequence used to draw regular encounters.</summary>
+        public const ulong EncounterDrawSequence = 0UL;
+
+        /// <summary>Generator sequence reserved for level-up offers (#76).</summary>
+        public const ulong LevelUpOfferSequence = 1UL;
+
+        /// <summary>Generator sequence of the first fight; fight k (from 0) uses this value + k.</summary>
+        public const ulong FirstFightSequence = 2UL;
+
+        private Pcg32Random _drawRandom;
         private readonly List<CardInstance> _reserve = new List<CardInstance>();
         private readonly ReadOnlyCollection<CardInstance> _readOnlyReserve;
         private readonly List<SecretRoom> _secretRooms = new List<SecretRoom>();
-        private SpellLine<CardInstance> _line;
+        private readonly SpellLine<CardInstance> _line;
         private int _nextCardInstanceId = 1;
 
         /// <param name="heroClass">The hero's class: stats, starting line and capacity.</param>
@@ -65,7 +83,7 @@ namespace Game.Core.Runs
             Biome = biome ?? throw new ArgumentNullException(nameof(biome));
             Rules = rules ?? throw new ArgumentNullException(nameof(rules));
             Seed = seed;
-            _drawRandom = new Pcg32Random(seed, 0UL);
+            _drawRandom = new Pcg32Random(seed, EncounterDrawSequence);
             _readOnlyReserve = _reserve.AsReadOnly();
 
             _line = new SpellLine<CardInstance>(heroClass.StartingLineCapacity);
@@ -145,7 +163,8 @@ namespace Game.Core.Runs
 
         /// <summary>
         /// Plays a step: picks its encounter, fights it with a fresh hero and the current spell line, and updates
-        /// the run. A lost or timed-out fight ends the run; a won professor fight wins it.
+        /// the run. A lost or timed-out fight ends the run; a won professor fight wins it. If the fight throws, the
+        /// run is left unchanged (no draw is consumed and the fight is not counted).
         /// </summary>
         /// <returns>The encounter fought and the fight's combat log.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="step"/> is null.</exception>
@@ -163,11 +182,15 @@ namespace Game.Core.Runs
                 throw new InvalidOperationException($"The step {step} is not available.");
             }
 
-            var encounter = EncounterFor(step);
-            FightsPlayed++;
-            var fightRandom = new Pcg32Random(Seed, (ulong)FightsPlayed);
+            var drawRandom = _drawRandom.Clone();
+            var encounter = EncounterFor(step, drawRandom);
+            var heroLine = new List<CardInstance>(_line.Cards);
+            var fightRandom = new Pcg32Random(Seed, FirstFightSequence + (ulong)FightsPlayed);
             var log = CombatLogRecorder.Record(CreateHero(), encounter.CreateParticipants(), Rules.FightTimeLimit, fightRandom);
-            var report = new RunFightReport(step, encounter, log);
+            var report = new RunFightReport(step, encounter, heroLine, log);
+
+            _drawRandom = drawRandom;
+            FightsPlayed++;
 
             if (!report.HeroWon)
             {
@@ -224,22 +247,18 @@ namespace Game.Core.Runs
             }
 
             EnsureInProgress();
-            var line = new SpellLine<CardInstance>(checked(_line.Capacity + slots));
-            foreach (var card in _line.Cards)
-            {
-                line.Add(card);
-            }
-
-            _line = line;
+            _line.IncreaseCapacity(slots);
         }
 
         /// <summary>
         /// Makes a secret room available as a step until the end of the run (#71 calls it when an objective is
-        /// completed). Unlocking a room twice does nothing.
+        /// completed). Unlocking a room again with the same encounter does nothing.
         /// </summary>
         /// <exception cref="ArgumentException"><paramref name="roomId"/> is null, empty or whitespace.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="miniBossEncounter"/> is null.</exception>
-        /// <exception cref="InvalidOperationException">The run is over.</exception>
+        /// <exception cref="InvalidOperationException">
+        /// The run is over, or the room is already unlocked with another encounter.
+        /// </exception>
         public void UnlockSecretRoom(string roomId, EncounterDefinition miniBossEncounter)
         {
             if (string.IsNullOrWhiteSpace(roomId))
@@ -253,9 +272,15 @@ namespace Game.Core.Runs
             }
 
             EnsureInProgress();
-            if (FindSecretRoom(roomId) == null)
+            var existing = FindSecretRoom(roomId);
+            if (existing == null)
             {
                 _secretRooms.Add(new SecretRoom(roomId, miniBossEncounter));
+            }
+            else if (existing.Encounter != miniBossEncounter)
+            {
+                throw new InvalidOperationException(
+                    $"Secret room '{roomId}' is already unlocked with encounter '{existing.Encounter.Id}'.");
             }
         }
 
@@ -328,13 +353,13 @@ namespace Game.Core.Runs
             return false;
         }
 
-        private EncounterDefinition EncounterFor(RunStep step)
+        private EncounterDefinition EncounterFor(RunStep step, IRandom drawRandom)
         {
             switch (step.Kind)
             {
                 case RunStepKind.RegularFight:
                     var pool = Biome.RegularEncounters;
-                    return pool[_drawRandom.NextInt(0, pool.Count)];
+                    return pool[drawRandom.NextInt(0, pool.Count)];
                 case RunStepKind.SecretRoom:
                     return FindSecretRoom(step.SecretRoomId).Encounter;
                 case RunStepKind.Professor:

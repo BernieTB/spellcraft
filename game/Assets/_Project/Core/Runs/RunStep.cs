@@ -30,7 +30,7 @@ namespace Game.Core.Runs
         /// True for mini-boss and professor fights, which a preparation phase comes before and whose spell line is
         /// fixed once they start (<c>docs/adr/0012-linked-choices-and-spell-line-editing.md</c>).
         /// </summary>
-        public bool RequiresPreparation => Kind != RunStepKind.RegularFight;
+        public bool RequiresPreparation => Kind == RunStepKind.SecretRoom || Kind == RunStepKind.Professor;
 
         /// <summary>The fight of an unlocked secret room.</summary>
         /// <exception cref="ArgumentException"><paramref name="roomId"/> is null, empty or whitespace.</exception>

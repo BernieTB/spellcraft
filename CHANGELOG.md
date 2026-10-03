@@ -72,7 +72,8 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
 - Core run model (`Game.Core.Runs.Run`): one run through one biome with the hero's spell line, card instances and
   an unlimited reserve; the player picks the next step (regular fight drawn from the biome's pool with the run seed,
   unlocked secret room, professor after a minimum of regular fights); every fight starts at max health; any defeat,
-  including the global fight time limit, ends the run. Core class, enemy, encounter and biome definitions.
+  including the global fight time limit, ends the run. Core class, enemy, encounter and biome definitions; enemy
+  and encounter assets convert to them (`ToDefinition`). Spell lines can gain slots (`SpellLine.IncreaseCapacity`).
 
 ### Changed
 
