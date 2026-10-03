@@ -69,6 +69,10 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
 - ADR 0014: boss preparation and recap (unlimited reserve, professor information hidden except mini-boss
   revelations kept in the bestiary, recap with per-card output, used and wasted bonuses, and the turning point
   and cause of a defeat).
+- Core run model (`Game.Core.Runs.Run`): one run through one biome with the hero's spell line, card instances and
+  an unlimited reserve; the player picks the next step (regular fight drawn from the biome's pool with the run seed,
+  unlocked secret room, professor after a minimum of regular fights); every fight starts at max health; any defeat,
+  including the global fight time limit, ends the run. Core class, enemy, encounter and biome definitions.
 
 ### Changed
 

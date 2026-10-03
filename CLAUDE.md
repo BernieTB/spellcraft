@@ -25,7 +25,7 @@ The Unity project lives in `game/`, not at the repo root.
 
 | Folder | Assembly | Role |
 |---|---|---|
-| `game/Assets/_Project/Core/` | `Game.Core` | Pure C# game logic (combat simulator, cards, effects) |
+| `game/Assets/_Project/Core/` | `Game.Core` | Pure C# game logic (combat simulator, cards, effects, classes, enemies, run model) |
 | `game/Assets/_Project/Unity/` | `Game.Unity` | Rendering, UI, scenes, ScriptableObjects. References `Game.Core` |
 | `game/Assets/_Project/Unity/EditorTools/` | `Game.Unity.EditorTools` | Editor-only tools: content generators, build checks, headless simulation runner |
 | `game/Assets/_Project/Unity/UI/` | `Game.Unity` | Game screens (UI Toolkit): views (`Game.Unity.UI`), `Screens/*.uxml`, `Styles/*.uss`, `Themes/`, panel settings |
