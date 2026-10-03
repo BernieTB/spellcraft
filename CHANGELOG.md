@@ -66,6 +66,9 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
   phase before mini-boss and professor fights.
 - ADR 0013: card evolution (two stages per card from data, word and cast time unchanged, counted per card
   instance over the run and kept in the reserve, shown by a stage mark and in the combat log).
+- ADR 0014: boss preparation and recap (unlimited reserve, professor information hidden except mini-boss
+  revelations kept in the bestiary, recap with per-card output, used and wasted bonuses, and the turning point
+  and cause of a defeat).
 
 ### Changed
 
