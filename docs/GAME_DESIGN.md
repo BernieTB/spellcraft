@@ -77,8 +77,15 @@ Pacing (see [ADR 0009](adr/0009-vertical-slice-run-pacing.md); numbers live in d
   modifiers giving +X damage, +X heal or +X shield to the next or previous card in the loop, used up after one
   cast. No tags or elements yet. See [ADR 0002](adr/0002-first-pass-combat-rules.md) and
   [ADR 0004](adr/0004-confirm-first-pass-combat-rules.md).
-- **Evolution through use:** a card cast many times grows stronger, for example by gaining letters, up to a
-  5-letter maximum.
+- **Evolution through use:** a card cast many times grows stronger. See
+  [ADR 0013](adr/0013-card-evolution.md).
+  - Each card has **two evolution stages**; the casts needed for each come from its data.
+  - The **word does not change**. A stage can improve anything except the cast time: effect amounts, neighbour
+    modifiers, effects and modifiers.
+  - Each card instance counts its casts over the whole run, across fights, and keeps its stage in the reserve.
+    Everything resets at the next run.
+  - An evolved card shows a **stage mark** on screen, with a short cue when it evolves; the evolution appears in
+    the combat log and the recap. No progress gauge.
 
 ## Combat
 

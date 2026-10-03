@@ -14,7 +14,7 @@ words. Use these terms consistently in code, docs and issues.
 | **Dead** | State of a combatant whose current health has reached zero. A dead combatant takes no damage, cannot be healed and gains no shield (placeholder rule: no revival mechanic is designed). |
 | **Encounter** | The enemies the hero faces together in one fight, in resolution order (the hero aims at the first living one). Authored as data; the same enemy can appear several times. In code: `Game.Unity.Enemies.EncounterAsset`. |
 | **Enemy** | Any opponent of the hero: a regular monster, a mini-boss or a professor (its **rank**). Has its own stats and spell line, from data, and fights with the same rules as the hero. In code: `Game.Unity.Enemies.EnemyAsset`. |
-| **Evolution** | A card growing stronger the more it is cast, for example by gaining letters up to a 5-letter maximum. |
+| **Evolution** | A card instance growing stronger the more it is cast during a run: two **stages**, reached after a number of casts set in its data. Its word and cast time never change. Shown by a stage mark. See [ADR 0013](adr/0013-card-evolution.md). |
 | **Grimoire** | Meta-progression collection of discovered named spells. |
 | **Health** | Combat stat. **Max health** is the upper bound, set by data; **current health** is what remains, between zero and max health. Damage not absorbed by shield lowers current health (never below zero); healing raises it (never above max health). |
 | **Linked choice** | The level-up reward: a package of one passive upgrade plus one card, among 3 offered. The player picks a package, not the two parts separately. See [Character and level-ups](GAME_DESIGN.md#character-and-level-ups). |
