@@ -14,7 +14,7 @@ namespace Game.Unity.Tests.Content
             var violations = PlaceholderGuard.FindProjectViolations();
 
             Assert.IsEmpty(violations,
-                "Placeholder cards may only be referenced from the placeholder or test folders:\n"
+                "Placeholder content may only be referenced from the placeholder, test or debug tools folders:\n"
                 + string.Join("\n", violations));
         }
 

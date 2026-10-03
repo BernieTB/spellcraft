@@ -95,10 +95,21 @@ namespace Game.Unity.Tests.Enemies
             StringAssert.Contains("no id", exception.Message);
         }
 
-        [Test]
-        public void ToParticipant_InvalidHealth_ThrowsNamingTheAsset()
+        [TestCase(0)]
+        [TestCase(-1)]
+        public void ToParticipant_InvalidHealth_ThrowsNamingTheAsset(int maxHealth)
         {
-            var enemy = _assets.Enemy("test_enemy", EnemyRank.Regular, 0, 0, _assets.Card("test_card_a"));
+            var enemy = _assets.Enemy("test_enemy", EnemyRank.Regular, maxHealth, 0, _assets.Card("test_card_a"));
+
+            var exception = Assert.Throws<InvalidOperationException>(() => enemy.ToParticipant());
+
+            StringAssert.Contains("'test_enemy'", exception.Message);
+        }
+
+        [Test]
+        public void ToParticipant_NegativeShield_ThrowsNamingTheAsset()
+        {
+            var enemy = _assets.Enemy("test_enemy", EnemyRank.Regular, 5, -1, _assets.Card("test_card_a"));
 
             var exception = Assert.Throws<InvalidOperationException>(() => enemy.ToParticipant());
 

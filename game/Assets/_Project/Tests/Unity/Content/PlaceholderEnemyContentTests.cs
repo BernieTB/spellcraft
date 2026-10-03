@@ -54,6 +54,17 @@ namespace Game.Unity.Tests.Content
         }
 
         [Test]
+        public void PlaceholderEnemiesAndEncounters_IdsAreTestIds()
+        {
+            var ids = Load<EnemyAsset>().Select(enemy => enemy.Id)
+                .Concat(Load<EncounterAsset>().Select(encounter => encounter.Id))
+                .ToList();
+
+            Assert.IsNotEmpty(ids);
+            Assert.That(ids, Is.All.StartsWith("test_"));
+        }
+
+        [Test]
         public void PlaceholderEnemies_CoverEveryRank()
         {
             var ranks = Load<EnemyAsset>().Select(enemy => enemy.Rank).Distinct();
