@@ -1,3 +1,4 @@
+using System.Linq;
 using Game.Unity.UI;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -30,6 +31,9 @@ namespace Game.Unity.EditorTools.UI
 
         /// <summary>Path of the runtime theme assigned to the panel settings.</summary>
         public const string ThemePath = UiFolder + "/Themes/GameTheme.tss";
+
+        /// <summary>Path of the shared style sheet (palette and sizes).</summary>
+        public const string CommonStylePath = UiFolder + "/Styles/Common.uss";
 
         /// <summary>Path of the title screen layout.</summary>
         public const string TitleScreenPath = UiFolder + "/Screens/TitleScreen.uxml";
@@ -67,8 +71,24 @@ namespace Game.Unity.EditorTools.UI
             uiObject.AddComponent<TitleScreenView>();
 
             EditorSceneManager.SaveScene(scene, ScenePath);
+
+            if (document.panelSettings == null || document.visualTreeAsset == null)
+            {
+                throw new System.InvalidOperationException(
+                    $"Could not assign {PanelSettingsPath} and {TitleScreenPath} to the UI document.");
+            }
+
+            var removed = EditorBuildSettings.scenes
+                .Select(buildScene => buildScene.path)
+                .Where(path => path != ScenePath)
+                .ToList();
             EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(ScenePath, true) };
             AssetDatabase.SaveAssets();
+            if (removed.Count > 0)
+            {
+                Debug.Log($"Removed from the build settings: {string.Join(", ", removed)}.");
+            }
+
             Debug.Log($"Bootstrap scene written to {ScenePath} and set as the only scene in the build settings.");
         }
 

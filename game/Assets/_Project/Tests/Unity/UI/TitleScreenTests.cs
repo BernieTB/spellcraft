@@ -14,8 +14,6 @@ namespace Game.Unity.Tests.UI
     /// </summary>
     public class TitleScreenTests
     {
-        private const string CommonStyleSheetPath = BootstrapSceneBuilder.UiFolder + "/Styles/Common.uss";
-
         private static VisualElement CloneTitleScreen()
         {
             var layout = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(BootstrapSceneBuilder.TitleScreenPath);
@@ -34,8 +32,8 @@ namespace Game.Unity.Tests.UI
         [Test]
         public void Layout_Clone_UsesTheCommonStyleSheet()
         {
-            var common = AssetDatabase.LoadAssetAtPath<StyleSheet>(CommonStyleSheetPath);
-            Assert.IsNotNull(common, $"Missing {CommonStyleSheetPath}.");
+            var common = AssetDatabase.LoadAssetAtPath<StyleSheet>(BootstrapSceneBuilder.CommonStylePath);
+            Assert.IsNotNull(common, $"Missing {BootstrapSceneBuilder.CommonStylePath}.");
 
             var root = CloneTitleScreen();
             var attached = Enumerable.Range(0, root.styleSheets.count).Select(i => root.styleSheets[i]);

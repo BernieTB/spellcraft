@@ -69,8 +69,9 @@ build check, and does not need to move.
 
 ### Negative
 
-- UI Toolkit has no world-space rendering in this setup: fight visuals are UI elements, not sprites. If the art
-  pipeline later needs animated sprites or particles, they will need a camera layer under the UI.
+- This setup uses screen-space overlay UI only: fight visuals are UI elements, not sprites. World-space UI, or
+  animated sprites and particles if the art pipeline needs them, would need a camera layer or panel set up for
+  that later.
 - The owner, not Claude Code, has to check the look in the editor or a build; tests only prove the structure.
 - With a single scene, every screen shares one `PanelSettings` and one document; screens must clean up what they
   register when they are replaced.

@@ -32,7 +32,7 @@ The Unity project lives in `game/`, not at the repo root.
 | `game/Assets/_Project/Unity/Scenes/` | `Game.Unity` | `Bootstrap.unity`, the only scene in the build (generated) |
 | `game/Assets/_Project/Unity/DebugTools/` | `Game.Unity` | Debug fight viewer: scene, setup asset, playback (never in builds) |
 | `game/Assets/_Project/Tests/Core/` | `Game.Core.Tests` | EditMode tests for `Game.Core` (Editor only, NUnit) |
-| `game/Assets/_Project/Tests/Unity/` | `Game.Unity.Tests` | EditMode tests for `Game.Unity` data conversion (Editor only, NUnit) |
+| `game/Assets/_Project/Tests/Unity/` | `Game.Unity.Tests` | EditMode tests for `Game.Unity`: data conversion, UI screens, generated scenes (Editor only, NUnit) |
 
 `docs/` holds design docs and ADRs. Do not put project code outside `game/Assets/_Project/`.
 
@@ -105,7 +105,8 @@ Close the editor on this project first (verified; menu: **Tools > Game > Rebuild
 
 Game screens follow [ADR 0008](docs/adr/0008-ui-toolkit-and-placeholder-visuals.md): UI Toolkit only, one UXML file
 per screen in `Unity/UI/Screens/`, styles in USS (`Unity/UI/Styles/Common.uss` holds the shared colour and size
-variables; no colours or sizes in C#), a view in `Game.Unity.UI` that queries elements by name and only displays
+variables; no colours or sizes in screen views, while editor generators may set the default values of the assets
+they create), a view in `Game.Unity.UI` that queries elements by name and only displays
 Core state. Placeholder visuals are flat-colour shapes, no sprites. Write UXML/USS as text; the debug viewer stays
 on IMGUI. The game runs in one scene, `Unity/Scenes/Bootstrap.unity`, and screens are switched in code, not by
 loading scenes. Rebuild that scene with code, never by editing its YAML: the builder also makes it the only scene in

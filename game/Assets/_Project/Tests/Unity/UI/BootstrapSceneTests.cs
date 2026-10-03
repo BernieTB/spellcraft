@@ -55,9 +55,15 @@ namespace Game.Unity.Tests.UI
         }
 
         [Test]
-        public void FindBuildViolations_BootstrapScene_ReportsNothing()
+        public void FindBuildViolations_ProjectBuildRoots_ReportsNothing()
         {
-            Assert.IsEmpty(PlaceholderGuard.FindBuildViolations(new[] { BootstrapSceneBuilder.ScenePath }));
+            Assert.IsEmpty(PlaceholderGuard.FindBuildViolations(PlaceholderGuard.FindBuildRoots()));
+        }
+
+        [Test]
+        public void FindPlaceholderReferences_BootstrapScene_ReportsNothing()
+        {
+            Assert.IsEmpty(PlaceholderGuard.FindPlaceholderReferences(new[] { BootstrapSceneBuilder.ScenePath }));
         }
     }
 }
