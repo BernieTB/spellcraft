@@ -32,6 +32,14 @@ namespace Game.Core.Runs
         /// </summary>
         public bool RequiresPreparation => Kind == RunStepKind.SecretRoom || Kind == RunStepKind.Professor;
 
+        /// <summary>
+        /// True for regular fights only: the player may edit the spell line while one plays, with the change applied
+        /// at once. Mini-boss and professor fights have a fixed line
+        /// (<c>docs/adr/0012-linked-choices-and-spell-line-editing.md</c>,
+        /// <c>docs/adr/0015-live-spell-line-editing-details.md</c>). The decision lives here, in Core, not in a screen.
+        /// </summary>
+        public bool AllowsLineEditing => Kind == RunStepKind.RegularFight;
+
         /// <summary>The fight of an unlocked secret room.</summary>
         /// <exception cref="ArgumentException"><paramref name="roomId"/> is null, empty or whitespace.</exception>
         public static RunStep SecretRoom(string roomId)

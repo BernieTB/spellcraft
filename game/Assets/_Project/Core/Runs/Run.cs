@@ -8,6 +8,7 @@ using Game.Core.Combat.Log;
 using Game.Core.Enemies;
 using Game.Core.Randomness;
 using Game.Core.SpellLines;
+using Game.Core.Upgrades;
 
 namespace Game.Core.Runs
 {
@@ -47,16 +48,22 @@ namespace Game.Core.Runs
     /// </para>
     /// <para>Extension points for later systems, not implemented here:</para>
     /// <list type="bullet">
-    /// <item>Level-up offers (#76) read <see cref="PendingLevelUps"/> and call <see cref="ConsumePendingLevelUp"/>;
-    /// objectives (#71) read the <see cref="RunFightReport"/> returned by <see cref="Play"/>.
-    /// Passive upgrades (#75) will change the hero's stats used when a fight starts (see <c>CreateHero</c>).</item>
+    /// <item>Level-up offers (#76) read <see cref="PendingLevelUps"/> and call <see cref="ConsumePendingLevelUp"/>,
+    /// then <see cref="TakeUpgrade"/> and <see cref="AddCard"/>; objectives (#71) read the
+    /// <see cref="RunFightReport"/> returned by <see cref="Play"/> or <see cref="RunFightSession.Complete"/>.</item>
     /// <item>Secret rooms are unlocked by objectives through <see cref="UnlockSecretRoom"/>; their rewards call
     /// <see cref="AddCard"/> and <see cref="IncreaseLineCapacity"/> (#71). Level-up cards also use <see cref="AddCard"/> (#76).</item>
     /// <item>The preparation phase (#82) happens before a step whose <see cref="RunStep.RequiresPreparation"/> is
     /// true, using the line and reserve edits below.</item>
-    /// <item>Live line editing during regular fights (#97) will replace the single <see cref="Fight.Run"/> call
-    /// with a fight advanced tick by tick.</item>
     /// </list>
+    /// <para>
+    /// Passive upgrades (#75): the run holds the hero's <see cref="Upgrades"/>, applied to the hero of every fight,
+    /// including the reserve cards the player may swap in during a regular fight. Live line editing (#97): a regular
+    /// fight is played with <see cref="BeginFight"/>, which returns a <see cref="RunFightSession"/> advanced tick by tick
+    /// with the line editable; <see cref="Play"/> is the same fight run to its end with no change (simulation,
+    /// tests). Mini-boss and professor fights never allow line edits (<see cref="RunStep.AllowsLineEditing"/>).
+    /// While a session is open, nothing else may change the run.
+    /// </para>
     /// </remarks>
     public sealed class Run
     {
@@ -75,6 +82,8 @@ namespace Game.Core.Runs
         private readonly List<SecretRoom> _secretRooms = new List<SecretRoom>();
         private readonly SpellLine<CardInstance> _line;
         private int _nextCardInstanceId = 1;
+        private PassiveUpgradeSet _upgrades = PassiveUpgradeSet.Empty;
+        private RunFightSession _currentFight;
 
         /// <param name="heroClass">The hero's class: stats, starting line and capacity.</param>
         /// <param name="biome">The biome to play.</param>
@@ -148,9 +157,16 @@ namespace Game.Core.Runs
         /// </summary>
         public IReadOnlyList<CardInstance> Reserve => _readOnlyReserve;
 
+        /// <summary>The passive upgrades taken so far, applied to the hero of every fight (#75).</summary>
+        public PassiveUpgradeSet Upgrades => _upgrades;
+
+        /// <summary>The fight being played tick by tick, or null when no session is open.</summary>
+        public RunFightSession CurrentFight => _currentFight;
+
         /// <summary>
         /// The steps the player can choose now, in a fixed order: the regular fight, unlocked secret rooms in the
-        /// order they were unlocked, then the professor when available. Empty once the run is over.
+        /// order they were unlocked, then the professor when available. Empty once the run is over. It does not look
+        /// at an open fight session, which blocks every step: the screen tests <see cref="CurrentFight"/> first.
         /// </summary>
         public IReadOnlyList<RunStep> AvailableSteps
         {
@@ -178,21 +194,50 @@ namespace Game.Core.Runs
         }
 
         /// <summary>
-        /// Plays a step: picks its encounter, fights it with a fresh hero and the current spell line, and updates
-        /// the run. A lost or timed-out fight ends the run; a won professor fight wins it. If the fight throws, the
-        /// run is left unchanged (no draw is consumed and the fight is not counted).
+        /// Plays a step to its end with no line change: picks its encounter, fights it with a fresh hero (upgrades
+        /// applied) and the current spell line, and updates the run. A lost or timed-out fight ends the run; a won
+        /// professor fight wins it. If the fight throws, the run is left unchanged (no draw is consumed and the fight
+        /// is not counted). To let the player edit the line during a regular fight, use <see cref="BeginFight"/>.
         /// </summary>
         /// <returns>The encounter fought and the fight's combat log.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="step"/> is null.</exception>
-        /// <exception cref="InvalidOperationException">The run is over or the step is not available.</exception>
+        /// <exception cref="InvalidOperationException">
+        /// The run is over, the step is not available, or a fight session is open.
+        /// </exception>
         public RunFightReport Play(RunStep step)
+        {
+            var session = BeginFight(step);
+            try
+            {
+                session.RunToEnd();
+                return session.Complete();
+            }
+            catch
+            {
+                session.Cancel();
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Starts a step as a fight advanced tick by tick: picks its encounter, builds the fight with a fresh hero
+        /// (upgrades applied) and the current spell line and reserve, and opens a <see cref="RunFightSession"/>. The
+        /// run only counts the fight, and the random draw, when the session is completed. For a regular fight the
+        /// session allows line edits; for a secret room or the professor the line is fixed
+        /// (<see cref="RunStep.AllowsLineEditing"/>).
+        /// </summary>
+        /// <exception cref="ArgumentNullException"><paramref name="step"/> is null.</exception>
+        /// <exception cref="InvalidOperationException">
+        /// The run is over, the step is not available, or a fight session is already open.
+        /// </exception>
+        public RunFightSession BeginFight(RunStep step)
         {
             if (step == null)
             {
                 throw new ArgumentNullException(nameof(step));
             }
 
-            EnsureInProgress();
+            EnsureCanChange();
             if (!IsAvailable(step))
             {
                 throw new InvalidOperationException($"The step {step} is not available.");
@@ -200,40 +245,25 @@ namespace Game.Core.Runs
 
             var drawRandom = _drawRandom.Clone();
             var encounter = EncounterFor(step, drawRandom);
-            var heroLine = new List<CardInstance>(_line.Cards);
+            var startLine = new List<CardInstance>(_line.Cards);
             var fightRandom = new Pcg32Random(Seed, FirstFightSequence + (ulong)FightsPlayed);
-            var log = CombatLogRecorder.Record(CreateHero(), encounter.CreateParticipants(), Rules.FightTimeLimit, fightRandom);
-            var won = log.Winner == FightWinner.Hero;
-            var xpGained = won ? XpRewardOf(encounter) : 0L;
-            var totalXp = checked(TotalXp + xpGained);
-            var level = Rules.LevelCurve.LevelForTotalXp(totalXp);
-            var report = new RunFightReport(step, encounter, heroLine, log, xpGained, level - Level);
+            var hero = CreateHero();
+            var enemies = encounter.CreateParticipants();
+            var fight = new Fight(
+                hero, enemies, Rules.FightTimeLimit, fightRandom, CreateFightReserve(), step.AllowsLineEditing);
 
-            _drawRandom = drawRandom;
-            FightsPlayed++;
-            TotalXp = totalXp;
-            PendingLevelUps += level - Level;
-            Level = level;
+            var participants = new List<FightParticipant>(enemies.Count + 1) { hero };
+            participants.AddRange(enemies);
+            var snapshots = CombatLogRecorder.Snapshot(participants);
 
-            if (!report.HeroWon)
-            {
-                Outcome = RunOutcome.Defeat;
-            }
-            else if (step.Kind == RunStepKind.RegularFight)
-            {
-                RegularFightsWon++;
-            }
-            else if (step.Kind == RunStepKind.Professor)
-            {
-                Outcome = RunOutcome.Victory;
-            }
-
-            return report;
+            _currentFight = new RunFightSession(this, step, encounter, fight, participants, snapshots, startLine, drawRandom);
+            return _currentFight;
         }
 
         /// <summary>
         /// Marks one pending level-up as handled, once its linked choice is taken (#76). Allowed after the run ends,
-        /// so a level reached in the last fight can still be shown.
+        /// so a level reached in the last fight can still be shown, and while a fight session is open (confirmed by
+        /// the owner on 2026-10-05): a passive upgrade taken then applies from the next fight, not to the one playing.
         /// </summary>
         /// <exception cref="InvalidOperationException">There is no pending level-up.</exception>
         public void ConsumePendingLevelUp()
@@ -260,7 +290,7 @@ namespace Game.Core.Runs
                 throw new ArgumentNullException(nameof(card));
             }
 
-            EnsureInProgress();
+            EnsureCanChange();
             var instance = NewInstance(card);
             if (_line.IsFull)
             {
@@ -284,8 +314,26 @@ namespace Game.Core.Runs
                 throw new ArgumentOutOfRangeException(nameof(slots), slots, "Add at least one slot.");
             }
 
-            EnsureInProgress();
+            EnsureCanChange();
             _line.IncreaseCapacity(slots);
+        }
+
+        /// <summary>
+        /// Gives the hero a passive upgrade for the rest of the run (#75): it is applied to the hero of every later
+        /// fight. Upgrades stack. Level-up offers (#76) call it with the chosen package.
+        /// </summary>
+        /// <exception cref="ArgumentNullException"><paramref name="upgrade"/> is null.</exception>
+        /// <exception cref="InvalidOperationException">The run is over or a fight session is open.</exception>
+        /// <exception cref="OverflowException">A total of the upgrades exceeds <see cref="int.MaxValue"/>.</exception>
+        public void TakeUpgrade(PassiveUpgrade upgrade)
+        {
+            if (upgrade == null)
+            {
+                throw new ArgumentNullException(nameof(upgrade));
+            }
+
+            EnsureCanChange();
+            _upgrades = _upgrades.With(upgrade);
         }
 
         /// <summary>
@@ -309,7 +357,7 @@ namespace Game.Core.Runs
                 throw new ArgumentNullException(nameof(miniBossEncounter));
             }
 
-            EnsureInProgress();
+            EnsureCanChange();
             var existing = FindSecretRoom(roomId);
             if (existing == null)
             {
@@ -327,7 +375,7 @@ namespace Game.Core.Runs
         /// <exception cref="InvalidOperationException">The run is over.</exception>
         public void MoveInLine(int fromPosition, int toPosition)
         {
-            EnsureInProgress();
+            EnsureCanChange();
             _line.Move(fromPosition, toPosition);
         }
 
@@ -336,13 +384,8 @@ namespace Game.Core.Runs
         /// <exception cref="InvalidOperationException">The run is over.</exception>
         public void SwapWithReserve(int linePosition, int reserveIndex)
         {
-            EnsureInProgress();
-            ValidateReserveIndex(reserveIndex);
-            var fromReserve = _reserve[reserveIndex];
-            var fromLine = _line.RemoveAt(linePosition);
-            _line.Add(fromReserve);
-            _line.Move(_line.Count - 1, linePosition);
-            _reserve[reserveIndex] = fromLine;
+            EnsureCanChange();
+            SwapCore(linePosition, reserveIndex);
         }
 
         /// <summary>
@@ -353,7 +396,7 @@ namespace Game.Core.Runs
         /// <exception cref="InvalidOperationException">The run is over, or it is the line's last card.</exception>
         public void MoveToReserve(int linePosition)
         {
-            EnsureInProgress();
+            EnsureCanChange();
             if (_line.Count == 1 && linePosition == 0)
             {
                 throw new InvalidOperationException("The spell line must keep at least one card.");
@@ -367,7 +410,7 @@ namespace Game.Core.Runs
         /// <exception cref="InvalidOperationException">The run is over or the spell line is full.</exception>
         public void MoveFromReserve(int reserveIndex)
         {
-            EnsureInProgress();
+            EnsureCanChange();
             ValidateReserveIndex(reserveIndex);
             if (_line.IsFull)
             {
@@ -426,7 +469,89 @@ namespace Game.Core.Runs
                 line.Add(card.Definition);
             }
 
-            return new FightParticipant(new Combatant(HeroClass.MaxHealth, HeroClass.StartingShield), line);
+            var hero = new FightParticipant(new Combatant(HeroClass.MaxHealth, HeroClass.StartingShield), line);
+            return _upgrades.ApplyTo(hero);
+        }
+
+        // The reserve a fight lets the player swap in: the same cards in the same order, upgraded like the line.
+        private List<CardDefinition> CreateFightReserve()
+        {
+            var reserve = new List<CardDefinition>(_reserve.Count);
+            foreach (var card in _reserve)
+            {
+                reserve.Add(_upgrades.ApplyTo(card.Definition));
+            }
+
+            return reserve;
+        }
+
+        private void SwapCore(int linePosition, int reserveIndex)
+        {
+            ValidateReserveIndex(reserveIndex);
+            var fromReserve = _reserve[reserveIndex];
+            var fromLine = _line.RemoveAt(linePosition);
+            _line.Add(fromReserve);
+            _line.Move(_line.Count - 1, linePosition);
+            _reserve[reserveIndex] = fromLine;
+        }
+
+        // Called by the open session after the fight accepted a line change: the run's own card instances follow.
+        internal void MirrorLineChange(LineChange change)
+        {
+            if (change.Kind == LineChangeKind.Move)
+            {
+                if (change.Position != change.ToPosition)
+                {
+                    _line.Move(change.Position, change.ToPosition);
+                }
+            }
+            else
+            {
+                SwapCore(change.Position, change.ReserveIndex);
+            }
+        }
+
+        // Called by the session when it completes: counts the fight and updates XP, level and outcome.
+        internal RunFightReport CommitFight(RunFightSession session, CombatLog log)
+        {
+            var step = session.Step;
+            var encounter = session.Encounter;
+            var won = log.Winner == FightWinner.Hero;
+            var xpGained = won ? XpRewardOf(encounter) : 0L;
+            var totalXp = checked(TotalXp + xpGained);
+            var level = Rules.LevelCurve.LevelForTotalXp(totalXp);
+            var report = new RunFightReport(step, encounter, session.StartLine, log, xpGained, level - Level);
+
+            _drawRandom = session.DrawRandomAfter;
+            _currentFight = null;
+            FightsPlayed++;
+            TotalXp = totalXp;
+            PendingLevelUps += level - Level;
+            Level = level;
+
+            if (!report.HeroWon)
+            {
+                Outcome = RunOutcome.Defeat;
+            }
+            else if (step.Kind == RunStepKind.RegularFight)
+            {
+                RegularFightsWon++;
+            }
+            else if (step.Kind == RunStepKind.Professor)
+            {
+                Outcome = RunOutcome.Victory;
+            }
+
+            return report;
+        }
+
+        // Called by the session when it is cancelled: the run is free again; nothing was counted or drawn.
+        internal void ReleaseFight(RunFightSession session)
+        {
+            if (ReferenceEquals(_currentFight, session))
+            {
+                _currentFight = null;
+            }
         }
 
         private CardInstance NewInstance(CardDefinition card)
@@ -461,6 +586,17 @@ namespace Game.Core.Runs
             if (!IsInProgress)
             {
                 throw new InvalidOperationException($"The run is over ({Outcome}).");
+            }
+        }
+
+        // Every change of the run goes through this: the run must be going on and no fight session may be open (the
+        // session owns the line, the reserve and the random draw until it is completed or cancelled).
+        private void EnsureCanChange()
+        {
+            EnsureInProgress();
+            if (_currentFight != null)
+            {
+                throw new InvalidOperationException("A fight session is open: complete or cancel it first.");
             }
         }
 
