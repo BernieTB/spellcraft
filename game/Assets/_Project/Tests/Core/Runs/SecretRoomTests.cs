@@ -78,6 +78,7 @@ namespace Game.Core.Tests.Runs
                 pool ?? new[] { GoblinFight },
                 2,
                 ProfessorFight,
+                Professor,
                 rooms ?? new[] { RoomAData() });
             return new Run(heroClass, biome, new RunRules(TimeLimit, Curve), seed);
         }
@@ -251,6 +252,45 @@ namespace Game.Core.Tests.Runs
             var run = CreateRun();
 
             Assert.Throws<InvalidOperationException>(() => run.UnlockSecretRoom(RoomA, MiniBossB));
+        }
+
+        [Test]
+        public void UnlockSecretRoom_AnEquivalentEncounterInstance_IsAcceptedAndUsesTheBiomesOwn()
+        {
+            var run = CreateRun();
+            var equivalent = new EncounterDefinition(MiniBossA.Id, new[] { MiniBossAEnemy });
+
+            run.UnlockSecretRoom(RoomA, equivalent);
+            run.UnlockSecretRoom(RoomA, MiniBossA);
+            run.UnlockSecretRoom(RoomA, equivalent);
+
+            Assert.IsTrue(Status(run, RoomA).IsUnlocked);
+            Assert.AreEqual(1, run.AvailableSteps.Count(s => s.Kind == RunStepKind.SecretRoom));
+            Assert.AreSame(MiniBossA, run.Play(RunStep.SecretRoom(RoomA)).Encounter);
+        }
+
+        [Test]
+        public void UnlockSecretRoom_TheSameInstanceTwice_DoesNothingTheSecondTime()
+        {
+            var run = CreateRun();
+
+            run.UnlockSecretRoom(RoomA, MiniBossA);
+            run.UnlockSecretRoom(RoomA, MiniBossA);
+
+            Assert.AreEqual(1, run.AvailableSteps.Count(s => s.Kind == RunStepKind.SecretRoom));
+        }
+
+        [Test]
+        public void UnlockSecretRoom_ARoomOutsideTheBiome_UsesTheGivenEncounterAndComparesByIdAfterwards()
+        {
+            var run = CreateRun();
+            var other = new EncounterDefinition("TestOtherRoomFight", new[] { MiniBossAEnemy });
+
+            run.UnlockSecretRoom("TestOutsideRoom", other);
+            run.UnlockSecretRoom("TestOutsideRoom", new EncounterDefinition(other.Id, new[] { MiniBossAEnemy }));
+
+            Assert.Throws<InvalidOperationException>(() => run.UnlockSecretRoom("TestOutsideRoom", MiniBossB));
+            Assert.AreEqual(1, run.AvailableSteps.Count(s => s.Kind == RunStepKind.SecretRoom));
         }
 
         [Test]
@@ -453,6 +493,102 @@ namespace Game.Core.Tests.Runs
             Assert.IsTrue(rewards.Revelation.RevealsHealth);
         }
 
+        // --- More rooms, cancellation, the unique card, atomicity ---
+
+        [Test]
+        public void Play_TwoThresholdsReachedByTheSameFight_UnlockBothRoomsInListingOrder()
+        {
+            var roomC = new SecretRoomDefinition(
+                "TestRoomC", new ObjectiveDefinition(Goblin.Id, 2), MiniBossB, 1, OtherUnique, new ProfessorRevelation(false, false, new int[0]));
+            var run = CreateRun(new[] { RoomAData(goblins: 1), roomC }, new[] { TwoGoblins });
+
+            var report = run.Play(RunStep.RegularFight);
+
+            CollectionAssert.AreEqual(new[] { RoomA, "TestRoomC" }, report.UnlockedRoomIds);
+            Assert.IsTrue(Status(run, RoomA).IsUnlocked);
+            Assert.IsTrue(Status(run, "TestRoomC").IsUnlocked);
+        }
+
+        [Test]
+        public void BeginFight_CancelledRegularFight_DoesNotCountTheObjectiveThatWouldHaveBeenReached()
+        {
+            var run = CreateRun(new[] { RoomAData(goblins: 1) });
+            var session = run.BeginFight(RunStep.RegularFight);
+            session.RunToEnd();
+
+            session.Cancel();
+
+            Assert.AreEqual(0, Status(run, RoomA).ObjectiveProgress);
+            Assert.IsFalse(Status(run, RoomA).IsUnlocked);
+            CollectionAssert.AreEqual(new[] { RunStep.RegularFight }, run.AvailableSteps);
+            CollectionAssert.AreEqual(new[] { RoomA }, run.Play(RunStep.RegularFight).UnlockedRoomIds);
+        }
+
+        [Test]
+        public void Play_TheUniqueCardIsANewInstanceWithNoCastsThatCountsLikeAnyOther()
+        {
+            var run = RunWithRoomA();
+            var before = run.Line.Select(c => c.Id).Concat(run.Reserve.Select(c => c.Id)).ToList();
+
+            var card = run.Play(RunStep.SecretRoom(RoomA)).SecretRoomRewards.Card;
+
+            CollectionAssert.DoesNotContain(before, card.Id);
+            Assert.AreEqual(0, card.Casts);
+            run.Play(RunStep.RegularFight);
+            Assert.Greater(card.Casts, 0);
+            Assert.AreSame(card, run.Line[1]);
+        }
+
+        [Test]
+        public void Play_TwoRoomsClearedWithTheSameUniqueCard_GiveTwoDistinctInstances()
+        {
+            var twin = new SecretRoomDefinition(
+                "TestRoomTwin", new ObjectiveDefinition(Goblin.Id, 1), MiniBossA, 1, Unique, new ProfessorRevelation(false, false, new int[0]));
+            var run = CreateRun(new[] { RoomAData(1), twin });
+            run.Play(RunStep.RegularFight);
+
+            var first = run.Play(RunStep.SecretRoom(RoomA)).SecretRoomRewards.Card;
+            var second = run.Play(RunStep.SecretRoom("TestRoomTwin")).SecretRoomRewards.Card;
+
+            Assert.AreNotSame(first, second);
+            Assert.AreNotEqual(first.Id, second.Id);
+            Assert.AreEqual(6, run.LineCapacity);
+        }
+
+        [Test]
+        public void Play_RewardsThatFail_LeaveTheRunUnchanged()
+        {
+            // A line that cannot take the room's slots: the fight is refused as a whole, and nothing was counted.
+            var hugeBonus = new SecretRoomDefinition(
+                RoomA,
+                new ObjectiveDefinition(Goblin.Id, 1),
+                MiniBossA,
+                int.MaxValue,
+                Unique,
+                new ProfessorRevelation(true, false, new[] { 1 }));
+            var run = CreateRun(new[] { hugeBonus });
+            run.Play(RunStep.RegularFight);
+            var fights = run.FightsPlayed;
+            var xp = run.TotalXp;
+            var level = run.Level;
+            var pending = run.PendingLevelUps;
+            var lineCount = run.Line.Count;
+
+            Assert.Throws<OverflowException>(() => run.Play(RunStep.SecretRoom(RoomA)));
+
+            Assert.AreEqual(fights, run.FightsPlayed);
+            Assert.AreEqual(xp, run.TotalXp);
+            Assert.AreEqual(level, run.Level);
+            Assert.AreEqual(pending, run.PendingLevelUps);
+            Assert.AreEqual(4, run.LineCapacity);
+            Assert.AreEqual(lineCount, run.Line.Count);
+            Assert.IsEmpty(run.Reserve);
+            Assert.IsFalse(Status(run, RoomA).IsCleared);
+            Assert.AreEqual(RunOutcome.InProgress, run.Outcome);
+            Assert.IsNull(run.CurrentFight);
+            Assert.IsTrue(run.IsInProgress);
+        }
+
         // --- Determinism ---
 
         [Test]
@@ -486,19 +622,70 @@ namespace Game.Core.Tests.Runs
         // --- Biome and room definitions ---
 
         [Test]
-        public void BiomeDefinition_Professor_IsTheFirstEnemyOfTheProfessorEncounter()
+        public void BiomeDefinition_Professor_IsTheEnemyTheDataNames()
         {
-            var biome = new BiomeDefinition("TestBiome", new[] { GoblinFight }, 0, ProfessorFight);
+            var sidekick = new EnemyDefinition("TestSidekick", 5, 0, new[] { EnemyHit }, 1);
+            var fight = new EncounterDefinition("TestProfessorAndSidekick", new[] { sidekick, Professor });
+
+            var biome = new BiomeDefinition("TestBiome", new[] { GoblinFight }, 0, fight, Professor);
 
             Assert.AreSame(Professor, biome.Professor);
             Assert.IsEmpty(biome.SecretRooms);
         }
 
         [Test]
+        public void BiomeDefinition_ProfessorGivenAsAnEquivalentInstance_IsMatchedById()
+        {
+            var copy = new EnemyDefinition(Professor.Id, 15, 4, new[] { EnemyHit, EnemyJab, EnemyPoke }, 30);
+
+            var biome = new BiomeDefinition("TestBiome", new[] { GoblinFight }, 0, ProfessorFight, copy);
+
+            Assert.AreSame(Professor, biome.Professor);
+        }
+
+        [Test]
+        public void BiomeDefinition_ProfessorNotInTheProfessorEncounter_ThrowsNamingTheBiome()
+        {
+            var exception = Assert.Throws<ArgumentException>(
+                () => new BiomeDefinition("TestBiome", new[] { GoblinFight }, 0, ProfessorFight, Goblin));
+
+            StringAssert.Contains("TestBiome", exception.Message);
+            StringAssert.Contains(Goblin.Id, exception.Message);
+        }
+
+        [Test]
+        public void BiomeDefinition_NullProfessor_Throws()
+        {
+            Assert.Throws<ArgumentNullException>(
+                () => new BiomeDefinition("TestBiome", new[] { GoblinFight }, 0, ProfessorFight, null));
+        }
+
+        [Test]
+        public void BiomeDefinition_SecretRoomErrors_NameTheBiome()
+        {
+            var duplicate = Assert.Throws<ArgumentException>(
+                () => new BiomeDefinition("TestBiomeX", new[] { GoblinFight }, 0, ProfessorFight, Professor, new[] { RoomAData(), RoomAData() }));
+            var missing = Assert.Throws<ArgumentException>(
+                () => new BiomeDefinition("TestBiomeX", new[] { ImpFight }, 0, ProfessorFight, Professor, new[] { RoomAData() }));
+            var beyond = Assert.Throws<ArgumentOutOfRangeException>(
+                () => new BiomeDefinition(
+                    "TestBiomeX",
+                    new[] { GoblinFight },
+                    0,
+                    ProfessorFight,
+                    Professor,
+                    new[] { RoomAData(revelation: new ProfessorRevelation(false, false, new[] { 3 })) }));
+
+            StringAssert.Contains("TestBiomeX", duplicate.Message);
+            StringAssert.Contains("TestBiomeX", missing.Message);
+            StringAssert.Contains("TestBiomeX", beyond.Message);
+        }
+
+        [Test]
         public void BiomeDefinition_SecretRooms_KeepTheirOrder()
         {
             var biome = new BiomeDefinition(
-                "TestBiome", new[] { GoblinFight, ImpFight }, 0, ProfessorFight, new[] { RoomBData(), RoomAData() });
+                "TestBiome", new[] { GoblinFight, ImpFight }, 0, ProfessorFight, Professor, new[] { RoomBData(), RoomAData() });
 
             CollectionAssert.AreEqual(new[] { RoomB, RoomA }, biome.SecretRooms.Select(r => r.Id));
         }
@@ -507,21 +694,21 @@ namespace Game.Core.Tests.Runs
         public void BiomeDefinition_NullSecretRoom_Throws()
         {
             Assert.Throws<ArgumentNullException>(
-                () => new BiomeDefinition("TestBiome", new[] { GoblinFight }, 0, ProfessorFight, new SecretRoomDefinition[] { null }));
+                () => new BiomeDefinition("TestBiome", new[] { GoblinFight }, 0, ProfessorFight, Professor, new SecretRoomDefinition[] { null }));
         }
 
         [Test]
         public void BiomeDefinition_TwoRoomsWithTheSameId_Throws()
         {
             Assert.Throws<ArgumentException>(
-                () => new BiomeDefinition("TestBiome", new[] { GoblinFight }, 0, ProfessorFight, new[] { RoomAData(), RoomAData() }));
+                () => new BiomeDefinition("TestBiome", new[] { GoblinFight }, 0, ProfessorFight, Professor, new[] { RoomAData(), RoomAData() }));
         }
 
         [Test]
         public void BiomeDefinition_ObjectiveEnemyInNoRegularEncounter_Throws()
         {
             var exception = Assert.Throws<ArgumentException>(
-                () => new BiomeDefinition("TestBiome", new[] { ImpFight }, 0, ProfessorFight, new[] { RoomAData() }));
+                () => new BiomeDefinition("TestBiome", new[] { ImpFight }, 0, ProfessorFight, Professor, new[] { RoomAData() }));
 
             StringAssert.Contains(RoomA, exception.Message);
             StringAssert.Contains(Goblin.Id, exception.Message);
@@ -533,7 +720,7 @@ namespace Game.Core.Tests.Runs
             var room = RoomAData(revelation: new ProfessorRevelation(false, false, new[] { 3 }));
 
             Assert.Throws<ArgumentOutOfRangeException>(
-                () => new BiomeDefinition("TestBiome", new[] { GoblinFight }, 0, ProfessorFight, new[] { room }));
+                () => new BiomeDefinition("TestBiome", new[] { GoblinFight }, 0, ProfessorFight, Professor, new[] { room }));
         }
 
         [Test]

@@ -35,7 +35,12 @@ namespace Game.Core.Tests.Runs
         private static Run CreateRun(EncounterDefinition regular, EncounterDefinition professor = null)
         {
             var heroClass = new ClassDefinition("TestClass", HeroHealth, 0, 4, new[] { Strike }, new CardDefinition[0]);
-            var biome = new BiomeDefinition("TestBiome", new[] { regular }, 0, professor ?? Encounter("TestProfessor", Weak("TestProfessor1", 0)));
+            var biome = new BiomeDefinition(
+                "TestBiome",
+                new[] { regular },
+                0,
+                professor ?? Encounter("TestProfessor", Weak("TestProfessor1", 0)),
+                (professor ?? Encounter("TestProfessor", Weak("TestProfessor1", 0))).Enemies[0]);
             return new Run(heroClass, biome, new RunRules(TimeLimit, Curve), 1);
         }
 

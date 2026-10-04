@@ -368,7 +368,8 @@ namespace Game.Core.Runs
         /// <summary>
         /// Makes a secret room available as a step until the end of the run. Objectives unlock the biome's rooms by
         /// themselves when they are completed; this opens one at once (tests, tools). Unlocking a room again with the
-        /// same encounter does nothing. A room the biome defines must be unlocked with its own mini-boss encounter.
+        /// same encounter does nothing. Encounters are compared by id. A room the biome defines must be unlocked with
+        /// its own mini-boss encounter.
         /// </summary>
         /// <exception cref="ArgumentException"><paramref name="roomId"/> is null, empty or whitespace.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="miniBossEncounter"/> is null.</exception>
@@ -388,8 +389,10 @@ namespace Game.Core.Runs
             }
 
             EnsureCanChange();
+
+            // Encounters are compared by id, not by reference: data converted twice gives equal but distinct objects.
             var state = FindRoomState(roomId);
-            if (state != null && state.Definition.MiniBossEncounter != miniBossEncounter)
+            if (state != null && !SameEncounter(state.Definition.MiniBossEncounter, miniBossEncounter))
             {
                 throw new InvalidOperationException(
                     $"Secret room '{roomId}' of the biome has encounter '{state.Definition.MiniBossEncounter.Id}', not '{miniBossEncounter.Id}'.");
@@ -398,9 +401,10 @@ namespace Game.Core.Runs
             var existing = FindSecretRoom(roomId);
             if (existing == null)
             {
-                _secretRooms.Add(new SecretRoom(roomId, miniBossEncounter));
+                // A room the biome defines always opens with the biome's own encounter definition.
+                _secretRooms.Add(new SecretRoom(roomId, state != null ? state.Definition.MiniBossEncounter : miniBossEncounter));
             }
-            else if (existing.Encounter != miniBossEncounter)
+            else if (!SameEncounter(existing.Encounter, miniBossEncounter))
             {
                 throw new InvalidOperationException(
                     $"Secret room '{roomId}' is already unlocked with encounter '{existing.Encounter.Id}'.");
@@ -566,6 +570,41 @@ namespace Game.Core.Runs
             var level = Rules.LevelCurve.LevelForTotalXp(totalXp);
             var levelsGained = level - Level;
 
+            // Everything that can throw is built here, before the run changes: the objective and reward plans and the
+            // report. The changes are applied below, none of which can throw, so a failure leaves the run unchanged.
+            var objectiveUpdates = new List<ObjectiveUpdate>();
+            RoomState clearedRoom = null;
+            CardInstance rewardCard = null;
+            SecretRoomRewards rewards = null;
+            if (won && step.Kind == RunStepKind.RegularFight)
+            {
+                PlanObjectives(encounter, objectiveUpdates);
+            }
+            else if (won && step.Kind == RunStepKind.SecretRoom)
+            {
+                var state = FindRoomState(step.SecretRoomId);
+                if (state != null && !state.IsCleared)
+                {
+                    var room = state.Definition;
+                    _ = checked(_line.Capacity + room.BonusLineSlots);
+                    clearedRoom = state;
+                    rewardCard = new CardInstance(_nextCardInstanceId, room.UniqueCard);
+                    rewards = new SecretRoomRewards(room.Id, room.BonusLineSlots, rewardCard, Biome.Professor, room.Revelation);
+                }
+            }
+
+            var unlockedRoomIds = new List<string>();
+            foreach (var update in objectiveUpdates)
+            {
+                if (update.Unlocks)
+                {
+                    unlockedRoomIds.Add(update.State.Definition.Id);
+                }
+            }
+
+            var report = new RunFightReport(
+                step, encounter, session.StartLine, log, xpGained, levelsGained, unlockedRoomIds, rewards);
+
             // Card evolution (ADR 0013): every card copy of the hero keeps the casts the fight counted for it. The
             // counts follow the copies' starting order (line, then reserve), wherever line changes moved them.
             var casts = log.HeroCardCasts;
@@ -605,8 +644,6 @@ namespace Game.Core.Runs
             PendingLevelUps += levelsGained;
             Level = level;
 
-            IReadOnlyList<string> unlockedRooms = null;
-            SecretRoomRewards rewards = null;
             if (!won)
             {
                 Outcome = RunOutcome.Defeat;
@@ -614,25 +651,25 @@ namespace Game.Core.Runs
             else if (step.Kind == RunStepKind.RegularFight)
             {
                 RegularFightsWon++;
-                unlockedRooms = CountObjectives(encounter);
+                ApplyObjectives(objectiveUpdates);
             }
             else if (step.Kind == RunStepKind.SecretRoom)
             {
-                rewards = GrantSecretRoomRewards(step.SecretRoomId);
+                ApplyRewards(clearedRoom, rewardCard);
             }
             else if (step.Kind == RunStepKind.Professor)
             {
                 Outcome = RunOutcome.Victory;
             }
 
-            return new RunFightReport(step, encounter, session.StartLine, log, xpGained, levelsGained, unlockedRooms, rewards);
+            return report;
         }
 
         // A regular fight was won: every defeated enemy counts for the objectives still in progress, and a room whose
-        // objective is complete opens. Returns the ids of the rooms opened by this fight, in listing order.
-        private List<string> CountObjectives(EncounterDefinition encounter)
+        // objective is complete opens. This only plans the changes, in the biome's listing order; ApplyObjectives
+        // makes them.
+        private void PlanObjectives(EncounterDefinition encounter, List<ObjectiveUpdate> updates)
         {
-            var unlocked = new List<string>();
             foreach (var state in _roomStates)
             {
                 if (state.IsUnlocked)
@@ -641,48 +678,62 @@ namespace Game.Core.Runs
                 }
 
                 var objective = state.Definition.Objective;
+                var progress = state.Progress;
                 foreach (var enemy in encounter.Enemies)
                 {
                     if (string.Equals(enemy.Id, objective.EnemyId, StringComparison.Ordinal))
                     {
-                        state.Progress = Math.Min(objective.Count, state.Progress + 1);
+                        progress = Math.Min(objective.Count, progress + 1);
                     }
                 }
 
-                if (state.Progress >= objective.Count)
-                {
-                    state.IsUnlocked = true;
-                    if (FindSecretRoom(state.Definition.Id) == null)
-                    {
-                        _secretRooms.Add(new SecretRoom(state.Definition.Id, state.Definition.MiniBossEncounter));
-                    }
-
-                    unlocked.Add(state.Definition.Id);
-                }
+                updates.Add(new ObjectiveUpdate(state, progress, progress >= objective.Count));
             }
-
-            return unlocked;
         }
 
-        // A secret room's mini-boss was beaten: the first time only, the line gets its slots, then the unique card (at
-        // the end of the line when a slot is free, otherwise in the reserve) and the revelation is handed back.
-        private SecretRoomRewards GrantSecretRoomRewards(string roomId)
+        private void ApplyObjectives(List<ObjectiveUpdate> updates)
         {
-            var state = FindRoomState(roomId);
-            if (state == null || state.IsCleared)
+            foreach (var update in updates)
             {
-                return null;
+                update.State.Progress = update.Progress;
+                if (!update.Unlocks)
+                {
+                    continue;
+                }
+
+                update.State.IsUnlocked = true;
+                if (FindSecretRoom(update.State.Definition.Id) == null)
+                {
+                    _secretRooms.Add(new SecretRoom(update.State.Definition.Id, update.State.Definition.MiniBossEncounter));
+                }
+            }
+        }
+
+        // A secret room's mini-boss was beaten for the first time (the card was planned in CommitFight): the room is
+        // cleared, the line gets its slots, then the unique card joins the end of the line, or the reserve when the
+        // line is still full. XP and levels are committed by the same call, after the slots and the card.
+        private void ApplyRewards(RoomState clearedRoom, CardInstance rewardCard)
+        {
+            if (clearedRoom == null)
+            {
+                return;
             }
 
-            state.IsCleared = true;
-            var room = state.Definition;
-            if (room.BonusLineSlots > 0)
+            clearedRoom.IsCleared = true;
+            _nextCardInstanceId++;
+            if (clearedRoom.Definition.BonusLineSlots > 0)
             {
-                _line.IncreaseCapacity(room.BonusLineSlots);
+                _line.IncreaseCapacity(clearedRoom.Definition.BonusLineSlots);
             }
 
-            var card = AddCardCore(room.UniqueCard);
-            return new SecretRoomRewards(room.Id, room.BonusLineSlots, card, Biome.Professor, room.Revelation);
+            if (_line.IsFull)
+            {
+                _reserve.Add(rewardCard);
+            }
+            else
+            {
+                _line.Add(rewardCard);
+            }
         }
 
         // Called by the session when it is cancelled: the run is free again; nothing was counted or drawn.
@@ -724,6 +775,11 @@ namespace Game.Core.Runs
             }
 
             return instance;
+        }
+
+        private static bool SameEncounter(EncounterDefinition a, EncounterDefinition b)
+        {
+            return string.Equals(a.Id, b.Id, StringComparison.Ordinal);
         }
 
         private RoomState FindRoomState(string roomId)
@@ -795,6 +851,23 @@ namespace Game.Core.Runs
             public bool IsUnlocked { get; set; }
 
             public bool IsCleared { get; set; }
+        }
+
+        // A planned change of one room's objective progress.
+        private sealed class ObjectiveUpdate
+        {
+            public ObjectiveUpdate(RoomState state, int progress, bool unlocks)
+            {
+                State = state;
+                Progress = progress;
+                Unlocks = unlocks;
+            }
+
+            public RoomState State { get; }
+
+            public int Progress { get; }
+
+            public bool Unlocks { get; }
         }
 
         private sealed class SecretRoom
