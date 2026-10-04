@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using Game.Unity.Enemies;
 using NUnit.Framework;
+using UnityEditor;
 
 namespace Game.Unity.Tests.Enemies
 {
@@ -127,6 +128,17 @@ namespace Game.Unity.Tests.Enemies
             Assert.AreEqual(12, definition.MaxHealth);
             Assert.AreEqual(3, definition.Shield);
             CollectionAssert.AreEqual(new[] { "test_card_a", "test_card_b" }, definition.SpellLine.Select(c => c.Id));
+        }
+
+        [Test]
+        public void ToDefinition_CopiesTheXpReward()
+        {
+            var enemy = _assets.Enemy("test_enemy", EnemyRank.MiniBoss, 5, 0, _assets.Card("test_card_a"));
+            var serialized = new SerializedObject(enemy);
+            serialized.FindProperty("_xpReward").intValue = 9;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+
+            Assert.AreEqual(9, enemy.ToDefinition().XpReward);
         }
 
         [Test]

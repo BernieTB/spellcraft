@@ -44,6 +44,19 @@ namespace Game.Core.Tests.Enemies
         }
 
         [Test]
+        public void Enemy_XpReward_DefaultsToZeroAndKeepsTheGivenValue()
+        {
+            Assert.AreEqual(0, Enemy().XpReward);
+            Assert.AreEqual(7, new EnemyDefinition("TestEnemy1", 10, 0, new[] { Attack }, 7).XpReward);
+        }
+
+        [Test]
+        public void Enemy_NegativeXpReward_Throws()
+        {
+            Assert.Throws<ArgumentOutOfRangeException>(() => new EnemyDefinition("TestEnemy1", 10, 0, new[] { Attack }, -1));
+        }
+
+        [Test]
         public void Enemy_EmptySpellLine_Throws()
         {
             Assert.Throws<ArgumentException>(() => new EnemyDefinition("TestEnemy1", 10, 0, new CardDefinition[0]));

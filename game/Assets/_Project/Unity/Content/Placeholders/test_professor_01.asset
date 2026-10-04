@@ -16,6 +16,7 @@ MonoBehaviour:
   _rank: 2
   _maxHealth: 40
   _startingShield: 5
+  _xpReward: 20
   _spellLine:
   - {fileID: 11400000, guid: 43f50fc67932b0f4da06397f413066c0, type: 2}
   - {fileID: 11400000, guid: 8603167df2c360542b79b44b6d230667, type: 2}

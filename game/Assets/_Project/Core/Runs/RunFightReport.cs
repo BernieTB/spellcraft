@@ -9,7 +9,7 @@ namespace Game.Core.Runs
 {
     /// <summary>
     /// What happened when a step was played: which encounter was fought and how the fight went. Later systems read
-    /// it to give XP (#70), count objectives (#71) and build the recap (#83).
+    /// it to offer level-ups (#76), count objectives (#71) and build the recap (#83).
     /// </summary>
     public sealed class RunFightReport
     {
@@ -17,8 +17,17 @@ namespace Game.Core.Runs
         /// <param name="encounter">The encounter fought.</param>
         /// <param name="heroLine">The hero's spell line when the fight started, in order. Copied.</param>
         /// <param name="log">The fight's combat log.</param>
+        /// <param name="xpGained">XP the hero earned from this fight. Zero or more.</param>
+        /// <param name="levelsGained">Levels the hero reached thanks to this fight. Zero or more.</param>
         /// <exception cref="ArgumentNullException">An argument or a card of <paramref name="heroLine"/> is null.</exception>
-        public RunFightReport(RunStep step, EncounterDefinition encounter, IEnumerable<CardInstance> heroLine, CombatLog log)
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="xpGained"/> or <paramref name="levelsGained"/> is negative.</exception>
+        public RunFightReport(
+            RunStep step,
+            EncounterDefinition encounter,
+            IEnumerable<CardInstance> heroLine,
+            CombatLog log,
+            long xpGained = 0,
+            int levelsGained = 0)
         {
             Step = step ?? throw new ArgumentNullException(nameof(step));
             Encounter = encounter ?? throw new ArgumentNullException(nameof(encounter));
@@ -35,6 +44,18 @@ namespace Game.Core.Runs
 
             HeroLine = new ReadOnlyCollection<CardInstance>(line);
             Log = log ?? throw new ArgumentNullException(nameof(log));
+            if (xpGained < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(xpGained), xpGained, "XP gained cannot be negative.");
+            }
+
+            if (levelsGained < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(levelsGained), levelsGained, "Levels gained cannot be negative.");
+            }
+
+            XpGained = xpGained;
+            LevelsGained = levelsGained;
         }
 
         /// <summary>The step that was played.</summary>
@@ -57,5 +78,16 @@ namespace Game.Core.Runs
 
         /// <summary>True when the fight reached the time limit, which counts as a defeat.</summary>
         public bool TimedOut => Log.Winner == FightWinner.None;
+
+        /// <summary>
+        /// XP the hero earned: the sum of the XP rewards of the encounter's enemies when the hero won, zero otherwise.
+        /// </summary>
+        public long XpGained { get; }
+
+        /// <summary>
+        /// Levels the hero reached thanks to this fight; several at once are possible. Each one is also added to
+        /// <see cref="Run.PendingLevelUps"/> so a linked choice can be offered (#76).
+        /// </summary>
+        public int LevelsGained { get; }
     }
 }

@@ -15,6 +15,9 @@ namespace Game.Core.Tests.Runs
         private const int HeroHealth = 20;
         private const int TimeLimit = 50;
 
+        // Level 1 -> 2 costs 10 XP, 2 -> 3 costs 20, then each level costs 5 more than the previous one.
+        private static readonly LevelCurve Curve = new LevelCurve(new[] { 10, 20 }, 5);
+
         private static readonly CardDefinition Strike = new CardDefinition("TestStrike", 1, new IEffect[] { new DealDamageEffect(10) });
         private static readonly CardDefinition Guard = new CardDefinition("TestGuard", 1, new IEffect[] { new GainShieldEffect(5) });
         private static readonly CardDefinition EnemyHit = new CardDefinition("TestEnemyHit", 1, new IEffect[] { new DealDamageEffect(3) });
@@ -49,7 +52,7 @@ namespace Game.Core.Tests.Runs
             var heroClass = new ClassDefinition(
                 "TestClass", HeroHealth, startingShield, capacity, deck ?? new[] { Strike }, new CardDefinition[0]);
             var biome = new BiomeDefinition("TestBiome", pool ?? new[] { Weak }, minimumRegularFights, professor ?? Professor);
-            return new Run(heroClass, biome, new RunRules(TimeLimit), seed);
+            return new Run(heroClass, biome, new RunRules(TimeLimit, Curve), seed);
         }
 
         private static List<string> PlayRegularFights(Run run, int count)
