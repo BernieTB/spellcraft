@@ -98,6 +98,12 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
   changes. Applied changes are in `FightResult.LineChanges` and in the combat log as `line` events (text and
   JSON), which the recap skips. ADR 0015 records the details confirmed by the owner (a cast takes its pending
   bonus when it starts, where a moved or swapped-out card resolves, order of changes on one tick).
+- Passive upgrades and live line editing wired into the run model: `Run.TakeUpgrade` stacks the hero's passive
+  upgrades, applied to the hero of every fight (and to the reserve cards swapped in during a fight);
+  `Run.BeginFight` opens a `RunFightSession` advanced tick by tick (`Advance`, `MoveCard`, `SwapWithReserve`,
+  `RunToEnd`, `Complete`, `Cancel`) whose line changes update the run's card instances as they happen. Only regular
+  fights allow line edits (`RunStep.AllowsLineEditing`); secret room and professor fights fix the line. `Run.Play`
+  is the same fight run to its end with no change, and gives the same result as stepping a session.
 
 ### Changed
 
