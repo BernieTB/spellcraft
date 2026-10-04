@@ -112,6 +112,16 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
   fight. Passive upgrades also upgrade the evolved stages of a card. A fight session (`RunFightSession`) counts the
   casts of the line and the reserve copies and hands them to the run's card instances when it completes, also for
   cards swapped during the fight; a cancelled session keeps its line changes but not the casts.
+- Recap screen (`Screens/RecapScreen.uxml`, `RecapScreenView`): shows a fight recap built by Core, with the
+  outcome (victory, defeat or out of time), per-card output for both sides, neighbour bonuses used and wasted
+  with the reason, and for a lost fight the turning point and its causes, the main one highlighted together with
+  the cards it blames (cards that wasted a bonus, the weakest card, or the enemy card that broke the shield).
+  It is not yet part of the game flow (#88).
+- `ScreenHost`: shows one UI Toolkit screen at a time in a container, so the single bootstrap scene can switch
+  screens in code (ADR 0008); a screen can pass a callback that runs once when it stops being shown.
+- Editor window **Tools > Game > Preview Screens**: shows the title screen and the recap (victory, defeat, out of
+  time, from small fights played by Core) with the game's theme and `ScreenHost`, to look at a screen without
+  playing a run. New screens register with one line in `ScreenPreviews`.
 
 ### Changed
 

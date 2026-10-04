@@ -1,0 +1,157 @@
+/* Recap screen (ADR 0014): flat placeholder shapes, colours and sizes from Common.uss (ADR 0008). */
+.recap-screen {
+    align-items: stretch;
+    justify-content: flex-start;
+    padding: 32px 48px;
+}
+
+.outcome-title {
+    font-size: var(--font-size-title);
+    -unity-font-style: bold;
+    color: var(--color-ink);
+}
+
+.outcome--victory {
+    color: var(--color-success);
+}
+
+.outcome--defeat,
+.outcome--time-limit {
+    color: var(--color-danger);
+}
+
+.outcome-subtitle {
+    margin-top: 8px;
+    margin-bottom: 24px;
+    font-size: var(--font-size-body);
+    color: var(--color-ink-muted);
+}
+
+.recap-content {
+    flex-grow: 1;
+}
+
+.defeat-panel {
+    margin-bottom: 32px;
+    padding: 20px 24px;
+    background-color: var(--color-danger-background);
+    border-left-width: 8px;
+    border-left-color: var(--color-danger);
+}
+
+.defeat-heading {
+    font-size: var(--font-size-heading);
+    -unity-font-style: bold;
+    color: var(--color-ink);
+}
+
+.turning-point {
+    margin-top: 12px;
+    font-size: var(--font-size-body);
+    color: var(--color-ink);
+}
+
+.analysed-loop {
+    margin-top: 4px;
+    font-size: var(--font-size-small);
+    color: var(--color-ink-muted);
+}
+
+.causes {
+    margin-top: 12px;
+}
+
+.cause {
+    margin-top: 6px;
+    font-size: var(--font-size-small);
+    color: var(--color-ink-muted);
+}
+
+.cause--main {
+    padding: 10px 14px;
+    font-size: var(--font-size-body);
+    -unity-font-style: bold;
+    color: var(--color-background);
+    background-color: var(--color-danger);
+}
+
+.combatants {
+    margin-bottom: 16px;
+}
+
+.combatant {
+    margin-bottom: 24px;
+    padding: 16px 20px;
+    background-color: var(--color-panel);
+}
+
+.combatant-heading {
+    margin-bottom: 8px;
+    font-size: var(--font-size-heading);
+    -unity-font-style: bold;
+    color: var(--color-accent);
+}
+
+.card-row {
+    flex-direction: row;
+    padding: 6px 8px;
+    border-bottom-width: 1px;
+    border-bottom-color: var(--color-background);
+}
+
+.card-row--header {
+    border-bottom-color: var(--color-accent);
+}
+
+.card-row--header .cell {
+    -unity-font-style: bold;
+    color: var(--color-ink-muted);
+}
+
+.card-row--culprit {
+    background-color: var(--color-danger-background);
+    border-left-width: 6px;
+    border-left-color: var(--color-danger);
+}
+
+.cell {
+    width: 120px;
+    font-size: var(--font-size-small);
+    color: var(--color-ink);
+}
+
+.cell--slot {
+    width: 80px;
+}
+
+.cell--card {
+    width: 260px;
+}
+
+.cell--number {
+    width: 120px;
+}
+
+/* The two bonus columns share what is left, from the same basis, so the header and the rows line up. */
+.cell--bonus {
+    flex-grow: 1;
+    flex-basis: 0;
+    width: auto;
+}
+
+.combatant-summary {
+    margin-top: 10px;
+    font-size: var(--font-size-small);
+    color: var(--color-ink-muted);
+}
+
+.wasted {
+    margin-top: 4px;
+    font-size: var(--font-size-small);
+    color: var(--color-ink);
+}
+
+.wasted--culprit {
+    color: var(--color-danger);
+    -unity-font-style: bold;
+}

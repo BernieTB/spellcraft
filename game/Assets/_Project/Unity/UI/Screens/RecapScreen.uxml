@@ -1,0 +1,18 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <Style src="../Styles/Common.uss" />
+    <Style src="../Styles/Recap.uss" />
+    <ui:VisualElement name="screen" class="screen recap-screen">
+        <ui:Label name="outcome-title" class="outcome-title" text="Outcome" />
+        <ui:Label name="outcome-subtitle" class="outcome-subtitle" text="Summary of the fight" />
+        <ui:ScrollView name="content" class="recap-content">
+            <ui:VisualElement name="defeat-panel" class="defeat-panel hidden">
+                <ui:Label name="defeat-heading" class="defeat-heading" text="Where the chain broke" />
+                <ui:Label name="turning-point" class="turning-point" text="Turning point" />
+                <ui:Label name="analysed-loop" class="analysed-loop" text="Analysed loop" />
+                <ui:VisualElement name="causes" class="causes" />
+            </ui:VisualElement>
+            <ui:VisualElement name="hero" class="combatants" />
+            <ui:VisualElement name="enemies" class="combatants" />
+        </ui:ScrollView>
+    </ui:VisualElement>
+</ui:UXML>
