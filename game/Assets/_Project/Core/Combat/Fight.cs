@@ -452,7 +452,7 @@ namespace Game.Core.Combat
 
         // The whole schedule is checked before the fight runs, so a bad change never leaves a half-run fight. The
         // sizes of the line and the reserve never change during a fight, so positions can be checked up front.
-        private void ValidateSchedule(IReadOnlyList<LineChange> lineChanges)
+        internal void ValidateSchedule(IReadOnlyList<LineChange> lineChanges)
         {
             if (lineChanges.Count > 0 && !LineEditsAllowed)
             {

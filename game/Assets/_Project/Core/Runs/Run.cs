@@ -165,7 +165,8 @@ namespace Game.Core.Runs
 
         /// <summary>
         /// The steps the player can choose now, in a fixed order: the regular fight, unlocked secret rooms in the
-        /// order they were unlocked, then the professor when available. Empty once the run is over.
+        /// order they were unlocked, then the professor when available. Empty once the run is over. It does not look
+        /// at an open fight session, which blocks every step: the screen tests <see cref="CurrentFight"/> first.
         /// </summary>
         public IReadOnlyList<RunStep> AvailableSteps
         {
@@ -261,7 +262,8 @@ namespace Game.Core.Runs
 
         /// <summary>
         /// Marks one pending level-up as handled, once its linked choice is taken (#76). Allowed after the run ends,
-        /// so a level reached in the last fight can still be shown.
+        /// so a level reached in the last fight can still be shown, and while a fight session is open (confirmed by
+        /// the owner on 2026-10-05): a passive upgrade taken then applies from the next fight, not to the one playing.
         /// </summary>
         /// <exception cref="InvalidOperationException">There is no pending level-up.</exception>
         public void ConsumePendingLevelUp()
