@@ -77,6 +77,9 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
 - Passive upgrades: `PassiveUpgrade` (+X max health, +X starting shield, +X to every effect of one kind, +X to
   every neighbour modifier) authored as `PassiveUpgradeAsset`, and `PassiveUpgradeSet`, which stacks the upgrades
   taken and applies them to the hero's participant before a fight (upgraded combatant and cards).
+- Fight recap in Core, built only from the combat log: per-card casts, damage, healing and shield for every
+  side, neighbour bonuses used and wasted (with the reason), and for a lost fight the turning point and its
+  causes (wasted bonuses, broken shield, weakest card), or a time-limit outcome.
 
 ### Changed
 
