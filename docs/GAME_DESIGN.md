@@ -40,7 +40,10 @@ Pacing (see [ADR 0009](adr/0009-vertical-slice-run-pacing.md); numbers live in d
 - Between fights the player picks the next step: a regular fight, an unlocked secret room, or the professor.
 - The professor becomes available after a **minimum number of regular fights** (about 8). The player may then
   keep fighting regular monsters and mini-bosses before facing the professor.
-- Regular fights are drawn with the run's seed from the biome's pool of encounters.
+- Regular fights are drawn with the run's seed from the biome's pool of encounters, with equal chances, when the
+  fight starts: the player does not see the encounter before choosing a regular fight.
+- The spell line always keeps at least one card.
+- In the Vertical slice a run is one biome: defeating the professor wins the run.
 - **Each fight starts fresh:** the hero has max health and the starting shield at the start of every fight.
 
 ## Character and level-ups

@@ -197,6 +197,37 @@ namespace Game.Core.Tests.SpellLines
             CollectionAssert.AreEqual(new[] { CardA, CardA }, line.Cards);
         }
 
+        [Test]
+        public void IncreaseCapacity_AddsSlotsAndKeepsCards()
+        {
+            var line = CreateLine(2, CardA, CardB);
+
+            line.IncreaseCapacity(2);
+
+            Assert.AreEqual(4, line.Capacity);
+            Assert.IsFalse(line.IsFull);
+            CollectionAssert.AreEqual(new[] { CardA, CardB }, line.Cards);
+        }
+
+        [Test]
+        public void IncreaseCapacity_CardsViewCapturedBefore_SeesCardsAddedAfter()
+        {
+            var line = CreateLine(1, CardA);
+            var view = line.Cards;
+
+            line.IncreaseCapacity(1);
+            line.Add(CardB);
+
+            CollectionAssert.AreEqual(new[] { CardA, CardB }, view);
+        }
+
+        [TestCase(0)]
+        [TestCase(-1)]
+        public void IncreaseCapacity_BelowOne_Throws(int slots)
+        {
+            Assert.Throws<ArgumentOutOfRangeException>(() => CreateLine(1, CardA).IncreaseCapacity(slots));
+        }
+
         // --- Removing ---
 
         [Test]
