@@ -21,8 +21,12 @@ namespace Game.Unity.Tests.Meta
             5,
             new[] { new CardDefinition("TestCard1", 1, new IEffect[] { new DealDamageEffect(2) }) });
 
+        private static readonly Regex CouldNotRead = new Regex(@"^\[Bestiary\] The save .* could not be read");
+
         private string _folder;
         private FileBestiaryStore _store;
+
+        private string SaveFolder => Path.GetDirectoryName(_store.Path);
 
         [SetUp]
         public void SetUp()
@@ -40,6 +44,12 @@ namespace Game.Unity.Tests.Meta
             }
         }
 
+        private void WriteSave(string text)
+        {
+            Directory.CreateDirectory(SaveFolder);
+            File.WriteAllText(_store.Path, text);
+        }
+
         [Test]
         public void Load_NoFile_IsMissingAndEmpty()
         {
@@ -47,6 +57,7 @@ namespace Game.Unity.Tests.Meta
 
             Assert.AreEqual(BestiaryLoadStatus.Missing, result.Status);
             Assert.AreEqual(0, result.Bestiary.Entries.Count);
+            Assert.IsFalse(_store.WritesBlocked);
         }
 
         [Test]
@@ -78,15 +89,69 @@ namespace Game.Unity.Tests.Meta
         [Test]
         public void Load_CorruptFile_StartsEmptyWarnsAndKeepsACopy()
         {
-            Directory.CreateDirectory(Path.GetDirectoryName(_store.Path));
-            File.WriteAllText(_store.Path, "{ broken");
-            LogAssert.Expect(LogType.Warning, new Regex(@"^\[Bestiary\] The save .* could not be read"));
+            WriteSave("{ broken");
+            LogAssert.Expect(LogType.Warning, CouldNotRead);
 
             var result = _store.Load();
 
             Assert.AreEqual(BestiaryLoadStatus.Unreadable, result.Status);
             Assert.AreEqual(0, result.Bestiary.Entries.Count);
+            Assert.AreEqual(Path.Combine(SaveFolder, "bestiary.unreadable.json"), _store.UnreadableCopyPath);
             Assert.AreEqual("{ broken", File.ReadAllText(_store.UnreadableCopyPath));
+            Assert.IsFalse(_store.WritesBlocked);
+        }
+
+        [Test]
+        public void Load_UnknownVersion_KeepsACopy()
+        {
+            WriteSave("{\"version\":99,\"professors\":[]}");
+            LogAssert.Expect(LogType.Warning, CouldNotRead);
+
+            var result = _store.Load();
+
+            Assert.AreEqual(BestiaryLoadStatus.Unreadable, result.Status);
+            Assert.AreEqual("{\"version\":99,\"professors\":[]}", File.ReadAllText(_store.UnreadableCopyPath));
+        }
+
+        [Test]
+        public void Load_UnreadableTwice_NeverOverwritesAnOlderCopy()
+        {
+            WriteSave("{ first");
+            LogAssert.Expect(LogType.Warning, CouldNotRead);
+            _store.Load();
+            var firstCopy = _store.UnreadableCopyPath;
+
+            WriteSave("{ second");
+            LogAssert.Expect(LogType.Warning, CouldNotRead);
+            _store.Load();
+
+            Assert.AreEqual("{ first", File.ReadAllText(firstCopy));
+            Assert.AreEqual(Path.Combine(SaveFolder, "bestiary.unreadable-1.json"), _store.UnreadableCopyPath);
+            Assert.AreEqual("{ second", File.ReadAllText(_store.UnreadableCopyPath));
+        }
+
+        [Test]
+        public void Load_LockedFile_IsUnreadableAndBlocksWrites()
+        {
+            if (Application.platform != RuntimePlatform.WindowsEditor)
+            {
+                Assert.Ignore("Exclusive file locks are only enforced on Windows.");
+            }
+
+            WriteSave("{\"version\":1,\"professors\":[]}");
+            using (new FileStream(_store.Path, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+            {
+                LogAssert.Expect(LogType.Warning, new Regex(@"^\[Bestiary\] The save .* no copy could be kept"));
+
+                var result = _store.Load();
+
+                Assert.AreEqual(BestiaryLoadStatus.Unreadable, result.Status);
+                Assert.IsTrue(_store.WritesBlocked);
+                Assert.IsNull(_store.UnreadableCopyPath);
+            }
+
+            Assert.Throws<InvalidOperationException>(() => BestiaryStorage.Save(_store, new Bestiary()));
+            Assert.AreEqual("{\"version\":1,\"professors\":[]}", File.ReadAllText(_store.Path));
         }
 
         [Test]
@@ -99,7 +164,8 @@ namespace Game.Unity.Tests.Meta
 
         [TestCase(null)]
         [TestCase(" ")]
-        public void Constructor_BlankPath_Throws(string path)
+        [TestCase("saves/bestiary.json")]
+        public void Constructor_BlankOrRelativePath_Throws(string path)
         {
             Assert.Throws<ArgumentException>(() => new FileBestiaryStore(path));
         }
