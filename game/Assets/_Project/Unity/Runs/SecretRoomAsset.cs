@@ -101,7 +101,8 @@ namespace Game.Unity.Runs
             }
             catch (Exception exception) when (exception is ArgumentException || exception is InvalidOperationException)
             {
-                throw new InvalidOperationException($"Secret room asset '{name}' is invalid: {exception.Message}", exception);
+                var idText = string.IsNullOrWhiteSpace(_id) ? string.Empty : $" (id '{_id}')";
+                throw new InvalidOperationException($"Secret room asset '{name}'{idText} is invalid: {exception.Message}", exception);
             }
         }
     }
