@@ -28,6 +28,9 @@ namespace Game.Core.Runs
     /// before.</item>
     /// <item>Any defeat ends the run, including a fight that reaches <see cref="RunRules.FightTimeLimit"/>. Defeating
     /// the professor wins it.</item>
+    /// <item>A won fight gives the XP of every enemy of its encounter, whatever the step (regular fight, secret room
+    /// fought again, professor). Levels follow <see cref="RunRules.LevelCurve"/>; each level reached adds a pending
+    /// level-up for the linked choice (#76). A lost fight gives no XP.</item>
     /// </list>
     /// <para>
     /// Determinism: every random source of the run is a <see cref="Pcg32Random"/> seeded with <see cref="Seed"/>, on
@@ -44,7 +47,8 @@ namespace Game.Core.Runs
     /// </para>
     /// <para>Extension points for later systems, not implemented here:</para>
     /// <list type="bullet">
-    /// <item>Level-ups (#70) and objectives (#71) read the <see cref="RunFightReport"/> returned by <see cref="Play"/>.
+    /// <item>Level-up offers (#76) read <see cref="PendingLevelUps"/> and call <see cref="ConsumePendingLevelUp"/>;
+    /// objectives (#71) read the <see cref="RunFightReport"/> returned by <see cref="Play"/>.
     /// Passive upgrades (#75) will change the hero's stats used when a fight starts (see <c>CreateHero</c>).</item>
     /// <item>Secret rooms are unlocked by objectives through <see cref="UnlockSecretRoom"/>; their rewards call
     /// <see cref="AddCard"/> and <see cref="IncreaseLineCapacity"/> (#71). Level-up cards also use <see cref="AddCard"/> (#76).</item>
@@ -117,6 +121,18 @@ namespace Game.Core.Runs
         /// <summary>Number of regular fights won. Secret room and professor fights do not count.</summary>
         public int RegularFightsWon { get; private set; }
 
+        /// <summary>Total XP earned since the start of the run.</summary>
+        public long TotalXp { get; private set; }
+
+        /// <summary>The hero's level, from <see cref="TotalXp"/> and <see cref="RunRules.LevelCurve"/>. Starts at 1.</summary>
+        public int Level { get; private set; } = 1;
+
+        /// <summary>
+        /// Levels reached whose linked choice has not been taken yet. Each level reached adds one; the level-up offer
+        /// (#76) removes one with <see cref="ConsumePendingLevelUp"/>.
+        /// </summary>
+        public int PendingLevelUps { get; private set; }
+
         /// <summary>True once enough regular fights are won to face the professor.</summary>
         public bool IsProfessorAvailable => RegularFightsWon >= Biome.MinimumRegularFights;
 
@@ -187,10 +203,17 @@ namespace Game.Core.Runs
             var heroLine = new List<CardInstance>(_line.Cards);
             var fightRandom = new Pcg32Random(Seed, FirstFightSequence + (ulong)FightsPlayed);
             var log = CombatLogRecorder.Record(CreateHero(), encounter.CreateParticipants(), Rules.FightTimeLimit, fightRandom);
-            var report = new RunFightReport(step, encounter, heroLine, log);
+            var won = log.Winner == FightWinner.Hero;
+            var xpGained = won ? XpRewardOf(encounter) : 0L;
+            var totalXp = checked(TotalXp + xpGained);
+            var level = Rules.LevelCurve.LevelForTotalXp(totalXp);
+            var report = new RunFightReport(step, encounter, heroLine, log, xpGained, level - Level);
 
             _drawRandom = drawRandom;
             FightsPlayed++;
+            TotalXp = totalXp;
+            PendingLevelUps += level - Level;
+            Level = level;
 
             if (!report.HeroWon)
             {
@@ -206,6 +229,21 @@ namespace Game.Core.Runs
             }
 
             return report;
+        }
+
+        /// <summary>
+        /// Marks one pending level-up as handled, once its linked choice is taken (#76). Allowed after the run ends,
+        /// so a level reached in the last fight can still be shown.
+        /// </summary>
+        /// <exception cref="InvalidOperationException">There is no pending level-up.</exception>
+        public void ConsumePendingLevelUp()
+        {
+            if (PendingLevelUps == 0)
+            {
+                throw new InvalidOperationException("There is no pending level-up.");
+            }
+
+            PendingLevelUps--;
         }
 
         /// <summary>
@@ -367,6 +405,17 @@ namespace Game.Core.Runs
                 default:
                     throw new InvalidOperationException($"Unknown step kind {step.Kind}.");
             }
+        }
+
+        private static long XpRewardOf(EncounterDefinition encounter)
+        {
+            var xp = 0L;
+            foreach (var enemy in encounter.Enemies)
+            {
+                xp = checked(xp + enemy.XpReward);
+            }
+
+            return xp;
         }
 
         private FightParticipant CreateHero()
