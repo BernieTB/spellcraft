@@ -104,6 +104,14 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
   `RunToEnd`, `Complete`, `Cancel`) whose line changes update the run's card instances as they happen. Only regular
   fights allow line edits (`RunStep.AllowsLineEditing`); secret room and professor fights fix the line. `Run.Play`
   is the same fight run to its end with no change, and gives the same result as stepping a session.
+- Card evolution (ADR 0013): a card has up to two evolution stages in its data (`CardEvolution`, authored on
+  `CardAsset`), each replacing its effects and neighbour modifiers but never its id or cast time. Every card copy
+  counts its own casts over the run (`CardInstance.Casts`, kept in the reserve); a fight created with those counts
+  evolves the hero's cards after the cast that reaches a stage, and reports each evolution (`FightResult.Evolutions`,
+  an `evolution` event in the combat log, text and JSON) and the final counts, which the run keeps for the next
+  fight. Passive upgrades also upgrade the evolved stages of a card. A fight session (`RunFightSession`) counts the
+  casts of the line and the reserve copies and hands them to the run's card instances when it completes, also for
+  cards swapped during the fight; a cancelled session keeps its line changes but not the casts.
 
 ### Changed
 

@@ -4,8 +4,8 @@ using System.Collections.Generic;
 namespace Game.Core.Combat
 {
     /// <summary>
-    /// How a fight ended: the winner, how long it took, every cast that resolved and every change the player made
-    /// to the hero's line.
+    /// How a fight ended: the winner, how long it took, every cast that resolved, every change the player made
+    /// to the hero's line and every evolution of the hero's cards.
     /// </summary>
     public sealed class FightResult
     {
@@ -24,11 +24,30 @@ namespace Game.Core.Combat
             int ticks,
             IReadOnlyList<CastRecord> casts,
             IReadOnlyList<LineChangeRecord> lineChanges)
+            : this(winner, ticks, casts, lineChanges, Array.Empty<EvolutionRecord>(), Array.Empty<int>())
+        {
+        }
+
+        /// <param name="evolutions">Every evolution of the hero's cards, in the order they happened.</param>
+        /// <param name="heroCardCasts">
+        /// The final casts of each card copy of the hero (see <see cref="HeroCardCasts"/>). Empty when the fight did
+        /// not count the casts of the hero's cards.
+        /// </param>
+        /// <exception cref="ArgumentNullException">An argument is null.</exception>
+        public FightResult(
+            FightWinner winner,
+            int ticks,
+            IReadOnlyList<CastRecord> casts,
+            IReadOnlyList<LineChangeRecord> lineChanges,
+            IReadOnlyList<EvolutionRecord> evolutions,
+            IReadOnlyList<int> heroCardCasts)
         {
             Winner = winner;
             Ticks = ticks;
             Casts = casts ?? throw new ArgumentNullException(nameof(casts));
             LineChanges = lineChanges ?? throw new ArgumentNullException(nameof(lineChanges));
+            Evolutions = evolutions ?? throw new ArgumentNullException(nameof(evolutions));
+            HeroCardCasts = heroCardCasts ?? throw new ArgumentNullException(nameof(heroCardCasts));
         }
 
         /// <summary>The winning side, or <see cref="FightWinner.None"/> on timeout.</summary>
@@ -48,5 +67,19 @@ namespace Game.Core.Combat
         /// casts of that tick). Empty when the line never changed.
         /// </summary>
         public IReadOnlyList<LineChangeRecord> LineChanges { get; }
+
+        /// <summary>
+        /// Every time a card of the hero's reached an evolution stage (<c>docs/adr/0013-card-evolution.md</c>), in
+        /// order. Empty when no card evolved, or when the fight did not count the hero's casts.
+        /// </summary>
+        public IReadOnlyList<EvolutionRecord> Evolutions { get; }
+
+        /// <summary>
+        /// The total casts of every card copy the hero had at the start, after the fight: first the copies of the
+        /// hero's line in its starting order, then the copies of the reserve in its starting order. A copy keeps
+        /// its place in this list wherever it was moved during the fight. Empty when the fight did not count the
+        /// hero's casts (it was not given the casts the copies already had).
+        /// </summary>
+        public IReadOnlyList<int> HeroCardCasts { get; }
     }
 }

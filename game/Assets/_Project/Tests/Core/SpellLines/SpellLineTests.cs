@@ -417,5 +417,35 @@ namespace Game.Core.Tests.SpellLines
 
             Assert.Throws<NotSupportedException>(() => cards.Add(CardB));
         }
+
+        // --- Replace ---
+
+        [Test]
+        public void Replace_ValidPosition_ReplacesOnlyThatCard()
+        {
+            var line = CreateLine(4, CardA, CardB, CardC);
+
+            line.Replace(1, CardD);
+
+            Assert.That(line.Cards, Is.EqualTo(new[] { CardA, CardD, CardC }));
+            Assert.That(line.Count, Is.EqualTo(3));
+        }
+
+        [Test]
+        public void Replace_PositionOutsideTheLine_Throws()
+        {
+            var line = CreateLine(4, CardA);
+
+            Assert.Throws<ArgumentOutOfRangeException>(() => line.Replace(1, CardB));
+            Assert.Throws<ArgumentOutOfRangeException>(() => line.Replace(-1, CardB));
+        }
+
+        [Test]
+        public void Replace_NullCard_Throws()
+        {
+            var line = CreateLine(4, CardA);
+
+            Assert.Throws<ArgumentNullException>(() => line.Replace(0, null));
+        }
     }
 }

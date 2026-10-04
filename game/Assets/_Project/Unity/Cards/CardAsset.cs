@@ -32,6 +32,10 @@ namespace Game.Unity.Cards
         private List<NeighbourModifierEntry> _neighbourModifiers = new List<NeighbourModifierEntry>();
 
         [SerializeField]
+        [Tooltip("Evolution stages, at most two, in order. Each needs strictly more casts than the previous one. The word and the cast time never change.")]
+        private List<CardEvolutionEntry> _evolutions = new List<CardEvolutionEntry>();
+
+        [SerializeField]
         [Tooltip("Test-only content. Tests and builds fail if an asset outside the placeholder and test folders references it.")]
         private bool _isPlaceholder;
 
@@ -61,7 +65,13 @@ namespace Game.Unity.Cards
                     modifiers.Add(entry.ToModifier());
                 }
 
-                return new CardDefinition(_id, _castTime, effects, modifiers);
+                var evolutions = new List<CardEvolution>(_evolutions.Count);
+                foreach (var entry in _evolutions)
+                {
+                    evolutions.Add(entry.ToEvolution());
+                }
+
+                return new CardDefinition(_id, _castTime, effects, modifiers, evolutions);
             }
             catch (Exception exception) when (exception is ArgumentException || exception is InvalidOperationException)
             {

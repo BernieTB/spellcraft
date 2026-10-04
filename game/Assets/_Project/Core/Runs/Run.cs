@@ -246,24 +246,36 @@ namespace Game.Core.Runs
             var drawRandom = _drawRandom.Clone();
             var encounter = EncounterFor(step, drawRandom);
             var startLine = new List<CardInstance>(_line.Cards);
+            var startReserve = new List<CardInstance>(_reserve);
             var fightRandom = new Pcg32Random(Seed, FirstFightSequence + (ulong)FightsPlayed);
             var hero = CreateHero();
             var enemies = encounter.CreateParticipants();
+
+            // Card evolution (ADR 0013): the fight counts the casts of every card copy of the hero, line and reserve,
+            // from the counts the copies already have. The session hands the final counts back to the instances.
             var fight = new Fight(
-                hero, enemies, Rules.FightTimeLimit, fightRandom, CreateFightReserve(), step.AllowsLineEditing);
+                hero,
+                enemies,
+                Rules.FightTimeLimit,
+                fightRandom,
+                CreateFightReserve(),
+                step.AllowsLineEditing,
+                CastsOf(startLine),
+                CastsOf(startReserve));
 
             var participants = new List<FightParticipant>(enemies.Count + 1) { hero };
             participants.AddRange(enemies);
             var snapshots = CombatLogRecorder.Snapshot(participants);
 
-            _currentFight = new RunFightSession(this, step, encounter, fight, participants, snapshots, startLine, drawRandom);
+            _currentFight = new RunFightSession(
+                this, step, encounter, fight, participants, snapshots, startLine, startReserve, drawRandom);
             return _currentFight;
         }
 
         /// <summary>
         /// Marks one pending level-up as handled, once its linked choice is taken (#76). Allowed after the run ends,
         /// so a level reached in the last fight can still be shown, and while a fight session is open (confirmed by
-        /// the owner on 2026-10-05): a passive upgrade taken then applies from the next fight, not to the one playing.
+        /// the owner on 2026-10-04): a passive upgrade taken then applies from the next fight, not to the one playing.
         /// </summary>
         /// <exception cref="InvalidOperationException">There is no pending level-up.</exception>
         public void ConsumePendingLevelUp()
@@ -463,10 +475,12 @@ namespace Game.Core.Runs
 
         private FightParticipant CreateHero()
         {
+            // Each card is at the stage its casts have reached; the upgrades then apply to every stage of it
+            // (CardDefinition.MapForms), so an upgraded card keeps its evolutions.
             var line = new SpellLine<CardDefinition>(_line.Capacity);
             foreach (var card in _line.Cards)
             {
-                line.Add(card.Definition);
+                line.Add(card.CurrentDefinition);
             }
 
             var hero = new FightParticipant(new Combatant(HeroClass.MaxHealth, HeroClass.StartingShield), line);
@@ -479,7 +493,7 @@ namespace Game.Core.Runs
             var reserve = new List<CardDefinition>(_reserve.Count);
             foreach (var card in _reserve)
             {
-                reserve.Add(_upgrades.ApplyTo(card.Definition));
+                reserve.Add(_upgrades.ApplyTo(card.CurrentDefinition));
             }
 
             return reserve;
@@ -522,6 +536,38 @@ namespace Game.Core.Runs
             var level = Rules.LevelCurve.LevelForTotalXp(totalXp);
             var report = new RunFightReport(step, encounter, session.StartLine, log, xpGained, level - Level);
 
+            // Card evolution (ADR 0013): every card copy of the hero keeps the casts the fight counted for it. The
+            // counts follow the copies' starting order (line, then reserve), wherever line changes moved them.
+            var casts = log.HeroCardCasts;
+            var startLine = session.StartLine;
+            var startReserve = session.StartReserve;
+            if (casts.Count != startLine.Count + startReserve.Count)
+            {
+                throw new InvalidOperationException(
+                    $"The fight counted the casts of {casts.Count} card copies, the run has {startLine.Count + startReserve.Count}.");
+            }
+
+            // Every count is checked before any is applied, so a failure leaves the run unchanged.
+            for (var i = 0; i < startLine.Count; i++)
+            {
+                startLine[i].EnsureCanSetCasts(casts[i]);
+            }
+
+            for (var i = 0; i < startReserve.Count; i++)
+            {
+                startReserve[i].EnsureCanSetCasts(casts[startLine.Count + i]);
+            }
+
+            for (var i = 0; i < startLine.Count; i++)
+            {
+                startLine[i].SetCasts(casts[i]);
+            }
+
+            for (var i = 0; i < startReserve.Count; i++)
+            {
+                startReserve[i].SetCasts(casts[startLine.Count + i]);
+            }
+
             _drawRandom = session.DrawRandomAfter;
             _currentFight = null;
             FightsPlayed++;
@@ -552,6 +598,17 @@ namespace Game.Core.Runs
             {
                 _currentFight = null;
             }
+        }
+
+        private static int[] CastsOf(IReadOnlyList<CardInstance> cards)
+        {
+            var casts = new int[cards.Count];
+            for (var i = 0; i < casts.Length; i++)
+            {
+                casts[i] = cards[i].Casts;
+            }
+
+            return casts;
         }
 
         private CardInstance NewInstance(CardDefinition card)

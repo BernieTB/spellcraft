@@ -60,3 +60,18 @@ gauge: the player does not see how many casts remain before the next stage.
   never to change.
 - **Reset when moved to the reserve, or per fight:** makes swapping costly or changes the rhythm of the game.
 - **Progress gauge:** helps planning but adds screen clutter; the owner prefers a stage mark only.
+
+## Addendum (2026-10-04): details settled while building it (#79)
+
+ADR 0013 stays Accepted; these details were confirmed by the owner or follow from rules decided elsewhere.
+
+- **A stage takes effect on the next cast of the card.** The cast that reaches the threshold resolves with the old
+  stage, so its effects and the neighbour bonuses it grants are the old stage's; the next cast of that card copy
+  uses the new stage (confirmed by the owner on 2026-10-04). A bonus already pending on a neighbour stays the one
+  the old stage granted.
+- **The counters are kept in the reserve.** Each card copy keeps its casts and its stage wherever it is, and a card
+  swapped to or from the reserve during a fight (ADR 0012, ADR 0015) keeps counting; a card swapped out while it is
+  casting still finishes that cast, and evolves in the reserve if the cast reaches a stage.
+- **A cancelled fight does not keep its counters.** A fight left unfinished is not counted (ADR 0015), so the casts
+  it counted are not given to the card copies; the line changes already made stay. Beginning the fight again
+  starts from the counts the copies had.

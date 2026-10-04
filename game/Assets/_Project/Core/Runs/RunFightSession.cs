@@ -27,13 +27,23 @@ namespace Game.Core.Runs
     /// <para>
     /// Line changes apply to the run's own card instances as they happen, so <see cref="Run.Line"/> and
     /// <see cref="Run.Reserve"/> always show the current state, which is the state replaying
-    /// <see cref="FightResult.LineChanges"/> on the instances would give. A fight that is cancelled (confirmed by the owner on 2026-10-05) keeps the changes
+    /// <see cref="FightResult.LineChanges"/> on the instances would give. A fight that is cancelled (confirmed by the owner on 2026-10-04) keeps the changes
     /// made so far: they are edits of the player's build. The fight itself is not counted and no random draw is
     /// consumed, so beginning the same step again plays the same encounter.
     /// </para>
     /// <para>
     /// Whatever the number of ticks per frame the screen plays, the same seed and the same changes at the same ticks
     /// give the same fight, as <see cref="Run.Play"/> (which is a session with no changes) does.
+    /// </para>
+    /// <para>
+    /// Card evolution (<c>docs/adr/0013-card-evolution.md</c>): the fight counts the casts of every card copy of the
+    /// hero, in the line and in the reserve, starting from the counts the run's <see cref="CardInstance"/>s already
+    /// have, and evolves the cards in the fight (the next cast of a copy uses the stage it just reached, confirmed by
+    /// the owner on 2026-10-04). <see cref="Complete"/> hands the final counts to the instances, by the copies
+    /// they belong to, so a card swapped into the reserve while casting keeps its count and stage. A session that is
+    /// cancelled does not count the fight, so it keeps none of its casts either: unlike the line changes, which are
+    /// edits of the player's build and stay, the counters belong to a fight that never counted. Beginning the step
+    /// again replays the fight from the counts the instances had.
     /// </para>
     /// </remarks>
     public sealed class RunFightSession
@@ -42,6 +52,7 @@ namespace Game.Core.Runs
         private readonly IReadOnlyList<FightParticipant> _participants;
         private readonly IReadOnlyList<CombatantSnapshot> _snapshots;
         private readonly List<CardInstance> _startLine;
+        private readonly List<CardInstance> _startReserve;
         private bool _closed;
 
         internal RunFightSession(
@@ -52,6 +63,7 @@ namespace Game.Core.Runs
             IReadOnlyList<FightParticipant> participants,
             IReadOnlyList<CombatantSnapshot> snapshots,
             IEnumerable<CardInstance> startLine,
+            IEnumerable<CardInstance> startReserve,
             Pcg32Random drawRandomAfter)
         {
             _run = run;
@@ -61,6 +73,7 @@ namespace Game.Core.Runs
             _participants = participants;
             _snapshots = snapshots;
             _startLine = new List<CardInstance>(startLine);
+            _startReserve = new List<CardInstance>(startReserve);
             DrawRandomAfter = drawRandomAfter;
         }
 
@@ -154,6 +167,8 @@ namespace Game.Core.Runs
 
         internal IReadOnlyList<CardInstance> StartLine => _startLine;
 
+        internal IReadOnlyList<CardInstance> StartReserve => _startReserve;
+
         /// <summary>
         /// Changes the hero's line at the start of the next tick, in the fight and on the run's card instances. See
         /// <see cref="Core.Combat.Fight.ApplyLineChange"/>; <paramref name="change"/> must be stamped with
@@ -233,8 +248,8 @@ namespace Game.Core.Runs
 
         /// <summary>
         /// Ends the session once the fight is over: builds the combat log and updates the run exactly as
-        /// <see cref="Run.Play"/> does (XP, levels, fights won, outcome, random draw). If it throws, the run is
-        /// unchanged: cancel the session.
+        /// <see cref="Run.Play"/> does (XP, levels, fights won, outcome, random draw, and the casts and evolution
+        /// of every card copy). If it throws, the run is unchanged: cancel the session.
         /// </summary>
         /// <returns>The report of the fight; <see cref="RunFightReport.HeroLine"/> is the line when it started.</returns>
         /// <exception cref="InvalidOperationException">The session is closed or the fight is not over yet.</exception>

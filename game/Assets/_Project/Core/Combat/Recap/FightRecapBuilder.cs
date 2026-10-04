@@ -128,9 +128,11 @@ namespace Game.Core.Combat.Recap
 
             foreach (var e in log.Events)
             {
-                if (e.Kind == CombatEventKind.LineChanged)
+                if (e.Kind == CombatEventKind.LineChanged || e.Kind == CombatEventKind.Evolved)
                 {
-                    // A change is not output of a card; the casts after it show which card played where.
+                    // A change or an evolution is not output of a card; the casts around it show which card played
+                    // where, and an evolved card keeps its id. The recap does not show evolutions for now (the
+                    // recap screen is #85, the stage marks are #80).
                     continue;
                 }
 

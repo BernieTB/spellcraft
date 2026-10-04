@@ -1,7 +1,7 @@
 # 0015. Live spell line editing details
 
 - **Status:** Accepted
-- **Date:** 2026-10-05
+- **Date:** 2026-10-04
 
 ## Context
 
@@ -15,7 +15,7 @@ several changes on one tick, and when a cast takes its pending bonus.
 resolves. With live editing, the card that resolves may no longer sit at the position it started from, so "when it
 resolves" no longer names one position.
 
-The owner confirmed the rules below on 2026-10-05.
+The owner confirmed the rules below on 2026-10-04.
 
 ## Decision
 

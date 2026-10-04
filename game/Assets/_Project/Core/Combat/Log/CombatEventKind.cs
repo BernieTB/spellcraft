@@ -26,5 +26,11 @@ namespace Game.Core.Combat.Log
         /// before the casts of its tick.
         /// </summary>
         LineChanged = 5,
+
+        /// <summary>
+        /// A card of the hero's reached an evolution stage (<see cref="CombatEvent.EvolutionStage"/>, ADR 0013). Comes
+        /// after the events of the cast that reached the stage; the next cast of that card copy uses the new stage.
+        /// </summary>
+        Evolved = 6,
     }
 }

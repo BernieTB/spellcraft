@@ -59,9 +59,44 @@ namespace Game.Core.Combat.Log
             bool lineEditsAllowed,
             IReadOnlyList<LineChange> lineChanges)
         {
+            return Record(
+                hero, enemies, maxTicks, random, heroReserve, lineEditsAllowed, lineChanges, null, null);
+        }
+
+        /// <summary>
+        /// Like the overload above, for a fight that also counts the casts of the hero's cards and evolves them (ADR
+        /// 0013): <paramref name="heroLineCasts"/> and <paramref name="heroReserveCasts"/> are the total casts each
+        /// card copy of the hero already has (see the constructor of <see cref="Fight"/>), or both null to not count.
+        /// The evolutions are logged as <see cref="CombatEventKind.Evolved"/> events and the final counts are in
+        /// <see cref="CombatLog.HeroCardCasts"/>.
+        /// </summary>
+        /// <exception cref="ArgumentNullException">An argument, an enemy, a reserve card or a change is null.</exception>
+        /// <exception cref="ArgumentException">
+        /// The participants or the cast counts are rejected by <see cref="Fight"/>, or the changes are not in tick
+        /// order or out of the fight's ticks.
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// <paramref name="maxTicks"/> is less than 1, or a change has a position or reserve index out of range.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// Changes are given while <paramref name="lineEditsAllowed"/> is false, or the log is out of sync with the
+        /// fight.
+        /// </exception>
+        public static CombatLog Record(
+            FightParticipant hero,
+            IReadOnlyList<FightParticipant> enemies,
+            int maxTicks,
+            IRandom random,
+            IReadOnlyList<CardDefinition> heroReserve,
+            bool lineEditsAllowed,
+            IReadOnlyList<LineChange> lineChanges,
+            IReadOnlyList<int> heroLineCasts,
+            IReadOnlyList<int> heroReserveCasts)
+        {
             // The fight validates its arguments; it is created before taking snapshots so invalid input fails with
             // the fight's own messages.
-            var fight = new Fight(hero, enemies, maxTicks, random, heroReserve, lineEditsAllowed);
+            var fight = new Fight(
+                hero, enemies, maxTicks, random, heroReserve, lineEditsAllowed, heroLineCasts, heroReserveCasts);
 
             var participants = new List<FightParticipant>(enemies.Count + 1) { hero };
             participants.AddRange(enemies);

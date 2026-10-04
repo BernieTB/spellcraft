@@ -75,6 +75,13 @@ namespace Game.Unity.DebugTools
                         e.TargetShield);
                 case CombatEventKind.Death:
                     return string.Format(CultureInfo.InvariantCulture, "{0} kills {1}", source, target);
+                case CombatEventKind.Evolved:
+                    return string.Format(
+                        CultureInfo.InvariantCulture,
+                        "{0} evolves to stage {1} after {2} casts",
+                        source,
+                        e.EvolutionStage,
+                        e.EvolutionCasts);
                 case CombatEventKind.LineChanged:
                     return e.LineChange.Kind == LineChangeKind.Move
                         ? string.Format(CultureInfo.InvariantCulture, "{0} moves to [{1}]", source, e.LineChange.ToPosition)
