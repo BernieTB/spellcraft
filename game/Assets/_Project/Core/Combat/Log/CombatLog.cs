@@ -33,6 +33,10 @@ namespace Game.Core.Combat.Log
     /// Line changes (<see cref="FightResult.LineChanges"/>, ADR 0012): each is a
     /// <see cref="CombatEventKind.LineChanged"/> event placed before the casts of its tick, in the order applied.
     /// </para>
+    /// <para>
+    /// Evolutions (<see cref="FightResult.Evolutions"/>, ADR 0013): each is a <see cref="CombatEventKind.Evolved"/>
+    /// event placed after the events of the cast that reached the stage.
+    /// </para>
     /// </remarks>
     public sealed class CombatLog
     {
@@ -40,12 +44,14 @@ namespace Game.Core.Combat.Log
             IReadOnlyList<CombatantSnapshot> combatants,
             IReadOnlyList<CombatEvent> events,
             FightWinner winner,
-            int ticks)
+            int ticks,
+            IReadOnlyList<int> heroCardCasts)
         {
             Combatants = combatants;
             Events = events;
             Winner = winner;
             Ticks = ticks;
+            HeroCardCasts = heroCardCasts;
         }
 
         /// <summary>The combatants as they started the fight, by fight index.</summary>
@@ -59,6 +65,13 @@ namespace Game.Core.Combat.Log
 
         /// <summary>Number of ticks simulated.</summary>
         public int Ticks { get; }
+
+        /// <summary>
+        /// The total casts of every card copy the hero had at the start, after the fight (see
+        /// <see cref="FightResult.HeroCardCasts"/>): the line's copies in their starting order, then the reserve's.
+        /// Empty when the fight did not count the hero's casts. Not part of the text or JSON output.
+        /// </summary>
+        public IReadOnlyList<int> HeroCardCasts { get; }
 
         /// <summary>
         /// Builds the log of a fight that has run.
@@ -141,8 +154,26 @@ namespace Game.Core.Combat.Log
                 }
             }
 
+            var evolutions = result.Evolutions;
+            var nextEvolution = 0;
+            for (var i = 0; i < evolutions.Count; i++)
+            {
+                var evolution = evolutions[i]
+                    ?? throw new ArgumentException($"Evolution {i} is null.", nameof(result));
+                if (evolution.CastIndex < 0 || evolution.CastIndex >= result.Casts.Count
+                    || (i > 0 && evolution.CastIndex < evolutions[i - 1].CastIndex))
+                {
+                    throw new ArgumentException(
+                        $"Evolution {i} refers to cast {evolution.CastIndex}, which is out of order or not in the fight's "
+                        + $"{result.Casts.Count} casts.",
+                        nameof(result));
+                }
+            }
+
+            var castIndex = -1;
             foreach (var cast in result.Casts)
             {
+                castIndex++;
                 AddChangesUpTo(cast.Tick);
                 var caster = cast.CasterIndex;
                 var target = cast.TargetIndex;
@@ -210,6 +241,21 @@ namespace Game.Core.Combat.Log
                         Add(CombatEventKind.ShieldGain, caster, outcome.ShieldGained, 0, 0);
                     }
                 }
+
+                while (nextEvolution < evolutions.Count && evolutions[nextEvolution].CastIndex == castIndex)
+                {
+                    var evolution = evolutions[nextEvolution];
+                    events.Add(CombatEvent.ForEvolution(
+                        events.Count,
+                        evolution.Tick,
+                        evolution.Card.Id,
+                        evolution.Position,
+                        evolution.Stage,
+                        evolution.Casts,
+                        health[Fight.HeroIndex],
+                        shield[Fight.HeroIndex]));
+                    nextEvolution++;
+                }
             }
 
             AddChangesUpTo(int.MaxValue);
@@ -218,7 +264,8 @@ namespace Game.Core.Combat.Log
                 new ReadOnlyCollection<CombatantSnapshot>(snapshots),
                 new ReadOnlyCollection<CombatEvent>(events),
                 result.Winner,
-                result.Ticks);
+                result.Ticks,
+                result.HeroCardCasts);
         }
 
         /// <summary>
@@ -237,9 +284,12 @@ namespace Game.Core.Combat.Log
         /// <item>a line change event, after its common fields (where <c>pos</c> and <c>card</c> are the line card
         /// that moved or left), has <c>change=move to=Q</c> or <c>change=swap reserve=R incoming=ID</c>, then the
         /// hero's state;</item>
+        /// <item>an evolution event, after its common fields (the cast that reached the stage), has
+        /// <c>stage=S casts=N</c>, then the hero's state;</item>
         /// <item>a last line <c>winner=W ticks=N</c>.</item>
         /// </list>
-        /// <para>Event names: <c>cast</c>, <c>damage</c>, <c>heal</c>, <c>shield</c>, <c>death</c>, <c>line</c>.
+        /// <para>Event names: <c>cast</c>, <c>damage</c>, <c>heal</c>, <c>shield</c>, <c>death</c>, <c>line</c>,
+        /// <c>evolution</c>.
         /// Winner names:
         /// <c>none</c>, <c>hero</c>, <c>enemies</c>. Numbers use the invariant culture. Card ids are written as
         /// they are, unescaped: the text is for reading and golden diffs; parse <see cref="ToJson"/> instead.</para>
@@ -282,6 +332,10 @@ namespace Game.Core.Combat.Log
                     case CombatEventKind.ShieldGain:
                         builder.Append(" amount=").Append(Number(e.Amount));
                         break;
+                    case CombatEventKind.Evolved:
+                        builder.Append(" stage=").Append(Number(e.EvolutionStage))
+                            .Append(" casts=").Append(Number(e.EvolutionCasts));
+                        break;
                     case CombatEventKind.LineChanged:
                         if (e.LineChange.Kind == LineChangeKind.Move)
                         {
@@ -320,8 +374,9 @@ namespace Game.Core.Combat.Log
         /// that order: the neighbour bonus a cast received and the part of it wasted, all zero on other events and on
         /// casts without bonus, so every event has these fields. A line change event also has a <c>change</c> object
         /// with <c>kind</c> (<c>move</c> or <c>swap</c>), <c>to</c>, <c>reserve</c> (-1 when unused) and
-        /// <c>incoming</c>; other events have no <c>change</c> field. One combatant or event per line, lines end with
-        /// <c>\n</c>; the output is deterministic.
+        /// <c>incoming</c>; other events have no <c>change</c> field. An evolution event has an <c>evolution</c>
+        /// object with <c>stage</c> and <c>casts</c>; other events have no <c>evolution</c> field. One combatant or
+        /// event per line, lines end with <c>\n</c>; the output is deterministic.
         /// </summary>
         public string ToJson()
         {
@@ -402,6 +457,17 @@ namespace Game.Core.Combat.Log
                     AppendChangeJson(builder, e);
                 }
 
+                if (e.Kind == CombatEventKind.Evolved)
+                {
+                    builder.Append(',');
+                    JsonWriter.AppendName(builder, "evolution");
+                    builder.Append('{');
+                    JsonWriter.AppendField(builder, "stage", e.EvolutionStage);
+                    builder.Append(',');
+                    JsonWriter.AppendField(builder, "casts", e.EvolutionCasts);
+                    builder.Append('}');
+                }
+
                 builder.Append('}');
             }
 
@@ -428,6 +494,8 @@ namespace Game.Core.Combat.Log
                     return "death";
                 case CombatEventKind.LineChanged:
                     return "line";
+                case CombatEventKind.Evolved:
+                    return "evolution";
                 default:
                     throw new ArgumentOutOfRangeException(nameof(kind), kind, "Unknown combat event kind.");
             }

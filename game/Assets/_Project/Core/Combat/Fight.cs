@@ -77,6 +77,17 @@ namespace Game.Core.Combat
     /// <see cref="FightResult.LineChanges"/>, so a run can replay them on its own spell line and reserve.
     /// </para>
     /// <para>
+    /// Card evolution (<c>docs/adr/0013-card-evolution.md</c>): a fight created with the casts each card copy of the
+    /// hero already has counts the casts of the hero's cards. Every copy keeps its own count wherever line changes
+    /// move it. When a resolved cast brings a copy to the casts required by an evolution stage, the card becomes its
+    /// evolved form, in the line or in the reserve: the cast that reached the stage resolved with the old form, and
+    /// the next cast of the copy uses the new one (same id and cast time, new effects and modifiers; this timing is
+    /// provisional until the owner confirms it). Each evolution
+    /// is listed in <see cref="FightResult.Evolutions"/>, and the final counts in
+    /// <see cref="FightResult.HeroCardCasts"/>, so a run can keep them for the next fight. Only the hero's cards
+    /// evolve, and a fight not given the counts does not count casts or evolve anything.
+    /// </para>
+    /// <para>
     /// Every resolution produces a <see cref="CastRecord"/> in <see cref="FightResult.Casts"/>; that is the
     /// intended hook for the combat event log. Effect outcomes include neighbour bonuses; the record also carries the
     /// bonus the cast received and the part of it no effect used (<see cref="CastRecord.WastedBonus"/>).
@@ -98,6 +109,11 @@ namespace Game.Core.Combat
         private readonly List<CardDefinition> _heroReserve;
         private readonly IReadOnlyList<CardDefinition> _heroReserveView;
         private bool _heroCastLeftLine;
+        private readonly List<HeroCardState> _lineStates;
+        private readonly List<HeroCardState> _reserveStates;
+        private readonly HeroCardState[] _allStates;
+        private HeroCardState _heroCastState;
+        private readonly List<EvolutionRecord> _evolutions = new List<EvolutionRecord>();
         private readonly List<CastRecord> _casts = new List<CastRecord>();
         private readonly List<LineChangeRecord> _lineChanges = new List<LineChangeRecord>();
         private readonly int _maxTicks;
@@ -150,6 +166,40 @@ namespace Game.Core.Combat
             IRandom random,
             IReadOnlyList<CardDefinition> heroReserve,
             bool lineEditsAllowed)
+            : this(hero, enemies, maxTicks, random, heroReserve, lineEditsAllowed, null, null)
+        {
+        }
+
+        /// <summary>
+        /// Creates a fight that also counts the casts of the hero's cards and evolves them (ADR 0013, see the
+        /// remarks of <see cref="Fight"/>).
+        /// </summary>
+        /// <param name="hero">The player's side. Its line holds each card at the stage its casts have reached.</param>
+        /// <param name="enemies">The enemies, at least one, in resolution order.</param>
+        /// <param name="maxTicks">Guard against endless fights, at least 1 (see the first constructor).</param>
+        /// <param name="random">Seeded random source for the fight.</param>
+        /// <param name="heroReserve">The hero's reserve, in the run's order. Copied. May be empty.</param>
+        /// <param name="lineEditsAllowed">True for regular fights; false for mini-boss and professor fights.</param>
+        /// <param name="heroLineCasts">
+        /// The total casts each card copy of the hero's line already has, in line order, or null (with
+        /// <paramref name="heroReserveCasts"/>) to not count casts. Not negative.
+        /// </param>
+        /// <param name="heroReserveCasts">The same for the reserve, in reserve order.</param>
+        /// <exception cref="ArgumentNullException">An argument, an enemy or a reserve card is null.</exception>
+        /// <exception cref="ArgumentException">
+        /// See the other constructors; or only one of the two cast lists is given, a list does not have one count per
+        /// card, a count is negative, or a card is not at the stage its casts have reached.
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxTicks"/> is less than 1.</exception>
+        public Fight(
+            FightParticipant hero,
+            IReadOnlyList<FightParticipant> enemies,
+            int maxTicks,
+            IRandom random,
+            IReadOnlyList<CardDefinition> heroReserve,
+            bool lineEditsAllowed,
+            IReadOnlyList<int> heroLineCasts,
+            IReadOnlyList<int> heroReserveCasts)
         {
             if (hero == null)
             {
@@ -235,6 +285,22 @@ namespace Game.Core.Combat
                 _spellLines[i] = Copy(participant.SpellLine);
                 _pendingBonuses[i] = new EffectBonus[_spellLines[i].Count];
             }
+
+            if ((heroLineCasts == null) != (heroReserveCasts == null))
+            {
+                throw new ArgumentException(
+                    "Give the casts of both the line and the reserve, or neither.",
+                    heroLineCasts == null ? nameof(heroLineCasts) : nameof(heroReserveCasts));
+            }
+
+            if (heroLineCasts != null)
+            {
+                var line = _spellLines[HeroIndex];
+                var states = new List<HeroCardState>(line.Count + _heroReserve.Count);
+                _lineStates = CreateStates(line.Cards, heroLineCasts, nameof(heroLineCasts), "line", states);
+                _reserveStates = CreateStates(_heroReserve, heroReserveCasts, nameof(heroReserveCasts), "reserve", states);
+                _allStates = states.ToArray();
+            }
         }
 
         /// <summary>The seeded random source of the fight. Unused by the first-pass rules.</summary>
@@ -302,6 +368,7 @@ namespace Game.Core.Combat
             if (change.Kind == LineChangeKind.Move)
             {
                 line.Move(change.Position, change.ToPosition);
+                MoveState(change.Position, change.ToPosition);
                 incoming = card;
                 if (casting)
                 {
@@ -316,6 +383,7 @@ namespace Game.Core.Combat
                 line.RemoveAt(change.Position);
                 InsertAt(line, change.Position, incoming);
                 _heroReserve[change.ReserveIndex] = card;
+                SwapStates(change.Position, change.ReserveIndex);
                 if (casting && change.Position == _castPositions[HeroIndex])
                 {
                     // Once the card being cast leaves for the reserve, its anchor stays on the slot it left, even if
@@ -357,6 +425,10 @@ namespace Game.Core.Combat
                     _castPositions[i] = start;
                     _castBonuses[i] = TakePendingBonus(i, start);
                     _elapsedTicks[i] = 0;
+                    if (i == HeroIndex && _lineStates != null)
+                    {
+                        _heroCastState = _lineStates[start];
+                    }
                 }
 
                 _elapsedTicks[i]++;
@@ -373,12 +445,17 @@ namespace Game.Core.Combat
                 var outcomes = card.Resolve(context);
                 GrantNeighbourBonuses(i, position, card);
                 _casts.Add(new CastRecord(Tick, i, position, card, targetIndex, outcomes, bonus, context.RemainingBonus));
+                if (i == HeroIndex && _heroCastState != null)
+                {
+                    CountHeroCast(card, position);
+                }
 
                 _positions[i] = _spellLines[i].PositionAfter(position);
                 _castCards[i] = null;
                 if (i == HeroIndex)
                 {
                     _heroCastLeftLine = false;
+                    _heroCastState = null;
                 }
 
                 _castBonuses[i] = EffectBonus.None;
@@ -447,7 +524,9 @@ namespace Game.Core.Combat
                 _winner,
                 Tick,
                 new ReadOnlyCollection<CastRecord>(_casts.ToArray()),
-                new ReadOnlyCollection<LineChangeRecord>(_lineChanges.ToArray()));
+                new ReadOnlyCollection<LineChangeRecord>(_lineChanges.ToArray()),
+                new ReadOnlyCollection<EvolutionRecord>(_evolutions.ToArray()),
+                new ReadOnlyCollection<int>(FinalCasts()));
         }
 
         // The whole schedule is checked before the fight runs, so a bad change never leaves a half-run fight. The
@@ -507,6 +586,111 @@ namespace Game.Core.Combat
                     change.ReserveIndex,
                     $"{change}: index is outside the hero's reserve ({_heroReserve.Count} cards).");
             }
+        }
+
+        // One state per card copy, in line order then reserve order, each checked against the card it goes with.
+        private static List<HeroCardState> CreateStates(
+            IReadOnlyList<CardDefinition> cards,
+            IReadOnlyList<int> casts,
+            string paramName,
+            string where,
+            List<HeroCardState> all)
+        {
+            if (casts.Count != cards.Count)
+            {
+                throw new ArgumentException(
+                    $"The hero's {where} has {cards.Count} cards but {casts.Count} casts were given.", paramName);
+            }
+
+            var states = new List<HeroCardState>(cards.Count);
+            for (var i = 0; i < cards.Count; i++)
+            {
+                if (casts[i] < 0)
+                {
+                    throw new ArgumentException($"The casts of {where} card {i} are negative ({casts[i]}).", paramName);
+                }
+
+                if (cards[i].Stage != cards[i].StageForCasts(casts[i]))
+                {
+                    throw new ArgumentException(
+                        $"The hero's {where} card {i} ('{cards[i].Id}') is at stage {cards[i].Stage} but {casts[i]} casts "
+                        + $"reach stage {cards[i].StageForCasts(casts[i])}.",
+                        paramName);
+                }
+
+                var state = new HeroCardState { Casts = casts[i] };
+                states.Add(state);
+                all.Add(state);
+            }
+
+            return states;
+        }
+
+        // The states follow their cards when the line changes.
+        private void MoveState(int from, int to)
+        {
+            if (_lineStates == null)
+            {
+                return;
+            }
+
+            var state = _lineStates[from];
+            _lineStates.RemoveAt(from);
+            _lineStates.Insert(to, state);
+        }
+
+        private void SwapStates(int linePosition, int reserveIndex)
+        {
+            if (_lineStates == null)
+            {
+                return;
+            }
+
+            var fromLine = _lineStates[linePosition];
+            _lineStates[linePosition] = _reserveStates[reserveIndex];
+            _reserveStates[reserveIndex] = fromLine;
+        }
+
+        // Counts a resolved cast of the hero's card copy being cast. When the count reaches a stage, the copy turns
+        // into its evolved form where it is now (line or reserve): the next cast of the copy uses it.
+        private void CountHeroCast(CardDefinition card, int position)
+        {
+            var state = _heroCastState;
+            state.Casts = checked(state.Casts + 1);
+            var stage = card.StageForCasts(state.Casts);
+            if (stage <= card.Stage)
+            {
+                return;
+            }
+
+            var evolved = card.AtStage(stage);
+            var slot = _lineStates.IndexOf(state);
+            if (slot >= 0)
+            {
+                _spellLines[HeroIndex].Replace(slot, evolved);
+            }
+            else
+            {
+                _heroReserve[_reserveStates.IndexOf(state)] = evolved;
+            }
+
+            _evolutions.Add(new EvolutionRecord(Tick, position, evolved, state.Casts, _casts.Count - 1));
+        }
+
+        private int[] FinalCasts()
+        {
+            if (_allStates == null)
+            {
+                return Array.Empty<int>();
+            }
+
+            var casts = new int[_allStates.Length];
+            for (var i = 0; i < casts.Length; i++)
+            {
+                casts[i] = _allStates[i].Casts;
+            }
+
+            return casts;
         }
 
         // Where the card at `position` ends up when the card at `from` moves to `to` (SpellLine.Move).
@@ -616,6 +800,12 @@ namespace Game.Core.Combat
             }
 
             return copy;
+        }
+
+        // The casts of one card copy of the hero. A reference, so it follows the copy through line changes.
+        private sealed class HeroCardState
+        {
+            public int Casts;
         }
     }
 }

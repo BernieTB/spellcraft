@@ -75,6 +75,11 @@ namespace Game.Core.Combat.Log
                 throw new ArgumentException("Create a line change event with ForLineChange.", nameof(kind));
             }
 
+            if (kind == CombatEventKind.Evolved)
+            {
+                throw new ArgumentException("Create an evolution event with ForEvolution.", nameof(kind));
+            }
+
             if (string.IsNullOrEmpty(cardId))
             {
                 throw new ArgumentException("Card id cannot be null or empty.", nameof(cardId));
@@ -146,6 +151,74 @@ namespace Game.Core.Combat.Log
         /// <param name="heroShield">The hero's shield at that moment.</param>
         /// <exception cref="ArgumentNullException"><paramref name="change"/> is null.</exception>
         /// <exception cref="ArgumentException">A card id is null or empty.</exception>
+        private CombatEvent(
+            int sequence,
+            int tick,
+            string cardId,
+            int position,
+            int stage,
+            int casts,
+            int heroHealth,
+            int heroShield)
+        {
+            Sequence = sequence;
+            Tick = tick;
+            Kind = CombatEventKind.Evolved;
+            CardId = cardId;
+            Position = position;
+            CasterIndex = Fight.HeroIndex;
+            TargetIndex = Fight.HeroIndex;
+            TargetHealth = heroHealth;
+            TargetShield = heroShield;
+            Bonus = EffectBonus.None;
+            WastedBonus = EffectBonus.None;
+            EvolutionStage = stage;
+            EvolutionCasts = casts;
+        }
+
+        /// <summary>
+        /// Creates a <see cref="CombatEventKind.Evolved"/> event: a card of the hero's reached an evolution stage
+        /// with the cast just logged. Its <see cref="Position"/> and <see cref="CardId"/> are those of that cast; the
+        /// hero is both <see cref="CasterIndex"/> and <see cref="TargetIndex"/>, and the amounts are zero.
+        /// </summary>
+        /// <param name="sequence">Index of the event in its log.</param>
+        /// <param name="tick">The tick of the cast.</param>
+        /// <param name="cardId">Id of the card (it does not change when it evolves).</param>
+        /// <param name="position">Position of the cast in the hero's line.</param>
+        /// <param name="stage">The stage reached, 1 or more.</param>
+        /// <param name="casts">Total casts of that card copy over the run, the cast just logged included.</param>
+        /// <param name="heroHealth">The hero's health at that moment.</param>
+        /// <param name="heroShield">The hero's shield at that moment.</param>
+        /// <exception cref="ArgumentException">The card id is null or empty.</exception>
+        /// <exception cref="ArgumentOutOfRangeException">The stage or the casts are less than 1.</exception>
+        public static CombatEvent ForEvolution(
+            int sequence,
+            int tick,
+            string cardId,
+            int position,
+            int stage,
+            int casts,
+            int heroHealth,
+            int heroShield)
+        {
+            if (string.IsNullOrEmpty(cardId))
+            {
+                throw new ArgumentException("Card id cannot be null or empty.", nameof(cardId));
+            }
+
+            if (stage < 1)
+            {
+                throw new ArgumentOutOfRangeException(nameof(stage), stage, "An evolution reaches stage 1 or more.");
+            }
+
+            if (casts < 1)
+            {
+                throw new ArgumentOutOfRangeException(nameof(casts), casts, "A card that evolved has been cast.");
+            }
+
+            return new CombatEvent(sequence, tick, cardId, position, stage, casts, heroHealth, heroShield);
+        }
+
         public static CombatEvent ForLineChange(
             int sequence,
             LineChange change,
@@ -182,6 +255,17 @@ namespace Game.Core.Combat.Log
         /// for a swap, <see cref="CardId"/> for a move); null for every other kind.
         /// </summary>
         public string IncomingCardId { get; }
+
+        /// <summary>
+        /// The stage a card reached, for <see cref="CombatEventKind.Evolved"/> (1 or 2); 0 for every other kind.
+        /// </summary>
+        public int EvolutionStage { get; }
+
+        /// <summary>
+        /// Total casts of the card copy that evolved, for <see cref="CombatEventKind.Evolved"/>; 0 for every other
+        /// kind.
+        /// </summary>
+        public int EvolutionCasts { get; }
 
         /// <summary>Index of the event in its log, from 0. Events are stored in this order.</summary>
         public int Sequence { get; }
