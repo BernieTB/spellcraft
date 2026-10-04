@@ -19,7 +19,7 @@ namespace Game.Core.Tests.Runs
         [Test]
         public void Biome_ValidData_KeepsValues()
         {
-            var biome = new BiomeDefinition("TestBiome", new[] { Encounter, Encounter }, 3, Encounter);
+            var biome = new BiomeDefinition("TestBiome", new[] { Encounter, Encounter }, 3, Encounter, Encounter.Enemies[0]);
 
             Assert.AreEqual("TestBiome", biome.Id);
             Assert.AreEqual(2, biome.RegularEncounters.Count);
@@ -30,12 +30,12 @@ namespace Game.Core.Tests.Runs
         [Test]
         public void Biome_InvalidData_Throws()
         {
-            Assert.Throws<ArgumentException>(() => new BiomeDefinition(" ", new[] { Encounter }, 0, Encounter));
-            Assert.Throws<ArgumentException>(() => new BiomeDefinition("TestBiome", new EncounterDefinition[0], 0, Encounter));
-            Assert.Throws<ArgumentNullException>(() => new BiomeDefinition("TestBiome", new EncounterDefinition[] { null }, 0, Encounter));
-            Assert.Throws<ArgumentNullException>(() => new BiomeDefinition("TestBiome", null, 0, Encounter));
-            Assert.Throws<ArgumentNullException>(() => new BiomeDefinition("TestBiome", new[] { Encounter }, 0, null));
-            Assert.Throws<ArgumentOutOfRangeException>(() => new BiomeDefinition("TestBiome", new[] { Encounter }, -1, Encounter));
+            Assert.Throws<ArgumentException>(() => new BiomeDefinition(" ", new[] { Encounter }, 0, Encounter, Encounter.Enemies[0]));
+            Assert.Throws<ArgumentException>(() => new BiomeDefinition("TestBiome", new EncounterDefinition[0], 0, Encounter, Encounter.Enemies[0]));
+            Assert.Throws<ArgumentNullException>(() => new BiomeDefinition("TestBiome", new EncounterDefinition[] { null }, 0, Encounter, Encounter.Enemies[0]));
+            Assert.Throws<ArgumentNullException>(() => new BiomeDefinition("TestBiome", null, 0, Encounter, Encounter.Enemies[0]));
+            Assert.Throws<ArgumentNullException>(() => new BiomeDefinition("TestBiome", new[] { Encounter }, 0, null, Encounter.Enemies[0]));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new BiomeDefinition("TestBiome", new[] { Encounter }, -1, Encounter, Encounter.Enemies[0]));
         }
 
         // --- RunRules ---

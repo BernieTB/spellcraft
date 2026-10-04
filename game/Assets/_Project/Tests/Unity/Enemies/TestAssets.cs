@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Game.Unity.Cards;
 using Game.Unity.Classes;
 using Game.Unity.Enemies;
+using Game.Unity.Runs;
 using UnityEditor;
 using UnityEngine;
 
@@ -82,6 +83,38 @@ namespace Game.Unity.Tests.Enemies
             serialized.FindProperty("_isPlaceholder").boolValue = isPlaceholder;
             FillCards(serialized.FindProperty("_startingDeck"), startingDeck);
             FillCards(serialized.FindProperty("_cardPool"), cardPool);
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            return asset;
+        }
+
+        public SecretRoomAsset SecretRoom(
+            string id,
+            EnemyAsset objectiveEnemy,
+            int objectiveCount,
+            EncounterAsset miniBossEncounter,
+            int bonusLineSlots,
+            CardAsset uniqueCard,
+            bool revealsHealth = false,
+            bool revealsShield = false,
+            params int[] revealedCardPositions)
+        {
+            var asset = Create<SecretRoomAsset>(string.IsNullOrEmpty(id) ? "unnamed_secret_room" : id);
+            var serialized = new SerializedObject(asset);
+            serialized.FindProperty("_id").stringValue = id;
+            serialized.FindProperty("_objectiveEnemy").objectReferenceValue = objectiveEnemy;
+            serialized.FindProperty("_objectiveCount").intValue = objectiveCount;
+            serialized.FindProperty("_miniBossEncounter").objectReferenceValue = miniBossEncounter;
+            serialized.FindProperty("_bonusLineSlots").intValue = bonusLineSlots;
+            serialized.FindProperty("_uniqueCard").objectReferenceValue = uniqueCard;
+            serialized.FindProperty("_revealsProfessorHealth").boolValue = revealsHealth;
+            serialized.FindProperty("_revealsProfessorShield").boolValue = revealsShield;
+            var positions = serialized.FindProperty("_revealedProfessorCardPositions");
+            positions.arraySize = revealedCardPositions.Length;
+            for (var i = 0; i < revealedCardPositions.Length; i++)
+            {
+                positions.GetArrayElementAtIndex(i).intValue = revealedCardPositions[i];
+            }
+
             serialized.ApplyModifiedPropertiesWithoutUndo();
             return asset;
         }

@@ -19,7 +19,11 @@ namespace Game.Core.Runs
         /// <param name="log">The fight's combat log.</param>
         /// <param name="xpGained">XP the hero earned from this fight. Zero or more.</param>
         /// <param name="levelsGained">Levels the hero reached thanks to this fight. Zero or more.</param>
-        /// <exception cref="ArgumentNullException">An argument or a card of <paramref name="heroLine"/> is null.</exception>
+        /// <param name="unlockedRoomIds">Secret rooms this fight unlocked (#71). Null for none.</param>
+        /// <param name="secretRoomRewards">What the first victory over a mini-boss gave (#71). Null when nothing.</param>
+        /// <exception cref="ArgumentNullException">
+        /// An argument or a card of <paramref name="heroLine"/> is null, or <paramref name="unlockedRoomIds"/> holds null.
+        /// </exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="xpGained"/> or <paramref name="levelsGained"/> is negative.</exception>
         public RunFightReport(
             RunStep step,
@@ -27,7 +31,9 @@ namespace Game.Core.Runs
             IEnumerable<CardInstance> heroLine,
             CombatLog log,
             long xpGained = 0,
-            int levelsGained = 0)
+            int levelsGained = 0,
+            IEnumerable<string> unlockedRoomIds = null,
+            SecretRoomRewards secretRoomRewards = null)
         {
             Step = step ?? throw new ArgumentNullException(nameof(step));
             Encounter = encounter ?? throw new ArgumentNullException(nameof(encounter));
@@ -56,6 +62,15 @@ namespace Game.Core.Runs
 
             XpGained = xpGained;
             LevelsGained = levelsGained;
+
+            var unlocked = unlockedRoomIds == null ? new List<string>() : new List<string>(unlockedRoomIds);
+            if (unlocked.Contains(null))
+            {
+                throw new ArgumentNullException(nameof(unlockedRoomIds), "The unlocked room ids cannot contain null.");
+            }
+
+            UnlockedRoomIds = new ReadOnlyCollection<string>(unlocked);
+            SecretRoomRewards = secretRoomRewards;
         }
 
         /// <summary>The step that was played.</summary>
@@ -89,5 +104,17 @@ namespace Game.Core.Runs
         /// <see cref="Run.PendingLevelUps"/> so a linked choice can be offered (#76).
         /// </summary>
         public int LevelsGained { get; }
+
+        /// <summary>
+        /// Ids of the secret rooms this fight unlocked: a regular fight won that completed their objective (#71).
+        /// Empty otherwise.
+        /// </summary>
+        public IReadOnlyList<string> UnlockedRoomIds { get; }
+
+        /// <summary>
+        /// What the first victory over a secret room's mini-boss gave, or null: for any other fight, for a defeat and
+        /// when the room was already cleared (a repeat fight gives XP only).
+        /// </summary>
+        public SecretRoomRewards SecretRoomRewards { get; }
     }
 }

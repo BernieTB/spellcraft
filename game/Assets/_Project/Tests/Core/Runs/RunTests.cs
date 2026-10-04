@@ -51,7 +51,8 @@ namespace Game.Core.Tests.Runs
         {
             var heroClass = new ClassDefinition(
                 "TestClass", HeroHealth, startingShield, capacity, deck ?? new[] { Strike }, new CardDefinition[0]);
-            var biome = new BiomeDefinition("TestBiome", pool ?? new[] { Weak }, minimumRegularFights, professor ?? Professor);
+            var biome = new BiomeDefinition(
+                "TestBiome", pool ?? new[] { Weak }, minimumRegularFights, professor ?? Professor, (professor ?? Professor).Enemies[0]);
             return new Run(heroClass, biome, new RunRules(TimeLimit, Curve), seed);
         }
 

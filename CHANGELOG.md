@@ -123,6 +123,17 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
   time, from small fights played by Core) with the game's theme and `ScreenHost`, to look at a screen without
   playing a run. New screens register with one line in `ScreenPreviews`.
 
+- Objectives and secret rooms in the run model (ADR 0010): a biome lists secret rooms (`SecretRoomDefinition`,
+  authored as `SecretRoomAsset`) with an objective "defeat N of enemy X" counted over regular fights won. A
+  completed objective opens its room; the first victory over its mini-boss adds line slots and the unique card (at
+  the end of the line, or in the reserve when it is full) and returns a revelation about the biome's professor that
+  the caller records in the bestiary with `SecretRoomRewards.RevealTo`; a repeat victory gives XP only. `Run.SecretRooms`
+  shows the progress, and the fight report tells which rooms it unlocked and what it gave. A fight is committed
+  to the run as a whole (a failure, such as a line that cannot take more slots, leaves the run unchanged).
+  `BiomeDefinition` now names its professor (an enemy of the professor encounter, matched by id) instead of
+  assuming the first enemy. `Run.UnlockSecretRoom` compares mini-boss encounters by id, not by reference, so data
+  converted twice no longer clashes.
+
 ### Changed
 
 - Git ignores Claude Code local state (`.claude/worktrees/`, `.claude/settings.local.json`, `CLAUDE.local.md`);

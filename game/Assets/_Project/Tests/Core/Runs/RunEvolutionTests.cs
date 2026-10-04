@@ -51,7 +51,7 @@ namespace Game.Core.Tests.Runs
             var heroClass = new ClassDefinition("TestClass", HeroHealth, 0, capacity, deck, new CardDefinition[0]);
             var enemy = new EnemyDefinition("TestEnemy", enemyHealth, 0, new[] { EnemyHit });
             var encounter = new EncounterDefinition("TestEncounter", new[] { enemy });
-            var biome = new BiomeDefinition("TestBiome", new[] { encounter }, 0, encounter);
+            var biome = new BiomeDefinition("TestBiome", new[] { encounter }, 0, encounter, encounter.Enemies[0]);
             return new Run(heroClass, biome, new RunRules(TimeLimit, new LevelCurve(new[] { 10 }, 5)), 1);
         }
 
