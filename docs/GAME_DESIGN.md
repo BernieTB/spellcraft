@@ -133,9 +133,14 @@ Pacing (see [ADR 0009](adr/0009-vertical-slice-run-pacing.md); numbers live in d
 
 - per card, for both sides: damage, healing and shield produced, and number of casts;
 - neighbour bonuses used and wasted, and why a bonus was wasted;
-- on a defeat, **where the chain broke**: the turning point (the tick after which the hero's health stays below
-  the enemy's) and the most visible cause around it (wasted bonuses, weakest card, broken shield), so a defeat
-  feels fair.
+- on a defeat, **where the chain broke**, so a defeat feels fair:
+  - the **turning point**: the first tick from which the hero stays behind until the end. *Behind* compares
+    **health shares**, not raw health: the hero's health over its max health against the enemies' total health
+    over their total max health (dead enemies count at zero). Shield is not counted; a tie is not behind;
+  - the causes, looked for in the hero's last loop of casts before the turning point, by priority: **wasted
+    bonuses**, then a **shield broken** between the start of that loop and the turning point, then the **weakest
+    card** of the loop (always present). The first one found is the main cause;
+  - precision of [ADR 0014](adr/0014-boss-preparation-and-recap.md) confirmed by the owner on 2026-10-04.
 
 ## Mini-bosses and secret rooms
 
