@@ -81,9 +81,8 @@ namespace Game.Core.Combat
     /// hero already has counts the casts of the hero's cards. Every copy keeps its own count wherever line changes
     /// move it. When a resolved cast brings a copy to the casts required by an evolution stage, the card becomes its
     /// evolved form, in the line or in the reserve: the cast that reached the stage resolved with the old form, and
-    /// the next cast of the copy uses the new one (same id and cast time, new effects and modifiers; this timing is
-    /// provisional until the owner confirms it). Each evolution
-    /// is listed in <see cref="FightResult.Evolutions"/>, and the final counts in
+    /// the next cast of the copy uses the new one (same id and cast time, new effects and modifiers; this timing was
+    /// confirmed by the owner on 2026-10-05). Each evolution is listed in <see cref="FightResult.Evolutions"/>, and the final counts in
     /// <see cref="FightResult.HeroCardCasts"/>, so a run can keep them for the next fight. Only the hero's cards
     /// evolve, and a fight not given the counts does not count casts or evolve anything.
     /// </para>
@@ -531,7 +530,7 @@ namespace Game.Core.Combat
 
         // The whole schedule is checked before the fight runs, so a bad change never leaves a half-run fight. The
         // sizes of the line and the reserve never change during a fight, so positions can be checked up front.
-        private void ValidateSchedule(IReadOnlyList<LineChange> lineChanges)
+        internal void ValidateSchedule(IReadOnlyList<LineChange> lineChanges)
         {
             if (lineChanges.Count > 0 && !LineEditsAllowed)
             {

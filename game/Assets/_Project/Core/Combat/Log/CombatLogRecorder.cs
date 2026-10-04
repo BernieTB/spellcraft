@@ -101,13 +101,70 @@ namespace Game.Core.Combat.Log
             var participants = new List<FightParticipant>(enemies.Count + 1) { hero };
             participants.AddRange(enemies);
 
+            var snapshots = Snapshot(participants);
+            var log = CombatLog.Build(snapshots, fight.Run(lineChanges));
+            CheckFinalState(log, participants);
+            return log;
+        }
+
+        /// <summary>
+        /// Takes the starting snapshot of every participant (the hero first, then the enemies in fight order). Take
+        /// it before the fight starts: the fight changes the combatants. Pair it with <see cref="Finish"/> for a fight
+        /// advanced tick by tick.
+        /// </summary>
+        /// <exception cref="ArgumentNullException"><paramref name="participants"/> or one of them is null.</exception>
+        public static IReadOnlyList<CombatantSnapshot> Snapshot(IReadOnlyList<FightParticipant> participants)
+        {
+            if (participants == null)
+            {
+                throw new ArgumentNullException(nameof(participants));
+            }
+
             var snapshots = new CombatantSnapshot[participants.Count];
             for (var i = 0; i < participants.Count; i++)
             {
-                snapshots[i] = CombatantSnapshot.Of(i, participants[i]);
+                var participant = participants[i]
+                    ?? throw new ArgumentNullException(nameof(participants), $"Participant {i} is null.");
+                snapshots[i] = CombatantSnapshot.Of(i, participant);
             }
 
-            var log = CombatLog.Build(snapshots, fight.Run(lineChanges));
+            return snapshots;
+        }
+
+        /// <summary>
+        /// Builds the log of a fight that was advanced with <see cref="Fight.Step"/> (and
+        /// <see cref="Fight.ApplyLineChange"/>): finishes the fight if it is not over yet, then builds the log from
+        /// its result and the snapshots taken before it started.
+        /// </summary>
+        /// <param name="fight">The fight, created from <paramref name="participants"/>.</param>
+        /// <param name="participants">The hero first, then the enemies, as given to the fight.</param>
+        /// <param name="snapshots">The starting snapshots, from <see cref="Snapshot"/>.</param>
+        /// <exception cref="ArgumentNullException">An argument is null.</exception>
+        /// <exception cref="InvalidOperationException">
+        /// The fight has already been run to its end with <see cref="Fight.Run()"/>, or the log is out of sync with
+        /// the fight.
+        /// </exception>
+        public static CombatLog Finish(
+            Fight fight,
+            IReadOnlyList<FightParticipant> participants,
+            IReadOnlyList<CombatantSnapshot> snapshots)
+        {
+            if (fight == null)
+            {
+                throw new ArgumentNullException(nameof(fight));
+            }
+
+            if (participants == null)
+            {
+                throw new ArgumentNullException(nameof(participants));
+            }
+
+            if (snapshots == null)
+            {
+                throw new ArgumentNullException(nameof(snapshots));
+            }
+
+            var log = CombatLog.Build(snapshots, fight.Run());
             CheckFinalState(log, participants);
             return log;
         }
