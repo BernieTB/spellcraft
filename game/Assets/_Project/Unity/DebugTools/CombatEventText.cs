@@ -75,6 +75,15 @@ namespace Game.Unity.DebugTools
                         e.TargetShield);
                 case CombatEventKind.Death:
                     return string.Format(CultureInfo.InvariantCulture, "{0} kills {1}", source, target);
+                case CombatEventKind.LineChanged:
+                    return e.LineChange.Kind == LineChangeKind.Move
+                        ? string.Format(CultureInfo.InvariantCulture, "{0} moves to [{1}]", source, e.LineChange.ToPosition)
+                        : string.Format(
+                            CultureInfo.InvariantCulture,
+                            "{0} swapped with reserve {1} ({2})",
+                            source,
+                            e.LineChange.ReserveIndex,
+                            e.IncomingCardId);
                 default:
                     return string.Format(CultureInfo.InvariantCulture, "{0} {1} {2}", source, e.Kind, target);
             }

@@ -70,6 +70,11 @@ namespace Game.Core.Combat.Log
             EffectBonus bonus,
             EffectBonus wastedBonus)
         {
+            if (kind == CombatEventKind.LineChanged)
+            {
+                throw new ArgumentException("Create a line change event with ForLineChange.", nameof(kind));
+            }
+
             if (string.IsNullOrEmpty(cardId))
             {
                 throw new ArgumentException("Card id cannot be null or empty.", nameof(cardId));
@@ -103,10 +108,85 @@ namespace Game.Core.Combat.Log
             WastedBonus = wastedBonus;
         }
 
+        private CombatEvent(
+            int sequence,
+            LineChange change,
+            string cardId,
+            string incomingCardId,
+            int heroHealth,
+            int heroShield)
+        {
+            Sequence = sequence;
+            Tick = change.Tick;
+            Kind = CombatEventKind.LineChanged;
+            CardId = cardId;
+            Position = change.Position;
+            CasterIndex = Fight.HeroIndex;
+            TargetIndex = Fight.HeroIndex;
+            TargetHealth = heroHealth;
+            TargetShield = heroShield;
+            Bonus = EffectBonus.None;
+            WastedBonus = EffectBonus.None;
+            LineChange = change;
+            IncomingCardId = incomingCardId;
+        }
+
+        /// <summary>
+        /// Creates a <see cref="CombatEventKind.LineChanged"/> event: the player changed the hero's line. Its
+        /// <see cref="Position"/> and <see cref="CardId"/> are the line card that moved or left for the reserve; the
+        /// hero is both <see cref="CasterIndex"/> and <see cref="TargetIndex"/>, and the amounts are zero.
+        /// </summary>
+        /// <param name="sequence">Index of the event in its log.</param>
+        /// <param name="change">The change, with its tick.</param>
+        /// <param name="cardId">
+        /// Id of the line card at <see cref="Game.Core.Combat.LineChange.Position"/> before the change.
+        /// </param>
+        /// <param name="incomingCardId">Id of the card that arrived in the line (the same card for a move).</param>
+        /// <param name="heroHealth">The hero's health at that moment.</param>
+        /// <param name="heroShield">The hero's shield at that moment.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="change"/> is null.</exception>
+        /// <exception cref="ArgumentException">A card id is null or empty.</exception>
+        public static CombatEvent ForLineChange(
+            int sequence,
+            LineChange change,
+            string cardId,
+            string incomingCardId,
+            int heroHealth,
+            int heroShield)
+        {
+            if (change == null)
+            {
+                throw new ArgumentNullException(nameof(change));
+            }
+
+            if (string.IsNullOrEmpty(cardId))
+            {
+                throw new ArgumentException("Card id cannot be null or empty.", nameof(cardId));
+            }
+
+            if (string.IsNullOrEmpty(incomingCardId))
+            {
+                throw new ArgumentException("Card id cannot be null or empty.", nameof(incomingCardId));
+            }
+
+            return new CombatEvent(sequence, change, cardId, incomingCardId, heroHealth, heroShield);
+        }
+
+        /// <summary>
+        /// The change to the hero's line, for <see cref="CombatEventKind.LineChanged"/>; null for every other kind.
+        /// </summary>
+        public LineChange LineChange { get; }
+
+        /// <summary>
+        /// Id of the card that arrived in the line, for <see cref="CombatEventKind.LineChanged"/> (the reserve card
+        /// for a swap, <see cref="CardId"/> for a move); null for every other kind.
+        /// </summary>
+        public string IncomingCardId { get; }
+
         /// <summary>Index of the event in its log, from 0. Events are stored in this order.</summary>
         public int Sequence { get; }
 
-        /// <summary>The tick on which the cast resolved, from 1.</summary>
+        /// <summary>The tick on which the cast resolved, or the line changed, from 1.</summary>
         public int Tick { get; }
 
         /// <summary>What happened.</summary>

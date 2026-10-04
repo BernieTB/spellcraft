@@ -125,6 +125,12 @@ namespace Game.Core.Combat.Recap
 
             foreach (var e in log.Events)
             {
+                if (e.Kind == CombatEventKind.LineChanged)
+                {
+                    // A change is not output of a card; the casts after it show which card played where.
+                    continue;
+                }
+
                 var card = Find(totals[e.CasterIndex], e.Position, e.CardId);
                 switch (e.Kind)
                 {
