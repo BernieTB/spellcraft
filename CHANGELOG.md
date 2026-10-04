@@ -98,6 +98,12 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
   changes. Applied changes are in `FightResult.LineChanges` and in the combat log as `line` events (text and
   JSON), which the recap skips. ADR 0015 records the details confirmed by the owner (a cast takes its pending
   bonus when it starts, where a moved or swapped-out card resolves, order of changes on one tick).
+- Card evolution (ADR 0013): a card has up to two evolution stages in its data (`CardEvolution`, authored on
+  `CardAsset`), each replacing its effects and neighbour modifiers but never its id or cast time. Every card copy
+  counts its own casts over the run (`CardInstance.Casts`, kept in the reserve); a fight created with those counts
+  evolves the hero's cards after the cast that reaches a stage, and reports each evolution (`FightResult.Evolutions`,
+  an `evolution` event in the combat log, text and JSON) and the final counts, which the run keeps for the next
+  fight. Passive upgrades also upgrade the evolved stages of a card.
 
 ### Changed
 

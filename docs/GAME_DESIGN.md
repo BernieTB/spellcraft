@@ -90,6 +90,8 @@ Pacing (see [ADR 0009](adr/0009-vertical-slice-run-pacing.md); numbers live in d
     modifiers, effects and modifiers.
   - Each card instance counts its casts over the whole run, across fights, and keeps its stage in the reserve.
     Everything resets at the next run.
+  - A stage takes effect on the next cast of the card: the cast that reaches it resolves with the old stage
+    (provisional, the owner has not confirmed it).
   - An evolved card shows a **stage mark** on screen, with a short cue when it evolves; the evolution appears in
     the combat log and the recap. No progress gauge.
 
