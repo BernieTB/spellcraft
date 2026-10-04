@@ -86,6 +86,11 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
   every enemy of its encounter; the level curve (`LevelCurve`, authored as `LevelCurveAsset`: explicit costs, then a
   fixed increase per level, no cap) is part of `RunRules`; the run tracks its level and pending level-ups for the
   linked choice, and each fight report gives the XP and levels gained.
+- Bestiary kept across runs (`Game.Core.Meta.Bestiary`): professor health, shield and spell line cards revealed
+  by mini-bosses, recorded by position and card id, and what the player knows about a professor for the
+  preparation phase. Saved as versioned JSON (`BestiaryJson`) through `IBestiaryStore`; `FileBestiaryStore` keeps
+  it in `bestiary.json` under the persistent data folder, and a missing or unreadable save starts an empty
+  bestiary (an unreadable one is kept as `bestiary.unreadable.json` and logged).
 
 ### Changed
 

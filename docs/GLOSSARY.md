@@ -5,7 +5,7 @@ words. Use these terms consistently in code, docs and issues.
 
 | Term | Definition |
 |---|---|
-| **Bestiary** | Permanent record of knowledge about enemies, kept across runs. Holds the professor information revealed by mini-bosses (cards, health, shield), shown during the preparation phase. See [Meta-progression](GAME_DESIGN.md#meta-progression). |
+| **Bestiary** | Permanent record of knowledge about enemies, kept across runs. Holds the professor information revealed by mini-bosses (cards, health, shield), shown during the preparation phase. The length of the professor's spell line is always shown; a revealed card is recorded by its position in the line (so two copies of a card are told apart) with its card id, and if the professor's data changed since, that card counts as unknown again (both confirmed by the owner on 2026-10-05). Saved locally as versioned JSON after **every reveal** (owner decision of 2026-10-05). In code: `Game.Core.Meta.Bestiary` (knowledge), `Game.Unity.Meta.FileBestiaryStore` (save file). See [Meta-progression](GAME_DESIGN.md#meta-progression) and [ADR 0014](adr/0014-boss-preparation-and-recap.md). |
 | **Biome** | One section of a run, representing one year at the magic school. Contains regular monsters, secret rooms and a professor. See [Run structure](GAME_DESIGN.md#run-structure). |
 | **Card** | One element of the spell line. Each card is a word. Cards react to their neighbours and evolve through use. See [Spell line](GAME_DESIGN.md#spell-line). |
 | **Card instance** | One copy of a card owned during a run. Two copies of the same card are two instances, so each tracks its own state (such as evolution). In code: `Game.Core.Runs.CardInstance`. |
