@@ -113,6 +113,13 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
   casts of the line and the reserve copies and hands them to the run's card instances when it completes, also for
   cards swapped during the fight; a cancelled session keeps its line changes but not the casts.
 
+- Objectives and secret rooms in the run model (ADR 0010): a biome lists secret rooms (`SecretRoomDefinition`,
+  authored as `SecretRoomAsset`) with an objective "defeat N of enemy X" counted over regular fights won. A
+  completed objective opens its room; the first victory over its mini-boss adds line slots and the unique card (at
+  the end of the line, or in the reserve when it is full) and returns a revelation about the biome's professor that
+  the caller records in the bestiary with `SecretRoomRewards.RevealTo`; a repeat victory gives XP only. `Run.SecretRooms`
+  shows the progress, and the fight report tells which rooms it unlocked and what it gave.
+
 ### Changed
 
 - Git ignores Claude Code local state (`.claude/worktrees/`, `.claude/settings.local.json`, `CLAUDE.local.md`);

@@ -129,7 +129,7 @@ the build settings and keeps an existing `Unity/UI/GamePanelSettings.asset`. Clo
 ```
 
 Save files: the bestiary ([ADR 0014](docs/adr/0014-boss-preparation-and-recap.md)) is the only save so far. It is
-saved after every reveal (owner decision of 2026-10-05: call `BestiaryStorage.Save` whenever `Bestiary.Reveal` returns
+saved after every reveal (owner decision of 2026-10-04: call `BestiaryStorage.Save` whenever `Bestiary.Reveal` returns
 `true`), written as versioned JSON by `Game.Core.Meta.BestiaryJson` to `bestiary.json` in `Application.persistentDataPath` (on Windows
 `%USERPROFILE%\AppData\LocalLow\<company>\<product>\`). A save the game cannot read (invalid, unknown version, IO
 error) starts an empty bestiary and is first copied to `bestiary.unreadable.json` (then `bestiary.unreadable-1.json`...);

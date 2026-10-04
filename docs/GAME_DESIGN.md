@@ -156,6 +156,8 @@ Pacing (see [ADR 0009](adr/0009-vertical-slice-run-pacing.md); numbers live in d
 - Secret rooms are unlocked by **objectives** of the form **defeat N of monster X** (from data), counted over
   regular fights. The player clicks to enter. See [ADR 0010](adr/0010-secret-rooms-and-mini-boss-rewards.md).
 - The Vertical slice biome has **two secret rooms**, each with its own objective and mini-boss.
+- Progress counts every enemy of the right kind defeated in regular fights won (an encounter with two of them
+  counts two) and stops once the room is open; fights in secret rooms and against the professor do not count.
 - Secret rooms hide **mini-bosses**, which are **mythical creatures**.
 - The first victory over each mini-boss gives:
   - **+1 spell line slot**;
