@@ -77,7 +77,8 @@ namespace Game.Core.Meta
 
         /// <summary>Reads a bestiary written by <see cref="Serialize"/>.</summary>
         /// <exception cref="FormatException">
-        /// The text is not valid JSON, its version is missing or unknown, or a field is missing or invalid.
+        /// The text is not valid JSON, its version is missing or unknown, a field is missing or invalid, a professor
+        /// appears twice or a professor has two cards at the same position.
         /// </exception>
         public static Bestiary Deserialize(string json)
         {
@@ -96,6 +97,7 @@ namespace Game.Core.Meta
             }
 
             var bestiary = new Bestiary();
+            var seenIds = new List<string>();
             var professors = ReadArray(root, "professors", "the save");
             for (var i = 0; i < professors.Count; i++)
             {
@@ -104,6 +106,12 @@ namespace Game.Core.Meta
                     ?? throw new FormatException("The " + where + " is not a JSON object.");
 
                 var id = ReadString(professor, "id", where);
+                if (seenIds.Exists(seen => string.Equals(seen, id, StringComparison.Ordinal)))
+                {
+                    throw new FormatException("Professor '" + id + "' appears twice in the save.");
+                }
+
+                seenIds.Add(id);
                 var cards = new List<RevealedCard>();
                 var cardValues = ReadArray(professor, "cards", where);
                 for (var j = 0; j < cardValues.Count; j++)
@@ -115,6 +123,11 @@ namespace Game.Core.Meta
                     if (position < 0)
                     {
                         throw new FormatException("The " + cardWhere + " has a negative position.");
+                    }
+
+                    if (cards.Exists(existing => existing.Position == position))
+                    {
+                        throw new FormatException("The " + where + " has two cards at position " + position.ToString(CultureInfo.InvariantCulture) + ".");
                     }
 
                     cards.Add(new RevealedCard(position, ReadString(card, "cardId", cardWhere)));

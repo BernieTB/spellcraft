@@ -156,7 +156,9 @@ namespace Game.Core.Meta
                 var c = _text[_index++];
                 if (c == '"')
                 {
-                    return builder.ToString();
+                    var value = builder.ToString();
+                    CheckSurrogates(value);
+                    return value;
                 }
 
                 if (c < ' ')
@@ -204,6 +206,7 @@ namespace Game.Core.Meta
                         break;
                     case 'u':
                         if (_index + 4 > _text.Length
+                            || !IsHex(_text, _index, 4)
                             || !int.TryParse(_text.Substring(_index, 4), NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture, out var code))
                         {
                             throw Error("Invalid unicode escape");
@@ -220,6 +223,20 @@ namespace Game.Core.Meta
             throw Error("Unterminated string");
         }
 
+        private static bool IsHex(string text, int start, int length)
+        {
+            for (var i = start; i < start + length; i++)
+            {
+                var c = text[i];
+                if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
         private long ReadInteger()
         {
             var start = _index;
@@ -228,14 +245,25 @@ namespace Game.Core.Meta
                 _index++;
             }
 
+            var digitsStart = _index;
             while (_index < _text.Length && _text[_index] >= '0' && _text[_index] <= '9')
             {
                 _index++;
             }
 
+            if (_index - digitsStart > 1 && _text[digitsStart] == '0')
+            {
+                throw Error("Numbers cannot have leading zeros");
+            }
+
             if (_index < _text.Length && (_text[_index] == '.' || _text[_index] == 'e' || _text[_index] == 'E'))
             {
                 throw Error("Only integer numbers are supported");
+            }
+
+            if (_index == digitsStart)
+            {
+                throw Error("Expected digits");
             }
 
             var token = _text.Substring(start, _index - start);
@@ -245,6 +273,22 @@ namespace Game.Core.Meta
             }
 
             return value;
+        }
+
+        // JSON text must be valid UTF-16 once unescaped: a high surrogate must be followed by a low one.
+        private void CheckSurrogates(string value)
+        {
+            for (var i = 0; i < value.Length; i++)
+            {
+                if (char.IsHighSurrogate(value[i]) && i + 1 < value.Length && char.IsLowSurrogate(value[i + 1]))
+                {
+                    i++;
+                }
+                else if (char.IsSurrogate(value[i]))
+                {
+                    throw Error("Unpaired surrogate in a string");
+                }
+            }
         }
 
         private void ReadLiteral(string literal)

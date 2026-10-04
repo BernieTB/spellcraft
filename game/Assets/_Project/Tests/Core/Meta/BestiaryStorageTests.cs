@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Game.Core.Cards;
 using Game.Core.Effects;
 using Game.Core.Enemies;
@@ -15,6 +16,21 @@ namespace Game.Core.Tests.Meta
             40,
             5,
             new[] { new CardDefinition("TestCard1", 1, new IEffect[] { new DealDamageEffect(2) }) });
+
+        private sealed class FailingStore : IBestiaryStore
+        {
+            public Exception Failure;
+
+            public bool TryRead(out string text)
+            {
+                throw Failure;
+            }
+
+            public void Write(string text)
+            {
+                throw Failure;
+            }
+        }
 
         private sealed class MemoryStore : IBestiaryStore
         {
@@ -76,6 +92,24 @@ namespace Game.Core.Tests.Meta
 
             Assert.AreEqual(BestiaryLoadStatus.Unreadable, result.Status);
             StringAssert.Contains("version 99", result.Error);
+        }
+
+        [Test]
+        public void Load_ReadFailure_IsUnreadableWithTheReason()
+        {
+            var io = BestiaryStorage.Load(new FailingStore { Failure = new IOException("disk gone") });
+            var denied = BestiaryStorage.Load(new FailingStore { Failure = new UnauthorizedAccessException("no access") });
+
+            Assert.AreEqual(BestiaryLoadStatus.Unreadable, io.Status);
+            StringAssert.Contains("disk gone", io.Error);
+            Assert.AreEqual(BestiaryLoadStatus.Unreadable, denied.Status);
+            StringAssert.Contains("no access", denied.Error);
+        }
+
+        [Test]
+        public void Save_StoreFailure_Propagates()
+        {
+            Assert.Throws<IOException>(() => BestiaryStorage.Save(new FailingStore { Failure = new IOException("full") }, new Bestiary()));
         }
 
         [Test]

@@ -106,6 +106,53 @@ namespace Game.Core.Tests.Meta
             yield return "{\"version\":1,\"professors\":[{\"id\":\"A\",\"healthKnown\":true,\"shieldKnown\":false,\"cards\":[{\"position\":1.5,\"cardId\":\"C\"}]}]}";
             yield return "{\"version\":1,\"version\":1,\"professors\":[]}";
             yield return "{\"version\":1,\"professors\":[";
+            yield return "{\"version\":01,\"professors\":[]}";
+            yield return "{\"version\":-,\"professors\":[]}";
+            yield return "{\"version\":1,\"professors\":[{\"id\":\"A\",\"healthKnown\":true,\"shieldKnown\":false,\"cards\":[{\"position\":3000000000,\"cardId\":\"C\"}]}]}";
+            yield return "{\"version\":1,\"professors\":[{\"id\":\"A\\u12G4\",\"healthKnown\":true,\"shieldKnown\":false,\"cards\":[]}]}";
+            yield return "{\"version\":1,\"professors\":[{\"id\":\"A\\u12";
+            yield return "{\"version\":1,\"professors\":[{\"id\":\"A\\uD800\",\"healthKnown\":true,\"shieldKnown\":false,\"cards\":[]}]}";
+            yield return "{\"version\":1,\"professors\":[{\"id\":\"A\\uDC00B\",\"healthKnown\":true,\"shieldKnown\":false,\"cards\":[]}]}";
+            yield return "{\"version\":1,\"professors\":[" + new string('[', 40) + new string(']', 40) + "]}";
+        }
+
+        [Test]
+        public void Deserialize_SameProfessorTwice_Throws()
+        {
+            var entry = "{\"id\":\"A\",\"healthKnown\":true,\"shieldKnown\":false,\"cards\":[]}";
+
+            var exception = Assert.Throws<FormatException>(
+                () => BestiaryJson.Deserialize("{\"version\":1,\"professors\":[" + entry + "," + entry + "]}"));
+
+            StringAssert.Contains("appears twice", exception.Message);
+        }
+
+        [Test]
+        public void Deserialize_TwoCardsAtTheSamePosition_Throws()
+        {
+            var json = "{\"version\":1,\"professors\":[{\"id\":\"A\",\"healthKnown\":true,\"shieldKnown\":false,\"cards\":"
+                + "[{\"position\":0,\"cardId\":\"C\"},{\"position\":0,\"cardId\":\"D\"}]}]}";
+
+            var exception = Assert.Throws<FormatException>(() => BestiaryJson.Deserialize(json));
+
+            StringAssert.Contains("two cards at position 0", exception.Message);
+        }
+
+        [Test]
+        public void Deserialize_EscapedSurrogatePair_IsRead()
+        {
+            var json = "{\"version\":1,\"professors\":[{\"id\":\"A\\uD83D\\uDE00\",\"healthKnown\":true,\"shieldKnown\":false,\"cards\":[]}]}";
+
+            Assert.AreEqual("A😀", BestiaryJson.Deserialize(json).Entries[0].ProfessorId);
+        }
+
+        [Test]
+        public void Deserialize_ZeroPosition_IsRead()
+        {
+            var json = "{\"version\":1,\"professors\":[{\"id\":\"A\",\"healthKnown\":false,\"shieldKnown\":false,\"cards\":"
+                + "[{\"position\":0,\"cardId\":\"C\"}]}]}";
+
+            Assert.AreEqual(0, BestiaryJson.Deserialize(json).Entries[0].Cards[0].Position);
         }
 
         [TestCaseSource(nameof(InvalidSaves))]
