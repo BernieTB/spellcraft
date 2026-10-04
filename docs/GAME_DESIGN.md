@@ -96,8 +96,11 @@ Pacing (see [ADR 0009](adr/0009-vertical-slice-run-pacing.md); numbers live in d
   regular fights:
   - **Regular fights:** the player may rearrange the line and swap cards with the reserve at any time; the
     change applies immediately. The card being cast finishes its cast, the line continues from the card now
-    after its position, and pending neighbour bonuses stay at their position in the line. See
-    [ADR 0012](adr/0012-linked-choices-and-spell-line-editing.md).
+    after its position, and pending neighbour bonuses stay at their position in the line. A cast takes its
+    card and pending bonus when it starts; a card moved during its cast resolves at its new position, a card sent
+    to the reserve during its cast resolves at the slot it left; several changes on one tick apply in order. See
+    [ADR 0012](adr/0012-linked-choices-and-spell-line-editing.md) and
+    [ADR 0015](adr/0015-live-spell-line-editing-details.md).
   - **Mini-boss and professor fights:** the line is fixed once the fight starts; it is prepared beforehand.
   - Line changes are fight inputs stamped with their tick, so fights stay deterministic and the combat log
     records them.

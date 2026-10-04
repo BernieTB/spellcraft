@@ -87,7 +87,8 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
   scheduled (`Run(lineChanges)`) or one tick at a time (`ApplyLineChange` then `Step`). The card being cast
   finishes its cast, pending neighbour bonuses stay at their position, and mini-boss and professor fights refuse
   changes. Applied changes are in `FightResult.LineChanges` and in the combat log as `line` events (text and
-  JSON), which the recap skips.
+  JSON), which the recap skips. ADR 0015 records the details confirmed by the owner (a cast takes its pending
+  bonus when it starts, where a moved or swapped-out card resolves, order of changes on one tick).
 
 ### Changed
 

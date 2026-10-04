@@ -32,3 +32,4 @@ Status values: `Proposed`, `Accepted`, `Rejected`, `Deprecated`, `Superseded by 
 | [0012](0012-linked-choices-and-spell-line-editing.md) | Level-up linked choices, passive upgrades and spell line editing | Accepted |
 | [0013](0013-card-evolution.md) | Card evolution through use | Accepted |
 | [0014](0014-boss-preparation-and-recap.md) | Boss preparation information, reserve and recap content | Accepted |
+| [0015](0015-live-spell-line-editing-details.md) | Live spell line editing details | Accepted |
