@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Game.Core.Cards;
 using Game.Core.Randomness;
 
 namespace Game.Core.Combat.Log
@@ -27,9 +28,40 @@ namespace Game.Core.Combat.Log
             int maxTicks,
             IRandom random)
         {
+            return Record(
+                hero, enemies, maxTicks, random, Array.Empty<CardDefinition>(), false, Array.Empty<LineChange>());
+        }
+
+        /// <summary>
+        /// Like <see cref="Record(FightParticipant, IReadOnlyList{FightParticipant}, int, IRandom)"/>, for a fight
+        /// whose hero line may change (ADR 0012): creates the <see cref="Fight"/> with the hero's reserve and
+        /// <paramref name="lineEditsAllowed"/>, runs it with <paramref name="lineChanges"/> and logs the applied
+        /// changes as <see cref="CombatEventKind.LineChanged"/> events.
+        /// </summary>
+        /// <exception cref="ArgumentNullException">An argument, an enemy, a reserve card or a change is null.</exception>
+        /// <exception cref="ArgumentException">
+        /// The participants are rejected by <see cref="Fight"/>, or the changes are not in tick order or out of the
+        /// fight's ticks.
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// <paramref name="maxTicks"/> is less than 1, or a change has a position or reserve index out of range.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// Changes are given while <paramref name="lineEditsAllowed"/> is false, or the log is out of sync with the
+        /// fight.
+        /// </exception>
+        public static CombatLog Record(
+            FightParticipant hero,
+            IReadOnlyList<FightParticipant> enemies,
+            int maxTicks,
+            IRandom random,
+            IReadOnlyList<CardDefinition> heroReserve,
+            bool lineEditsAllowed,
+            IReadOnlyList<LineChange> lineChanges)
+        {
             // The fight validates its arguments; it is created before taking snapshots so invalid input fails with
             // the fight's own messages.
-            var fight = new Fight(hero, enemies, maxTicks, random);
+            var fight = new Fight(hero, enemies, maxTicks, random, heroReserve, lineEditsAllowed);
 
             var participants = new List<FightParticipant>(enemies.Count + 1) { hero };
             participants.AddRange(enemies);
@@ -40,7 +72,7 @@ namespace Game.Core.Combat.Log
                 snapshots[i] = CombatantSnapshot.Of(i, participants[i]);
             }
 
-            var log = CombatLog.Build(snapshots, fight.Run());
+            var log = CombatLog.Build(snapshots, fight.Run(lineChanges));
             CheckFinalState(log, participants);
             return log;
         }

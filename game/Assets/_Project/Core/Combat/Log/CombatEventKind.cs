@@ -20,5 +20,11 @@ namespace Game.Core.Combat.Log
 
         /// <summary>A combatant's health reached zero.</summary>
         Death = 4,
+
+        /// <summary>
+        /// The player changed the hero's spell line during the fight (<see cref="CombatEvent.LineChange"/>). Comes
+        /// before the casts of its tick.
+        /// </summary>
+        LineChanged = 5,
     }
 }

@@ -29,6 +29,10 @@ namespace Game.Core.Combat.Log
     /// the part it wasted (<see cref="CombatEvent.Bonus"/>, <see cref="CombatEvent.WastedBonus"/>, from
     /// <see cref="CastRecord"/>). The used part is already in the amounts of the effect events.
     /// </para>
+    /// <para>
+    /// Line changes (<see cref="FightResult.LineChanges"/>, ADR 0012): each is a
+    /// <see cref="CombatEventKind.LineChanged"/> event placed before the casts of its tick, in the order applied.
+    /// </para>
     /// </remarks>
     public sealed class CombatLog
     {
@@ -66,7 +70,8 @@ namespace Game.Core.Combat.Log
         /// <param name="result">The result of <see cref="Fight.Run"/>.</param>
         /// <exception cref="ArgumentNullException">An argument or a snapshot is null.</exception>
         /// <exception cref="ArgumentException">
-        /// A snapshot index does not match its position, or a cast refers to an unknown combatant.
+        /// A snapshot index does not match its position, a cast refers to an unknown combatant, or the line changes
+        /// are out of tick order or outside the fight's ticks.
         /// </exception>
         /// <exception cref="InvalidOperationException">
         /// The outcomes do not fit the snapshots (health or shield would go out of range).
@@ -103,9 +108,42 @@ namespace Game.Core.Combat.Log
             }
 
             var events = new List<CombatEvent>();
+            var changes = result.LineChanges;
+            var nextChange = 0;
+            var previousChangeTick = 1;
+            for (var i = 0; i < changes.Count; i++)
+            {
+                var change = changes[i]?.Change
+                    ?? throw new ArgumentException($"Line change {i} is null.", nameof(result));
+                if (change.Tick < previousChangeTick || change.Tick > result.Ticks)
+                {
+                    throw new ArgumentException(
+                        $"Line change {i} ({change}) is out of tick order or outside the fight's {result.Ticks} ticks.",
+                        nameof(result));
+                }
+
+                previousChangeTick = change.Tick;
+            }
+
+            void AddChangesUpTo(int tick)
+            {
+                while (nextChange < changes.Count && changes[nextChange].Change.Tick <= tick)
+                {
+                    var record = changes[nextChange];
+                    events.Add(CombatEvent.ForLineChange(
+                        events.Count,
+                        record.Change,
+                        record.Card.Id,
+                        record.IncomingCard.Id,
+                        health[Fight.HeroIndex],
+                        shield[Fight.HeroIndex]));
+                    nextChange++;
+                }
+            }
 
             foreach (var cast in result.Casts)
             {
+                AddChangesUpTo(cast.Tick);
                 var caster = cast.CasterIndex;
                 var target = cast.TargetIndex;
                 if (caster < 0 || caster >= count || target < 0 || target >= count)
@@ -174,6 +212,8 @@ namespace Game.Core.Combat.Log
                 }
             }
 
+            AddChangesUpTo(int.MaxValue);
+
             return new CombatLog(
                 new ReadOnlyCollection<CombatantSnapshot>(snapshots),
                 new ReadOnlyCollection<CombatEvent>(events),
@@ -194,9 +234,13 @@ namespace Game.Core.Combat.Log
         /// heal, shield: <c>bonusK=N</c> (received), followed by <c>wastedK=W</c> when part of it was wasted, with
         /// <c>K</c> one of <c>Damage</c>, <c>Heal</c>, <c>Shield</c> (for example
         /// <c>bonusDamage=3 bonusHeal=4 wastedHeal=4</c>). A cast without bonus has none of these fields;</item>
+        /// <item>a line change event, after its common fields (where <c>pos</c> and <c>card</c> are the line card
+        /// that moved or left), has <c>change=move to=Q</c> or <c>change=swap reserve=R incoming=ID</c>, then the
+        /// hero's state;</item>
         /// <item>a last line <c>winner=W ticks=N</c>.</item>
         /// </list>
-        /// <para>Event names: <c>cast</c>, <c>damage</c>, <c>heal</c>, <c>shield</c>, <c>death</c>. Winner names:
+        /// <para>Event names: <c>cast</c>, <c>damage</c>, <c>heal</c>, <c>shield</c>, <c>death</c>, <c>line</c>.
+        /// Winner names:
         /// <c>none</c>, <c>hero</c>, <c>enemies</c>. Numbers use the invariant culture. Card ids are written as
         /// they are, unescaped: the text is for reading and golden diffs; parse <see cref="ToJson"/> instead.</para>
         /// </remarks>
@@ -238,6 +282,18 @@ namespace Game.Core.Combat.Log
                     case CombatEventKind.ShieldGain:
                         builder.Append(" amount=").Append(Number(e.Amount));
                         break;
+                    case CombatEventKind.LineChanged:
+                        if (e.LineChange.Kind == LineChangeKind.Move)
+                        {
+                            builder.Append(" change=move to=").Append(Number(e.LineChange.ToPosition));
+                        }
+                        else
+                        {
+                            builder.Append(" change=swap reserve=").Append(Number(e.LineChange.ReserveIndex))
+                                .Append(" incoming=").Append(e.IncomingCardId);
+                        }
+
+                        break;
                 }
 
                 if (e.Kind != CombatEventKind.CardCast)
@@ -262,7 +318,9 @@ namespace Game.Core.Combat.Log
         /// <c>targetShield</c>, <c>bonus</c>, <c>wasted</c>), with the same names as <see cref="ToText"/> for kinds and
         /// winner. <c>bonus</c> and <c>wasted</c> are objects with <c>damage</c>, <c>heal</c> and <c>shield</c>, in
         /// that order: the neighbour bonus a cast received and the part of it wasted, all zero on other events and on
-        /// casts without bonus, so every event has the same shape. One combatant or event per line, lines end with
+        /// casts without bonus, so every event has these fields. A line change event also has a <c>change</c> object
+        /// with <c>kind</c> (<c>move</c> or <c>swap</c>), <c>to</c>, <c>reserve</c> (-1 when unused) and
+        /// <c>incoming</c>; other events have no <c>change</c> field. One combatant or event per line, lines end with
         /// <c>\n</c>; the output is deterministic.
         /// </summary>
         public string ToJson()
@@ -338,6 +396,12 @@ namespace Game.Core.Combat.Log
                 AppendBonusJson(builder, "bonus", e.Bonus);
                 builder.Append(',');
                 AppendBonusJson(builder, "wasted", e.WastedBonus);
+                if (e.Kind == CombatEventKind.LineChanged)
+                {
+                    builder.Append(',');
+                    AppendChangeJson(builder, e);
+                }
+
                 builder.Append('}');
             }
 
@@ -362,6 +426,8 @@ namespace Game.Core.Combat.Log
                     return "shield";
                 case CombatEventKind.Death:
                     return "death";
+                case CombatEventKind.LineChanged:
+                    return "line";
                 default:
                     throw new ArgumentOutOfRangeException(nameof(kind), kind, "Unknown combat event kind.");
             }
@@ -400,6 +466,20 @@ namespace Game.Core.Combat.Log
             {
                 builder.Append(" wasted").Append(name).Append('=').Append(Number(wasted));
             }
+        }
+
+        private static void AppendChangeJson(StringBuilder builder, CombatEvent e)
+        {
+            JsonWriter.AppendName(builder, "change");
+            builder.Append('{');
+            JsonWriter.AppendField(builder, "kind", e.LineChange.Kind == LineChangeKind.Move ? "move" : "swap");
+            builder.Append(',');
+            JsonWriter.AppendField(builder, "to", e.LineChange.ToPosition);
+            builder.Append(',');
+            JsonWriter.AppendField(builder, "reserve", e.LineChange.ReserveIndex);
+            builder.Append(',');
+            JsonWriter.AppendField(builder, "incoming", e.IncomingCardId);
+            builder.Append('}');
         }
 
         private static void AppendBonusJson(StringBuilder builder, string name, EffectBonus bonus)

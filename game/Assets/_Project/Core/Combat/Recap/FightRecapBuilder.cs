@@ -16,6 +16,9 @@ namespace Game.Core.Combat.Recap
     /// position and its id: casts and the bonus they received or wasted from <see cref="CombatEventKind.CardCast"/>,
     /// damage from <see cref="CombatEventKind.Damage"/> (shield absorbed plus health lost), healing and shield from
     /// <see cref="CombatEventKind.Heal"/> and <see cref="CombatEventKind.ShieldGain"/>.
+    /// <see cref="CombatEventKind.LineChanged"/> events (live line editing in regular fights, ADR 0012 and
+    /// ADR 0015) are not output and are skipped; after a change, the cards seen at a new position get their own
+    /// entries, after those of the starting line.
     /// </para>
     /// <para>
     /// <b>Turning point</b> (fights not won). The state of the fight is read after the last event of every tick
@@ -125,6 +128,12 @@ namespace Game.Core.Combat.Recap
 
             foreach (var e in log.Events)
             {
+                if (e.Kind == CombatEventKind.LineChanged)
+                {
+                    // A change is not output of a card; the casts after it show which card played where.
+                    continue;
+                }
+
                 var card = Find(totals[e.CasterIndex], e.Position, e.CardId);
                 switch (e.Kind)
                 {

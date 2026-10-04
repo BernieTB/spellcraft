@@ -91,6 +91,13 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
   preparation phase. Saved as versioned JSON (`BestiaryJson`) through `IBestiaryStore`; `FileBestiaryStore` keeps
   it in `bestiary.json` under the persistent data folder, and a missing or unreadable save starts an empty
   bestiary (an unreadable one is kept as `bestiary.unreadable.json` and logged).
+- Live spell line editing in regular fights (ADR 0012): `Fight` takes the hero's reserve and whether line edits
+  are allowed, and applies `LineChange`s (move a card, swap with the reserve) at the start of their tick, either
+  scheduled (`Run(lineChanges)`) or one tick at a time (`ApplyLineChange` then `Step`). The card being cast
+  finishes its cast, pending neighbour bonuses stay at their position, and mini-boss and professor fights refuse
+  changes. Applied changes are in `FightResult.LineChanges` and in the combat log as `line` events (text and
+  JSON), which the recap skips. ADR 0015 records the details confirmed by the owner (a cast takes its pending
+  bonus when it starts, where a moved or swapped-out card resolves, order of changes on one tick).
 
 ### Changed
 
