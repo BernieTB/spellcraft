@@ -122,14 +122,21 @@ on IMGUI. The game runs in one scene, `Unity/Scenes/Bootstrap.unity`, and screen
 loading scenes: `Game.Unity.UI.ScreenHost` shows one screen at a time in a container (the root of the
 `UIDocument` in the game, any `VisualElement` in tests). A screen view is a static `Bind(root, state)` that fills a
 cloned tree, so it is tested without Play mode (`TitleScreenView`, `RecapScreenView`); screen-specific USS goes in its
-own file next to `Common.uss`. Rebuild that scene with code, never by editing its YAML: the builder also makes it the only scene in
-the build settings and keeps an existing `Unity/UI/GamePanelSettings.asset`. Close the editor on this project first
-(verified; menu: **Tools > Game > Rebuild Bootstrap Scene**):
+own file next to `Common.uss`. Rebuild that scene with code, never by editing its YAML: the builder also makes it
+the only scene in the build settings and keeps an existing `Unity/UI/GamePanelSettings.asset`. Close the editor on
+this project first (verified; menu: **Tools > Game > Rebuild Bootstrap Scene**):
 
 ```powershell
 & "C:\Program Files\Unity\Hub\Editor\6000.3.24f1\Editor\Unity.exe" -batchmode -quit -projectPath <absolute path to game> `
   -executeMethod Game.Unity.EditorTools.UI.BootstrapSceneBuilder.Build -logFile <scratch-dir>/bootstrap-scene.log
 ```
+
+Look at the screens without playing a run: **Tools > Game > Preview Screens** opens an editor window with one
+button per screen, filled with demo data (the recap on a victory, a defeat and a fight that runs out of time,
+played by Core from `demo_*` cards built in `ScreenPreviewFights`). It uses the game's runtime theme, layouts and
+`ScreenHost`; it is editor-only (`Game.Unity.EditorTools`, never in a build) and changes no asset. A new screen adds
+one line to `ScreenPreviews.All` (name, layout path, how to fill it). The editor window does not scale to the
+1920x1080 reference resolution of the game panel, so judge proportions by resizing it.
 
 Save files: the bestiary ([ADR 0014](docs/adr/0014-boss-preparation-and-recap.md)) is the only save so far. It is
 saved after every reveal (owner decision of 2026-10-04: call `BestiaryStorage.Save` whenever `Bestiary.Reveal` returns

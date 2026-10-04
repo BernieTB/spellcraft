@@ -128,8 +128,14 @@
     width: 260px;
 }
 
+.cell--number {
+    width: 120px;
+}
+
+/* The two bonus columns share what is left, from the same basis, so the header and the rows line up. */
 .cell--bonus {
     flex-grow: 1;
+    flex-basis: 0;
     width: auto;
 }
 

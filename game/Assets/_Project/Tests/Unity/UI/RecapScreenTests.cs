@@ -338,6 +338,7 @@ namespace Game.Unity.Tests.UI
                 "Wasted bonuses are the main cause.");
 
             var cardRow = Rows(root.Q(RecapScreenView.HeroElement))[2];
+            Assert.IsTrue(cardRow.ClassListContains(RecapScreenView.CulpritRowClass), "The card that wasted the bonus.");
             var cells = Texts(cardRow);
             Assert.AreEqual("none", cells[6], "Bonus used by the card.");
             Assert.AreEqual("+3 damage", cells[7], "Bonus wasted by the card.");
@@ -402,6 +403,144 @@ namespace Game.Unity.Tests.UI
         {
             Assert.Throws<InvalidOperationException>(
                 () => RecapScreenView.Bind(new VisualElement(), SimpleRecap(FightRecapOutcome.Victory, null)));
+        }
+
+        [Test]
+        public void Bind_LostFightWithoutAnalysis_DoesNotClaimTimeRanOut()
+        {
+            var root = Bound(SimpleRecap(FightRecapOutcome.Defeat, null));
+
+            var text = root.Q<Label>(RecapScreenView.TurningPointElement).text;
+            StringAssert.DoesNotContain("time ran out", text);
+            StringAssert.Contains("No analysis", text);
+            Assert.IsEmpty(Causes(root));
+        }
+
+        [Test]
+        public void Bind_WastedBonusesAreTheMainCause_MarksTheHeroCardsThatWastedThem()
+        {
+            var received = new EffectBonus(3, 0, 0);
+            var recap = Recap(
+                FightRecapOutcome.Defeat,
+                Defeat(DefeatCause.WastedBonuses, wastedBonus: received),
+                Combatant(
+                    Hero,
+                    new[]
+                    {
+                        Card(Hero, 0, "hero_a", casts: 4, damage: 12),
+                        Card(Hero, 1, "hero_b", casts: 4, healing: 3, received: received, wasted: received),
+                    }),
+                Combatant(1, new[] { Card(1, 0, "enemy_card", casts: 5, damage: 20, received: received, wasted: received) }));
+
+            var root = Bound(recap);
+
+            var culprits = root.Query(className: RecapScreenView.CulpritRowClass).ToList();
+            Assert.AreEqual(1, culprits.Count, "Only the hero's card that wasted a bonus, not the enemy's.");
+            Assert.That(Texts(culprits[0]), Has.Member("hero_b"));
+        }
+
+        [Test]
+        public void Bind_MainCause_IsTheOneNamedByTheAnalysisNotTheFirstOfTheList()
+        {
+            var defeat = new DefeatAnalysis(
+                60,
+                20,
+                60,
+                DefeatCause.WastedBonuses,
+                new[] { DefeatCause.WeakestCard, DefeatCause.WastedBonuses },
+                new EffectBonus(2, 0, 0),
+                -1,
+                -1,
+                -1,
+                null,
+                1,
+                "hero_b",
+                3);
+
+            var root = Bound(SimpleRecap(FightRecapOutcome.Defeat, defeat));
+
+            var causes = Causes(root);
+            Assert.AreEqual(2, causes.Count);
+            Assert.IsFalse(causes[0].ClassListContains(RecapScreenView.MainCauseClass));
+            Assert.IsTrue(causes[1].ClassListContains(RecapScreenView.MainCauseClass));
+            StringAssert.StartsWith("Main cause:", causes[1].text);
+            StringAssert.StartsWith("Also:", causes[0].text);
+        }
+
+        [Test]
+        public void Bind_Cells_UseOneClassPerColumnInTheHeaderAndInTheRows()
+        {
+            var root = Bound(SimpleRecap(FightRecapOutcome.Victory, null));
+
+            var rows = Rows(root.Q(RecapScreenView.HeroElement));
+            var headerClasses = rows[0].Children().Select(cell => cell.GetClasses().ToList()).ToList();
+            var rowClasses = rows[1].Children().Select(cell => cell.GetClasses().ToList()).ToList();
+
+            Assert.AreEqual(8, headerClasses.Count);
+            Assert.AreEqual(headerClasses.Count, rowClasses.Count);
+            for (var i = 0; i < headerClasses.Count; i++)
+            {
+                CollectionAssert.AreEquivalent(headerClasses[i], rowClasses[i], $"Column {i}.");
+                Assert.That(headerClasses[i], Has.Member(RecapScreenView.CellClass));
+            }
+
+            Assert.That(headerClasses[0], Has.Member(RecapScreenView.SlotCellClass));
+            Assert.That(headerClasses[1], Has.Member(RecapScreenView.CardCellClass));
+            Assert.That(headerClasses[2], Has.Member(RecapScreenView.NumberCellClass));
+            Assert.That(headerClasses[5], Has.Member(RecapScreenView.NumberCellClass));
+            Assert.That(headerClasses[6], Has.Member(RecapScreenView.BonusCellClass));
+            Assert.That(headerClasses[7], Has.Member(RecapScreenView.BonusCellClass));
+        }
+
+        [Test]
+        public void Bind_CombatantWithoutCards_ShowsOnlyItsHeaderAndSummary()
+        {
+            var recap = Recap(
+                FightRecapOutcome.Victory,
+                null,
+                Combatant(Hero, new CardRecap[0]),
+                Combatant(1, new CardRecap[0]));
+
+            var root = Bound(recap);
+
+            Assert.AreEqual(1, Rows(root.Q(RecapScreenView.HeroElement)).Count, "The header row only.");
+            Assert.AreEqual(1, Rows(root.Q(RecapScreenView.EnemiesElement)).Count);
+            Assert.IsEmpty(root.Query<Label>(className: RecapScreenView.WastedClass).ToList());
+            Assert.That(Texts(root.Q(RecapScreenView.HeroElement)), Has.Member("Hero"));
+        }
+
+        [Test]
+        public void Bind_RecapWithoutCombatants_ShowsTheOutcomeAndNoSections()
+        {
+            var root = Bound(Recap(FightRecapOutcome.Victory, null));
+
+            Assert.AreEqual("Victory", root.Q<Label>(RecapScreenView.OutcomeTitleElement).text);
+            Assert.IsEmpty(root.Q(RecapScreenView.HeroElement).Children());
+            Assert.IsEmpty(root.Q(RecapScreenView.EnemiesElement).Children());
+        }
+
+        [Test]
+        public void Bind_DefeatWithoutAnyCause_ShowsTheTurningPointOnly()
+        {
+            var defeat = new DefeatAnalysis(
+                60,
+                20,
+                60,
+                DefeatCause.WeakestCard,
+                new DefeatCause[0],
+                default,
+                -1,
+                -1,
+                -1,
+                null,
+                0,
+                "hero_a",
+                0);
+
+            var root = Bound(SimpleRecap(FightRecapOutcome.Defeat, defeat));
+
+            StringAssert.Contains("tick 60", root.Q<Label>(RecapScreenView.TurningPointElement).text);
+            Assert.IsEmpty(Causes(root));
         }
 
         [Test]

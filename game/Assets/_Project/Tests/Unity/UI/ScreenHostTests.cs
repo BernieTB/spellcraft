@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
 using Game.Unity.EditorTools.UI;
 using Game.Unity.UI;
 using NUnit.Framework;
@@ -97,6 +99,89 @@ namespace Game.Unity.Tests.UI
 
             Assert.DoesNotThrow(host.Clear);
             Assert.IsNull(host.Current);
+        }
+
+        [Test]
+        public void Show_ReplacingTheScreen_RunsTheHideCallbackOnceWithThatScreen()
+        {
+            var host = new ScreenHost(new VisualElement());
+            var hidden = new List<VisualElement>();
+            var first = host.Show(Layout(BootstrapSceneBuilder.TitleScreenPath), hidden.Add);
+
+            host.Show(Layout(BootstrapSceneBuilder.RecapScreenPath));
+            host.Clear();
+
+            Assert.AreEqual(1, hidden.Count);
+            Assert.AreSame(first, hidden[0]);
+        }
+
+        [Test]
+        public void Clear_RunsTheHideCallbackOnce()
+        {
+            var host = new ScreenHost(new VisualElement());
+            var calls = 0;
+            host.Show(Layout(BootstrapSceneBuilder.TitleScreenPath), _ => calls++);
+
+            host.Clear();
+            host.Clear();
+
+            Assert.AreEqual(1, calls);
+        }
+
+        [Test]
+        public void Current_ScreenTakenOutByTheCaller_IsNullAndTheHideCallbackRuns()
+        {
+            var container = new VisualElement();
+            var host = new ScreenHost(container);
+            var calls = 0;
+            var screen = host.Show(Layout(BootstrapSceneBuilder.TitleScreenPath), _ => calls++);
+
+            screen.RemoveFromHierarchy();
+
+            Assert.IsNull(host.Current);
+            Assert.AreEqual(1, calls);
+            Assert.IsNull(host.Current, "Asking again changes nothing.");
+            Assert.AreEqual(1, calls);
+        }
+
+        [Test]
+        public void Show_AfterTheScreenWasTakenOut_ShowsTheNewOneAndReleasesTheOldOneOnce()
+        {
+            var container = new VisualElement();
+            var host = new ScreenHost(container);
+            var calls = 0;
+            var first = host.Show(Layout(BootstrapSceneBuilder.TitleScreenPath), _ => calls++);
+            first.RemoveFromHierarchy();
+
+            var second = host.Show(Layout(BootstrapSceneBuilder.RecapScreenPath));
+
+            Assert.AreEqual(1, calls);
+            Assert.AreSame(second, host.Current);
+            Assert.AreEqual(1, container.childCount);
+        }
+
+        [Test]
+        public void Show_RecapScreen_IsATemplateContainerInTheSlotAndBindsThroughIt()
+        {
+            var host = new ScreenHost(new VisualElement());
+
+            var screen = host.Show(Layout(BootstrapSceneBuilder.RecapScreenPath));
+
+            Assert.IsInstanceOf<TemplateContainer>(screen);
+            Assert.IsTrue(screen.ClassListContains(ScreenHost.SlotClass));
+            Assert.DoesNotThrow(() => RecapScreenView.Bind(screen, ScreenPreviewFights.Defeat()));
+            Assert.AreEqual("Defeat", screen.Q<Label>(RecapScreenView.OutcomeTitleElement).text);
+        }
+
+        [Test]
+        public void SlotClass_IsDefinedInTheCommonStyleSheet()
+        {
+            var common = AssetDatabase.LoadAssetAtPath<StyleSheet>(BootstrapSceneBuilder.CommonStylePath);
+            Assert.IsNotNull(common, $"Missing {BootstrapSceneBuilder.CommonStylePath}.");
+
+            // Without a panel there is no resolved style to read, so check the rule in the sheet's source text.
+            var source = File.ReadAllText(BootstrapSceneBuilder.CommonStylePath);
+            StringAssert.Contains("." + ScreenHost.SlotClass, source);
         }
 
         [Test]

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Game.Core.Combat.Recap;
 using Game.Core.Effects;
 using UnityEngine.UIElements;
@@ -78,11 +79,40 @@ namespace Game.Unity.UI
         /// <summary>Class added to the wasted bonus lines when wasted bonuses are the main cause.</summary>
         public const string WastedCulpritClass = "wasted--culprit";
 
+        /// <summary>Class of a combatant's heading ("Hero", "Enemy 1").</summary>
+        public const string CombatantHeadingClass = "combatant-heading";
+
+        /// <summary>Class of the line that totals a combatant's neighbour bonuses.</summary>
+        public const string CombatantSummaryClass = "combatant-summary";
+
+        /// <summary>Class of every table cell.</summary>
+        public const string CellClass = "cell";
+
+        /// <summary>Class of the slot column.</summary>
+        public const string SlotCellClass = "cell--slot";
+
+        /// <summary>Class of the card column.</summary>
+        public const string CardCellClass = "cell--card";
+
+        /// <summary>Class of the numeric columns (casts, damage, healing, shield).</summary>
+        public const string NumberCellClass = "cell--number";
+
+        /// <summary>Class of the bonus columns, which share the remaining width equally.</summary>
+        public const string BonusCellClass = "cell--bonus";
+
         private static readonly string[] OutcomeClasses = { VictoryClass, DefeatClass, TimeLimitClass };
 
-        private static readonly string[] ColumnTitles =
+        /// <summary>The table columns, in order: title and class of every cell of the column.</summary>
+        private static readonly (string Title, string Class)[] Columns =
         {
-            "Slot", "Card", "Casts", "Damage", "Healing", "Shield", "Bonus used", "Bonus wasted",
+            ("Slot", SlotCellClass),
+            ("Card", CardCellClass),
+            ("Casts", NumberCellClass),
+            ("Damage", NumberCellClass),
+            ("Healing", NumberCellClass),
+            ("Shield", NumberCellClass),
+            ("Bonus used", BonusCellClass),
+            ("Bonus wasted", BonusCellClass),
         };
 
         /// <summary>
@@ -180,8 +210,11 @@ namespace Game.Unity.UI
             var defeat = recap.Defeat;
             if (defeat == null)
             {
-                // The hero was not behind when time ran out: there is nothing to point at.
-                turningPoint.text = "The hero was not behind when time ran out, so there is no turning point.";
+                // Nothing to point at. Only a fight that ran out of time can be explained this way (the hero was
+                // not behind when time ran out); a lost fight always comes with an analysis, so say so neutrally.
+                turningPoint.text = recap.Outcome == FightRecapOutcome.TimeLimit
+                    ? "The hero was not behind when time ran out, so there is no turning point."
+                    : "No analysis of this fight is available.";
                 analysedLoop.AddToClassList(HiddenClass);
                 return;
             }
@@ -194,7 +227,7 @@ namespace Game.Unity.UI
 
             for (var i = 0; i < defeat.Causes.Count; i++)
             {
-                var isMain = i == 0;
+                var isMain = defeat.Causes[i] == defeat.MainCause;
                 var row = new Label((isMain ? "Main cause: " : "Also: ") + DescribeCause(defeat.Causes[i], defeat));
                 row.AddToClassList(CauseClass);
                 if (isMain)
@@ -230,10 +263,10 @@ namespace Game.Unity.UI
             section.AddToClassList(CombatantClass);
 
             var heading = new Label(combatant.IsHero ? "Hero" : $"Enemy {combatant.Index}");
-            heading.AddToClassList("combatant-heading");
+            heading.AddToClassList(CombatantHeadingClass);
             section.Add(heading);
 
-            section.Add(BuildRow(ColumnTitles, HeaderRowClass));
+            section.Add(BuildRow(Columns.Select(column => column.Title).ToArray(), HeaderRowClass));
             foreach (var card in combatant.Cards)
             {
                 var cells = new[]
@@ -259,7 +292,7 @@ namespace Game.Unity.UI
             var summary = new Label(
                 $"Neighbour bonuses: {FormatBonus(combatant.BonusReceived)} received, "
                 + $"{FormatBonus(combatant.BonusUsed)} used, {FormatBonus(combatant.BonusWasted)} wasted.");
-            summary.AddToClassList("combatant-summary");
+            summary.AddToClassList(CombatantSummaryClass);
             section.Add(summary);
 
             var wastedIsMainCause = combatant.IsHero && defeat != null && defeat.MainCause == DefeatCause.WastedBonuses;
@@ -281,8 +314,8 @@ namespace Game.Unity.UI
         }
 
         /// <summary>
-        /// True for the card the defeat analysis blames first: the hero's weakest card, or the enemy card that
-        /// broke the hero's shield.
+        /// True for the cards the defeat analysis blames first: the hero's cards that wasted a neighbour bonus, the
+        /// hero's weakest card, or the enemy card that broke the hero's shield, depending on the main cause.
         /// </summary>
         private static bool IsCulprit(CardRecap card, DefeatAnalysis defeat)
         {
@@ -293,6 +326,8 @@ namespace Game.Unity.UI
 
             switch (defeat.MainCause)
             {
+                case DefeatCause.WastedBonuses:
+                    return card.CombatantIndex == Core.Combat.Fight.HeroIndex && !card.BonusWasted.IsNone;
                 case DefeatCause.WeakestCard:
                     return card.CombatantIndex == Core.Combat.Fight.HeroIndex
                         && card.Position == defeat.WeakestCardPosition
@@ -318,20 +353,8 @@ namespace Game.Unity.UI
             for (var i = 0; i < cells.Count; i++)
             {
                 var cell = new Label(cells[i]);
-                cell.AddToClassList("cell");
-                if (i == 0)
-                {
-                    cell.AddToClassList("cell--slot");
-                }
-                else if (i == 1)
-                {
-                    cell.AddToClassList("cell--card");
-                }
-                else if (i >= 6)
-                {
-                    cell.AddToClassList("cell--bonus");
-                }
-
+                cell.AddToClassList(CellClass);
+                cell.AddToClassList(Columns[i].Class);
                 row.Add(cell);
             }
 
