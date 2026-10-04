@@ -70,7 +70,8 @@ namespace Game.Core.Combat.Log
         /// <param name="result">The result of <see cref="Fight.Run"/>.</param>
         /// <exception cref="ArgumentNullException">An argument or a snapshot is null.</exception>
         /// <exception cref="ArgumentException">
-        /// A snapshot index does not match its position, or a cast refers to an unknown combatant.
+        /// A snapshot index does not match its position, a cast refers to an unknown combatant, or the line changes
+        /// are out of tick order or outside the fight's ticks.
         /// </exception>
         /// <exception cref="InvalidOperationException">
         /// The outcomes do not fit the snapshots (health or shield would go out of range).
@@ -109,6 +110,20 @@ namespace Game.Core.Combat.Log
             var events = new List<CombatEvent>();
             var changes = result.LineChanges;
             var nextChange = 0;
+            var previousChangeTick = 1;
+            for (var i = 0; i < changes.Count; i++)
+            {
+                var change = changes[i]?.Change
+                    ?? throw new ArgumentException($"Line change {i} is null.", nameof(result));
+                if (change.Tick < previousChangeTick || change.Tick > result.Ticks)
+                {
+                    throw new ArgumentException(
+                        $"Line change {i} ({change}) is out of tick order or outside the fight's {result.Ticks} ticks.",
+                        nameof(result));
+                }
+
+                previousChangeTick = change.Tick;
+            }
 
             void AddChangesUpTo(int tick)
             {

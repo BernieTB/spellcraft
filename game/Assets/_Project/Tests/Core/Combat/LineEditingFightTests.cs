@@ -257,6 +257,89 @@ namespace Game.Core.Tests.Combat
         }
 
         [Test]
+        public void SwapWithReserve_CardBeingCastLeft_AnchorStaysOnTheSlotWhenTheIncomingCardMoves()
+        {
+            var fight = EditableFight(
+                Participant(Sturdy, Idle("test_card_01", 3), Idle("test_card_02", 1)),
+                Idle("test_card_03", 1));
+
+            // Tick 2: card 01 leaves for the reserve (03 takes slot 0), then 03 moves to slot 1: line 02, 03.
+            var result = fight.Run(new[] { LineChange.SwapWithReserve(2, 0, 0), LineChange.Move(2, 0, 1) });
+
+            // Card 01 resolves at the slot it left (0); the line continues after it, at slot 1 (card 03).
+            Assert.That(HeroCasts(result).GetRange(0, 3), Is.EqualTo(new[]
+            {
+                (3, 0, "test_card_01"),
+                (4, 1, "test_card_03"),
+                (5, 0, "test_card_02"),
+            }));
+        }
+
+        [Test]
+        public void SwapWithReserve_SingleCardWithSelfBonusDuringItsCast_IncomingCardGetsTheBonus()
+        {
+            var fight = EditableFight(
+                Participant(Sturdy, Hit("test_card_01", 2, 1, NextDamage(Bonus))),
+                Hit("test_card_02", 1, 2));
+
+            // Card 01 starts on tick 1 and is swapped out on tick 2; its bonus lands on slot 0, now card 02.
+            var result = fight.Run(new[] { LineChange.SwapWithReserve(2, 0, 0) });
+
+            Assert.That(HeroCastOnTick(result, 2).Card.Id, Is.EqualTo("test_card_01"));
+            var next = HeroCastOnTick(result, 3);
+            Assert.That(next.Card.Id, Is.EqualTo("test_card_02"));
+            Assert.That(next.Bonus.Damage, Is.EqualTo(Bonus));
+        }
+
+        [Test]
+        public void Move_OntoItsOwnPosition_IsIgnored()
+        {
+            var fight = EditableFight(Participant(Sturdy, Idle("test_card_01", 1), Idle("test_card_02", 1)));
+
+            var result = fight.Run(new[] { LineChange.Move(1, 1, 1) });
+
+            Assert.That(result.LineChanges, Is.Empty);
+            Assert.That(HeroCasts(result)[0], Is.EqualTo((1, 0, "test_card_01")));
+        }
+
+        [Test]
+        public void Run_SeveralEnemiesWithChanges_EnemiesKeepTheirLines()
+        {
+            var hero = Participant(Sturdy, Hit("test_card_01", 1, 1), Hit("test_card_02", 1, 2));
+            var first = Participant(Sturdy, Hit("test_card_08", 2, 1));
+            var second = Participant(Sturdy, Hit("test_card_09", 1, 1));
+            var fight = new Fight(
+                hero, new[] { first, second }, 6, new Pcg32Random(Seed), new[] { Hit("test_card_03", 1, 3) }, true);
+
+            var result = fight.Run(new[] { LineChange.Move(2, 1, 0), LineChange.SwapWithReserve(4, 0, 0) });
+
+            var enemyCasts = new List<(int, int, string)>();
+            foreach (var cast in result.Casts)
+            {
+                if (cast.CasterIndex != Hero)
+                {
+                    enemyCasts.Add((cast.CasterIndex, cast.Position, cast.Card.Id));
+                }
+            }
+
+            Assert.That(enemyCasts, Is.EqualTo(new[]
+            {
+                (2, 0, "test_card_09"), (1, 0, "test_card_08"), (2, 0, "test_card_09"),
+                (2, 0, "test_card_09"), (1, 0, "test_card_08"), (2, 0, "test_card_09"),
+                (2, 0, "test_card_09"), (1, 0, "test_card_08"), (2, 0, "test_card_09"),
+            }));
+            Assert.That(HeroCasts(result), Is.EqualTo(new[]
+            {
+                (1, 0, "test_card_01"),
+                (2, 1, "test_card_01"),
+                (3, 0, "test_card_02"),
+                (4, 1, "test_card_01"),
+                (5, 0, "test_card_03"),
+                (6, 1, "test_card_01"),
+            }));
+        }
+
+        [Test]
         public void SeveralChangesOnOneTick_ApplyInOrder()
         {
             var fight = EditableFight(Participant(Sturdy, Idle("test_card_01", 1), Idle("test_card_02", 1), Idle("test_card_03", 1)));
@@ -311,6 +394,75 @@ namespace Game.Core.Tests.Combat
             var result = stepped.Run();
             Assert.That(HeroCasts(result), Is.EqualTo(HeroCasts(scheduled)));
             Assert.That(result.LineChanges.Count, Is.EqualTo(2));
+        }
+
+        [Test]
+        public void StepWithChanges_GivesTheSameLogAsRecordWithTheSchedule()
+        {
+            CardDefinition[] Cards() => new[]
+            {
+                Hit("test_card_01", 1, 1, NextDamage(Bonus)),
+                Hit("test_card_02", 2, 1),
+                Hit("test_card_03", 1, 3),
+            };
+
+            FightParticipant Enemy() => Participant(200, Hit("test_card_09", 2, 1));
+            var schedule = new[] { LineChange.Move(3, 2, 0), LineChange.SwapWithReserve(6, 1, 0) };
+            var reserve = new[] { Hit("test_card_04", 1, 4) };
+
+            var recorded = CombatLogRecorder.Record(
+                Participant(Sturdy, Cards()), new[] { Enemy() }, 12, new Pcg32Random(Seed), reserve, true, schedule);
+
+            var hero = Participant(Sturdy, Cards());
+            var enemy = Enemy();
+            var snapshots = new[] { CombatantSnapshot.Of(0, hero), CombatantSnapshot.Of(1, enemy) };
+            var stepped = new Fight(hero, new[] { enemy }, 12, new Pcg32Random(Seed), reserve, true);
+            var next = 0;
+            while (!stepped.IsOver)
+            {
+                while (next < schedule.Length && schedule[next].Tick == stepped.Tick + 1)
+                {
+                    stepped.ApplyLineChange(schedule[next++]);
+                }
+
+                stepped.Step();
+            }
+
+            Assert.That(CombatLog.Build(snapshots, stepped.Run()).ToText(), Is.EqualTo(recorded.ToText()));
+        }
+
+        [Test]
+        public void Run_ScheduleWithATickAlreadyStepped_Throws()
+        {
+            var fight = EditableFight(Participant(Sturdy, Idle("test_card_01", 1), Idle("test_card_02", 1)));
+            fight.Step();
+            fight.Step();
+
+            Assert.Throws<ArgumentException>(() => fight.Run(new[] { LineChange.Move(2, 0, 1) }));
+            Assert.That(fight.Tick, Is.EqualTo(2));
+        }
+
+        [Test]
+        public void Build_LineChangesOutOfOrderOrAfterTheLastTick_Throws()
+        {
+            var card = Idle("test_card_01", 1);
+            var snapshots = new[]
+            {
+                CombatantSnapshot.Of(0, Participant(Sturdy, card)),
+                CombatantSnapshot.Of(1, Dummy()),
+            };
+
+            FightResult Result(params LineChangeRecord[] changes) =>
+                new FightResult(FightWinner.None, 5, new CastRecord[0], changes);
+
+            Assert.Throws<ArgumentException>(() => CombatLog.Build(
+                snapshots,
+                Result(
+                    new LineChangeRecord(LineChange.Move(3, 0, 1), card, card),
+                    new LineChangeRecord(LineChange.Move(2, 0, 1), card, card))));
+            Assert.Throws<ArgumentException>(() => CombatLog.Build(
+                snapshots,
+                Result(new LineChangeRecord(LineChange.Move(6, 0, 1), card, card))));
         }
 
         [Test]

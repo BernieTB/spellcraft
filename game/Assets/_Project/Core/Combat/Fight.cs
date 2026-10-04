@@ -60,17 +60,20 @@ namespace Game.Core.Combat
     /// <item>A cast takes its card and the bonus pending on its position when it starts (its first tick). The card
     /// being cast when the line changes finishes its cast and resolves as started, even if it was moved or swapped
     /// out.</item>
-    /// <item>The line then continues from the position after that card: its new position if it was moved, or the
-    /// position it left if it went to the reserve (where the incoming card now sits). Its neighbour modifiers aim
-    /// at the neighbours of that same position, in the line as it is when the card resolves.</item>
+    /// <item>The line then continues from the position after that card. While the card is in the line, that
+    /// position follows it when it or another card moves. Once it has gone to the reserve, it is the slot it left,
+    /// and it stays that slot even if the incoming card moves later. Its neighbour modifiers aim at the neighbours
+    /// of that same position, in the line as it is when the card resolves.</item>
     /// <item>Pending neighbour bonuses stay at their position: the card that now sits there receives them.</item>
     /// <item>Between two casts (the tick after a resolution), no card is being cast: the next cast plays the card
     /// now at the position that was next.</item>
-    /// <item>Several changes on the same tick apply in the order given.</item>
+    /// <item>Several changes on the same tick apply in the order given. Moving a card onto its own position is
+    /// ignored (no record, no log event).</item>
     /// </list>
     /// <para>
-    /// The cast-anchoring rules above (moved card, swapped-out card, several changes on a tick) are not detailed in
-    /// ADR 0012; they were confirmed by the owner on 2026-10-05. Enemies never change their lines. Applied changes are listed in
+    /// The details above are recorded in <c>docs/adr/0015-live-spell-line-editing-details.md</c> (confirmed by
+    /// the owner on 2026-10-05), including that a cast takes its pending bonus when it starts, which refines
+    /// ADR 0005. Enemies never change their lines. Applied changes are listed in
     /// <see cref="FightResult.LineChanges"/>, so a run can replay them on its own spell line and reserve.
     /// </para>
     /// <para>
@@ -93,6 +96,8 @@ namespace Game.Core.Combat
         private readonly int[] _castPositions;
         private readonly EffectBonus[] _castBonuses;
         private readonly List<CardDefinition> _heroReserve;
+        private readonly IReadOnlyList<CardDefinition> _heroReserveView;
+        private bool _heroCastLeftLine;
         private readonly List<CastRecord> _casts = new List<CastRecord>();
         private readonly List<LineChangeRecord> _lineChanges = new List<LineChangeRecord>();
         private readonly int _maxTicks;
@@ -183,6 +188,8 @@ namespace Game.Core.Combat
                 _heroReserve.Add(card);
             }
 
+            _heroReserveView = _heroReserve.AsReadOnly();
+
             var participants = new List<FightParticipant>(enemies.Count + 1) { hero };
             for (var i = 0; i < enemies.Count; i++)
             {
@@ -246,7 +253,7 @@ namespace Game.Core.Combat
         public IReadOnlyList<CardDefinition> HeroLine => _spellLines[HeroIndex].Cards;
 
         /// <summary>The hero's reserve as it is now, in order. Read-only live view.</summary>
-        public IReadOnlyList<CardDefinition> HeroReserve => _heroReserve.AsReadOnly();
+        public IReadOnlyList<CardDefinition> HeroReserve => _heroReserveView;
 
         /// <summary>
         /// Changes the hero's line at the start of the next tick (see the remarks of <see cref="Fight"/>).
@@ -282,15 +289,23 @@ namespace Game.Core.Combat
             }
 
             Validate(change, nameof(change));
+            if (change.Kind == LineChangeKind.Move && change.Position == change.ToPosition)
+            {
+                // Moving a card onto its own position changes nothing: ignored, with no record or log event.
+                return;
+            }
+
             var line = _spellLines[HeroIndex];
             var card = line[change.Position];
+            var casting = _castCards[HeroIndex] != null && !_heroCastLeftLine;
             CardDefinition incoming;
             if (change.Kind == LineChangeKind.Move)
             {
                 line.Move(change.Position, change.ToPosition);
                 incoming = card;
-                if (_castCards[HeroIndex] != null)
+                if (casting)
                 {
+                    // While the card being cast is in the line, its anchor follows it.
                     _castPositions[HeroIndex] =
                         PositionAfterMove(_castPositions[HeroIndex], change.Position, change.ToPosition);
                 }
@@ -301,6 +316,12 @@ namespace Game.Core.Combat
                 line.RemoveAt(change.Position);
                 InsertAt(line, change.Position, incoming);
                 _heroReserve[change.ReserveIndex] = card;
+                if (casting && change.Position == _castPositions[HeroIndex])
+                {
+                    // Once the card being cast leaves for the reserve, its anchor stays on the slot it left, even if
+                    // the incoming card is moved later (ADR 0015).
+                    _heroCastLeftLine = true;
+                }
             }
 
             _lineChanges.Add(new LineChangeRecord(change, card, incoming));
@@ -355,6 +376,11 @@ namespace Game.Core.Combat
 
                 _positions[i] = _spellLines[i].PositionAfter(position);
                 _castCards[i] = null;
+                if (i == HeroIndex)
+                {
+                    _heroCastLeftLine = false;
+                }
+
                 _castBonuses[i] = EffectBonus.None;
                 _elapsedTicks[i] = 0;
 
