@@ -202,12 +202,28 @@ namespace Game.Core.Runs
             var encounter = EncounterFor(step, drawRandom);
             var heroLine = new List<CardInstance>(_line.Cards);
             var fightRandom = new Pcg32Random(Seed, FirstFightSequence + (ulong)FightsPlayed);
-            var log = CombatLogRecorder.Record(CreateHero(), encounter.CreateParticipants(), Rules.FightTimeLimit, fightRandom);
+            var heroLineCasts = CastsOf(heroLine);
+            var log = CombatLogRecorder.Record(
+                CreateHero(),
+                encounter.CreateParticipants(),
+                Rules.FightTimeLimit,
+                fightRandom,
+                Array.Empty<CardDefinition>(),
+                false,
+                Array.Empty<LineChange>(),
+                heroLineCasts,
+                Array.Empty<int>());
             var won = log.Winner == FightWinner.Hero;
             var xpGained = won ? XpRewardOf(encounter) : 0L;
             var totalXp = checked(TotalXp + xpGained);
             var level = Rules.LevelCurve.LevelForTotalXp(totalXp);
             var report = new RunFightReport(step, encounter, heroLine, log, xpGained, level - Level);
+
+            // Card evolution (ADR 0013): each copy of the line keeps the casts the fight counted for it.
+            for (var i = 0; i < heroLine.Count; i++)
+            {
+                heroLine[i].SetCasts(log.HeroCardCasts[i]);
+            }
 
             _drawRandom = drawRandom;
             FightsPlayed++;
@@ -423,10 +439,21 @@ namespace Game.Core.Runs
             var line = new SpellLine<CardDefinition>(_line.Capacity);
             foreach (var card in _line.Cards)
             {
-                line.Add(card.Definition);
+                line.Add(card.CurrentDefinition);
             }
 
             return new FightParticipant(new Combatant(HeroClass.MaxHealth, HeroClass.StartingShield), line);
+        }
+
+        private static int[] CastsOf(IReadOnlyList<CardInstance> cards)
+        {
+            var casts = new int[cards.Count];
+            for (var i = 0; i < casts.Length; i++)
+            {
+                casts[i] = cards[i].Casts;
+            }
+
+            return casts;
         }
 
         private CardInstance NewInstance(CardDefinition card)
