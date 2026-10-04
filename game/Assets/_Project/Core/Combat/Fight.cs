@@ -69,8 +69,8 @@ namespace Game.Core.Combat
     /// <item>Several changes on the same tick apply in the order given.</item>
     /// </list>
     /// <para>
-    /// The cast-anchoring rules above (moved card, swapped-out card, several changes on a tick) are provisional:
-    /// ADR 0012 does not detail them. Enemies never change their lines. Applied changes are listed in
+    /// The cast-anchoring rules above (moved card, swapped-out card, several changes on a tick) are not detailed in
+    /// ADR 0012; they were confirmed by the owner on 2026-10-05. Enemies never change their lines. Applied changes are listed in
     /// <see cref="FightResult.LineChanges"/>, so a run can replay them on its own spell line and reserve.
     /// </para>
     /// <para>
