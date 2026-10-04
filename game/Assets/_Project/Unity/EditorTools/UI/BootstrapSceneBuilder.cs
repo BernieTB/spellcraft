@@ -38,6 +38,12 @@ namespace Game.Unity.EditorTools.UI
         /// <summary>Path of the title screen layout.</summary>
         public const string TitleScreenPath = UiFolder + "/Screens/TitleScreen.uxml";
 
+        /// <summary>Path of the recap screen layout (not part of the bootstrap scene: screens are switched in code).</summary>
+        public const string RecapScreenPath = UiFolder + "/Screens/RecapScreen.uxml";
+
+        /// <summary>Path of the recap screen style sheet.</summary>
+        public const string RecapStylePath = UiFolder + "/Styles/Recap.uss";
+
         [MenuItem("Tools/Game/Rebuild Bootstrap Scene")]
         public static void Build()
         {
