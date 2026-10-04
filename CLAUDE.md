@@ -119,7 +119,10 @@ variables; no colours or sizes in screen views, while editor generators may set 
 they create), a view in `Game.Unity.UI` that queries elements by name and only displays
 Core state. Placeholder visuals are flat-colour shapes, no sprites. Write UXML/USS as text; the debug viewer stays
 on IMGUI. The game runs in one scene, `Unity/Scenes/Bootstrap.unity`, and screens are switched in code, not by
-loading scenes. Rebuild that scene with code, never by editing its YAML: the builder also makes it the only scene in
+loading scenes: `Game.Unity.UI.ScreenHost` shows one screen at a time in a container (the root of the
+`UIDocument` in the game, any `VisualElement` in tests). A screen view is a static `Bind(root, state)` that fills a
+cloned tree, so it is tested without Play mode (`TitleScreenView`, `RecapScreenView`); screen-specific USS goes in its
+own file next to `Common.uss`. Rebuild that scene with code, never by editing its YAML: the builder also makes it the only scene in
 the build settings and keeps an existing `Unity/UI/GamePanelSettings.asset`. Close the editor on this project first
 (verified; menu: **Tools > Game > Rebuild Bootstrap Scene**):
 
@@ -129,7 +132,7 @@ the build settings and keeps an existing `Unity/UI/GamePanelSettings.asset`. Clo
 ```
 
 Save files: the bestiary ([ADR 0014](docs/adr/0014-boss-preparation-and-recap.md)) is the only save so far. It is
-saved after every reveal (owner decision of 2026-10-05: call `BestiaryStorage.Save` whenever `Bestiary.Reveal` returns
+saved after every reveal (owner decision of 2026-10-04: call `BestiaryStorage.Save` whenever `Bestiary.Reveal` returns
 `true`), written as versioned JSON by `Game.Core.Meta.BestiaryJson` to `bestiary.json` in `Application.persistentDataPath` (on Windows
 `%USERPROFILE%\AppData\LocalLow\<company>\<product>\`). A save the game cannot read (invalid, unknown version, IO
 error) starts an empty bestiary and is first copied to `bestiary.unreadable.json` (then `bestiary.unreadable-1.json`...);

@@ -5,8 +5,13 @@
     --color-ink: rgb(240, 228, 210);
     --color-ink-muted: rgb(170, 158, 142);
     --color-accent: rgb(214, 150, 72);
+    --color-success: rgb(132, 178, 108);
+    --color-danger: rgb(214, 96, 82);
+    --color-danger-background: rgb(88, 44, 40);
     --font-size-title: 72px;
+    --font-size-heading: 44px;
     --font-size-body: 28px;
+    --font-size-small: 22px;
 }
 
 .screen {
@@ -33,4 +38,14 @@
     height: 8px;
     margin-top: 24px;
     background-color: var(--color-accent);
+}
+
+/* Hides an element without removing it from the tree (screens toggle it from C#). */
+.hidden {
+    display: none;
+}
+
+/* The wrapper a screen host puts around a cloned screen: it fills the host. */
+.screen-slot {
+    flex-grow: 1;
 }
