@@ -7,7 +7,7 @@ namespace Game.Core.Effects
     /// The cast's neighbour bonus of the matching kind, if any and not consumed by an earlier effect of the
     /// card, is added to the amount (<see cref="EffectContext.ConsumeBonus"/>).
     /// </summary>
-    public sealed class DealDamageEffect : IEffect
+    public sealed class DealDamageEffect : IAmountEffect
     {
         /// <param name="amount">Damage dealt, from card data. Zero or more.</param>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="amount"/> is negative.</exception>
@@ -25,6 +25,12 @@ namespace Game.Core.Effects
         /// Damage dealt each time the effect is applied, before any neighbour bonus.
         /// </summary>
         public int Amount { get; }
+
+        /// <inheritdoc />
+        public BonusKind Kind => BonusKind.Damage;
+
+        /// <inheritdoc />
+        public IAmountEffect WithAmount(int amount) => new DealDamageEffect(amount);
 
         /// <inheritdoc />
         /// <exception cref="ArgumentNullException"><paramref name="context"/> is null.</exception>
