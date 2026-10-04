@@ -77,6 +77,8 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
 - Passive upgrades: `PassiveUpgrade` (+X max health, +X starting shield, +X to every effect of one kind, +X to
   every neighbour modifier) authored as `PassiveUpgradeAsset`, and `PassiveUpgradeSet`, which stacks the upgrades
   taken and applies them to the hero's participant before a fight (upgraded combatant and cards).
+- Class data: `ClassAsset` (id, max health, starting shield, starting line capacity, starting deck and level-up
+  card pool) converts to the Core `ClassDefinition`, with errors that name the asset.
 
 ### Changed
 
