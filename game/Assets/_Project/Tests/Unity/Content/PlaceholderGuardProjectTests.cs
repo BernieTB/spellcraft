@@ -1,3 +1,5 @@
+using Game.Unity.Cards;
+using Game.Unity.Classes;
 using Game.Unity.EditorTools.Content;
 using Game.Unity.Enemies;
 using NUnit.Framework;
@@ -7,8 +9,8 @@ using UnityEngine;
 namespace Game.Unity.Tests.Content
 {
     /// <summary>
-    /// Writes a shipped-looking asset outside the placeholder area that references a placeholder enemy, and checks
-    /// the project scan reports it. The temporary folder is deleted after each test.
+    /// Writes shipped-looking assets outside the placeholder area that reference placeholder content, and checks
+    /// the project scan reports them. The temporary folder is deleted after each test.
     /// </summary>
     public class PlaceholderGuardProjectTests
     {
@@ -37,6 +39,33 @@ namespace Game.Unity.Tests.Content
             var violations = PlaceholderGuard.FindProjectViolations();
 
             CollectionAssert.Contains(violations, $"{encounterPath} -> {enemyPath}");
+        }
+
+        [Test]
+        public void FindProjectViolations_ClassOutsideAreaReferencingPlaceholderCard_ReportsIt()
+        {
+            var cardPath = PlaceholderCardGenerator.AssetPath(PlaceholderCardGenerator.CardIds[0]);
+            var classPath = $"{TempFolder}/shipped_class.asset";
+            CreateClass(classPath, AssetDatabase.LoadAssetAtPath<CardAsset>(cardPath));
+
+            var violations = PlaceholderGuard.FindProjectViolations();
+
+            CollectionAssert.Contains(violations, $"{classPath} -> {cardPath}");
+        }
+
+        private static void CreateClass(string path, CardAsset card)
+        {
+            Assert.IsNotNull(card, "Placeholder card missing; run the placeholder card generator.");
+
+            var classAsset = ScriptableObject.CreateInstance<ClassAsset>();
+            AssetDatabase.CreateAsset(classAsset, path);
+            var serialized = new SerializedObject(classAsset);
+            serialized.FindProperty("_id").stringValue = "shipped_class";
+            var deck = serialized.FindProperty("_startingDeck");
+            deck.arraySize = 1;
+            deck.GetArrayElementAtIndex(0).objectReferenceValue = card;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            AssetDatabase.SaveAssets();
         }
 
         private static void CreateEncounter(string path, EnemyAsset enemy)

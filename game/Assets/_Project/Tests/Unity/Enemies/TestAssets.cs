@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Game.Unity.Cards;
+using Game.Unity.Classes;
 using Game.Unity.Enemies;
 using UnityEditor;
 using UnityEngine;
@@ -7,7 +8,7 @@ using UnityEngine;
 namespace Game.Unity.Tests.Enemies
 {
     /// <summary>
-    /// Builds in-memory card, enemy and encounter assets through their serialized fields, as the inspector would,
+    /// Builds in-memory card, enemy, encounter and class assets through their serialized fields, as the inspector would,
     /// and destroys them after the test. Ids and numbers are arbitrary test data.
     /// </summary>
     internal sealed class TestAssets
@@ -63,6 +64,28 @@ namespace Game.Unity.Tests.Enemies
             return encounter;
         }
 
+        public ClassAsset Class(
+            string id,
+            int maxHealth,
+            int startingShield,
+            int startingLineCapacity,
+            CardAsset[] startingDeck,
+            CardAsset[] cardPool,
+            bool isPlaceholder = false)
+        {
+            var asset = Create<ClassAsset>(string.IsNullOrEmpty(id) ? "unnamed_class" : id);
+            var serialized = new SerializedObject(asset);
+            serialized.FindProperty("_id").stringValue = id;
+            serialized.FindProperty("_maxHealth").intValue = maxHealth;
+            serialized.FindProperty("_startingShield").intValue = startingShield;
+            serialized.FindProperty("_startingLineCapacity").intValue = startingLineCapacity;
+            serialized.FindProperty("_isPlaceholder").boolValue = isPlaceholder;
+            FillCards(serialized.FindProperty("_startingDeck"), startingDeck);
+            FillCards(serialized.FindProperty("_cardPool"), cardPool);
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            return asset;
+        }
+
         public void DestroyAll()
         {
             foreach (var asset in _created)
@@ -71,6 +94,15 @@ namespace Game.Unity.Tests.Enemies
             }
 
             _created.Clear();
+        }
+
+        private static void FillCards(SerializedProperty list, CardAsset[] cards)
+        {
+            list.arraySize = cards.Length;
+            for (var i = 0; i < cards.Length; i++)
+            {
+                list.GetArrayElementAtIndex(i).objectReferenceValue = cards[i];
+            }
         }
 
         private T Create<T>(string assetName) where T : ScriptableObject
