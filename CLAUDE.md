@@ -128,6 +128,11 @@ the build settings and keeps an existing `Unity/UI/GamePanelSettings.asset`. Clo
   -executeMethod Game.Unity.EditorTools.UI.BootstrapSceneBuilder.Build -logFile <scratch-dir>/bootstrap-scene.log
 ```
 
+Save files: the bestiary ([ADR 0014](docs/adr/0014-boss-preparation-and-recap.md)) is the only save so far, written
+as versioned JSON by `Game.Core.Meta.BestiaryJson` to `bestiary.json` in `Application.persistentDataPath` (on Windows
+`%USERPROFILE%\AppData\LocalLow\<company>\<product>\`). Delete that file to reset what the player knows. Changing
+the format means a new version number in `BestiaryJson`; an unknown version is read as an empty bestiary.
+
 Run the headless simulation runner ([ADR 0006](docs/adr/0006-headless-simulation-runner.md)): plays the fight of a
 `DebugFightSetup` asset over a range of seeds and writes a JSON summary (win/timeout counts and rates, fight
 length in ticks, damage per side and card id, where damage = health lost + shield absorbed). Same seeds, same file.

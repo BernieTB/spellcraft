@@ -80,6 +80,11 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
 - Fight recap in Core, built only from the combat log: per-card casts, damage, healing and shield for every
   side, neighbour bonuses used and wasted (with the reason), and for a lost fight the turning point and its
   causes (wasted bonuses, broken shield, weakest card), or a time-limit outcome.
+- Bestiary kept across runs (`Game.Core.Meta.Bestiary`): professor health, shield and spell line cards revealed
+  by mini-bosses, recorded by position and card id, and what the player knows about a professor for the
+  preparation phase. Saved as versioned JSON (`BestiaryJson`) through `IBestiaryStore`; `FileBestiaryStore` keeps
+  it in `bestiary.json` under the persistent data folder, and a missing or unreadable save starts an empty
+  bestiary (an unreadable one is kept as `bestiary.unreadable.json` and logged).
 
 ### Changed
 
