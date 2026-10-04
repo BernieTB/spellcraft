@@ -40,16 +40,27 @@ namespace Game.Core.Tests.Runs
 
         // --- RunRules ---
 
+        private static readonly LevelCurve Curve = new LevelCurve(new[] { 10 }, 5);
+
         [Test]
-        public void Rules_ValidTimeLimit_KeepsIt()
+        public void Rules_ValidData_KeepsValues()
         {
-            Assert.AreEqual(500, new RunRules(500).FightTimeLimit);
+            var rules = new RunRules(500, Curve);
+
+            Assert.AreEqual(500, rules.FightTimeLimit);
+            Assert.AreSame(Curve, rules.LevelCurve);
         }
 
         [Test]
         public void Rules_TimeLimitBelowOne_Throws()
         {
-            Assert.Throws<ArgumentOutOfRangeException>(() => new RunRules(0));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new RunRules(0, Curve));
+        }
+
+        [Test]
+        public void Rules_NullLevelCurve_Throws()
+        {
+            Assert.Throws<ArgumentNullException>(() => new RunRules(500, null));
         }
 
         // --- RunStep ---

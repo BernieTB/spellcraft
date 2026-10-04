@@ -82,6 +82,15 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
   causes (wasted bonuses, broken shield, weakest card), or a time-limit outcome.
 - Class data: `ClassAsset` (id, max health, starting shield, starting line capacity, starting deck and level-up
   card pool) converts to the Core `ClassDefinition`, with errors that name the asset.
+- XP and levels: enemies carry an XP reward (`EnemyDefinition.XpReward`, `EnemyAsset`); a won fight gives the XP of
+  every enemy of its encounter; the level curve (`LevelCurve`, authored as `LevelCurveAsset`: explicit costs, then a
+  fixed increase per level, no cap) is part of `RunRules`; the run tracks its level and pending level-ups for the
+  linked choice, and each fight report gives the XP and levels gained.
+- Bestiary kept across runs (`Game.Core.Meta.Bestiary`): professor health, shield and spell line cards revealed
+  by mini-bosses, recorded by position and card id, and what the player knows about a professor for the
+  preparation phase. Saved as versioned JSON (`BestiaryJson`) through `IBestiaryStore`; `FileBestiaryStore` keeps
+  it in `bestiary.json` under the persistent data folder, and a missing or unreadable save starts an empty
+  bestiary (an unreadable one is kept as `bestiary.unreadable.json` and logged).
 - Live spell line editing in regular fights (ADR 0012): `Fight` takes the hero's reserve and whether line edits
   are allowed, and applies `LineChange`s (move a card, swap with the reserve) at the start of their tick, either
   scheduled (`Run(lineChanges)`) or one tick at a time (`ApplyLineChange` then `Step`). The card being cast

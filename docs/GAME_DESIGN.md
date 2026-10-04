@@ -64,6 +64,9 @@ Pacing (see [ADR 0009](adr/0009-vertical-slice-run-pacing.md); numbers live in d
 - XP comes from defeated enemies (mini-bosses give more). Each level costs more XP than the previous one,
   tuned for **about 5 level-ups** per biome on the shortest path; farming brings further levels more and more
   slowly, with no hard cap. See [ADR 0009](adr/0009-vertical-slice-run-pacing.md).
+  - Every won fight gives the XP of all its enemies (a lost fight gives none, and ends the run anyway).
+  - The level curve is data: an explicit XP cost for each early level-up, then each next level costs a fixed
+    amount more. Several levels can be reached in one fight; each one is a linked choice.
 - The MVP class's defensive card **gives shield** (health resets every fight).
 
 ## Spell line

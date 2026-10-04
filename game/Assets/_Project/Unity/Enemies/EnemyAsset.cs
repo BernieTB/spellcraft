@@ -34,6 +34,11 @@ namespace Game.Unity.Enemies
         private int _startingShield;
 
         [SerializeField]
+        [Min(0)]
+        [Tooltip("XP the hero earns when this enemy is defeated. Mini-bosses usually carry more than regular monsters.")]
+        private int _xpReward;
+
+        [SerializeField]
         [Tooltip("Cards of the enemy's spell line, in order. At least one.")]
         private List<CardAsset> _spellLine = new List<CardAsset>();
 
@@ -81,7 +86,7 @@ namespace Game.Unity.Enemies
                     cards.Add(card.ToDefinition());
                 }
 
-                return new EnemyDefinition(_id, _maxHealth, _startingShield, cards);
+                return new EnemyDefinition(_id, _maxHealth, _startingShield, cards, _xpReward);
             }
             catch (Exception exception) when (exception is ArgumentException || exception is InvalidOperationException)
             {
