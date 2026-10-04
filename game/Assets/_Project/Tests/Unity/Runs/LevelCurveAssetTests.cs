@@ -61,6 +61,29 @@ namespace Game.Unity.Tests.Runs
         }
 
         [Test]
+        public void ToDefinition_ZeroCostIncrease_ThrowsNamingTheAsset()
+        {
+            Set(new[] { 10, 20 }, 0);
+
+            var exception = Assert.Throws<InvalidOperationException>(() => _asset.ToDefinition());
+
+            StringAssert.Contains("'test_level_curve'", exception.Message);
+            Assert.IsInstanceOf<ArgumentOutOfRangeException>(exception.InnerException);
+        }
+
+        [Test]
+        public void IsPlaceholder_ReadsTheFlag()
+        {
+            Assert.IsFalse(_asset.IsPlaceholder);
+
+            var serialized = new SerializedObject(_asset);
+            serialized.FindProperty("_isPlaceholder").boolValue = true;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+
+            Assert.IsTrue(_asset.IsPlaceholder);
+        }
+
+        [Test]
         public void ToDefinition_CostsNotIncreasing_ThrowsNamingTheAsset()
         {
             Set(new[] { 20, 10 }, 5);

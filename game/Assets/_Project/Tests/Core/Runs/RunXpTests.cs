@@ -121,6 +121,35 @@ namespace Game.Core.Tests.Runs
         }
 
         [Test]
+        public void Play_FightReachesTheTimeLimit_GivesNoXp()
+        {
+            var guard = new CardDefinition("TestGuard", 1, new IEffect[] { new GainShieldEffect(5) });
+            var wall = Encounter("TestWall", new EnemyDefinition("TestEnemy4", 1000, 0, new[] { guard }, 50));
+            var run = CreateRun(wall);
+
+            var report = run.Play(RunStep.RegularFight);
+
+            Assert.IsTrue(report.TimedOut);
+            Assert.AreEqual(0, report.XpGained);
+            Assert.AreEqual(0, run.TotalXp);
+            Assert.AreEqual(1, run.Level);
+        }
+
+        [Test]
+        public void Play_XpBeyondIntMaxValue_KeepsCounting()
+        {
+            var rich = Encounter("TestRich", Weak("TestEnemy1", int.MaxValue), Weak("TestEnemy2", int.MaxValue));
+            var run = CreateRun(rich);
+
+            var report = run.Play(RunStep.RegularFight);
+            run.Play(RunStep.RegularFight);
+
+            Assert.AreEqual(2L * int.MaxValue, report.XpGained);
+            Assert.AreEqual(4L * int.MaxValue, run.TotalXp);
+            Assert.Greater(run.Level, 1);
+        }
+
+        [Test]
         public void Play_SecretRoomFoughtAgain_GivesXpEachTime()
         {
             var run = CreateRun(Encounter("TestWeak", Weak("TestEnemy1", 1)));

@@ -117,7 +117,7 @@ namespace Game.Core.Runs
                 }
 
                 remaining -= cost;
-                level++;
+                level = checked(level + 1);
             }
         }
     }
