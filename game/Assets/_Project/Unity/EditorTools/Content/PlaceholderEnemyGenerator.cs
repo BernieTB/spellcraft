@@ -28,10 +28,10 @@ namespace Game.Unity.EditorTools.Content
     {
         private static readonly EnemySpec[] EnemySpecs =
         {
-            new EnemySpec("test_enemy_01", EnemyRank.Regular, 10, 0, "test_card_01"),
-            new EnemySpec("test_enemy_02", EnemyRank.Regular, 8, 2, "test_card_03", "test_card_01"),
-            new EnemySpec("test_miniboss_01", EnemyRank.MiniBoss, 25, 3, "test_card_04", "test_card_02"),
-            new EnemySpec("test_professor_01", EnemyRank.Professor, 40, 5, "test_card_05", "test_card_01", "test_card_03"),
+            new EnemySpec("test_enemy_01", EnemyRank.Regular, 10, 0, 2, "test_card_01"),
+            new EnemySpec("test_enemy_02", EnemyRank.Regular, 8, 2, 3, "test_card_03", "test_card_01"),
+            new EnemySpec("test_miniboss_01", EnemyRank.MiniBoss, 25, 3, 12, "test_card_04", "test_card_02"),
+            new EnemySpec("test_professor_01", EnemyRank.Professor, 40, 5, 20, "test_card_05", "test_card_01", "test_card_03"),
         };
 
         private static readonly EncounterSpec[] EncounterSpecs =
@@ -95,6 +95,7 @@ namespace Game.Unity.EditorTools.Content
             serialized.FindProperty("_rank").intValue = (int)spec.Rank;
             serialized.FindProperty("_maxHealth").intValue = spec.MaxHealth;
             serialized.FindProperty("_startingShield").intValue = spec.StartingShield;
+            serialized.FindProperty("_xpReward").intValue = spec.XpReward;
             serialized.FindProperty("_isPlaceholder").boolValue = true;
 
             var line = serialized.FindProperty("_spellLine");
@@ -139,12 +140,13 @@ namespace Game.Unity.EditorTools.Content
 
         private readonly struct EnemySpec
         {
-            public EnemySpec(string id, EnemyRank rank, int maxHealth, int startingShield, params string[] cardIds)
+            public EnemySpec(string id, EnemyRank rank, int maxHealth, int startingShield, int xpReward, params string[] cardIds)
             {
                 Id = id;
                 Rank = rank;
                 MaxHealth = maxHealth;
                 StartingShield = startingShield;
+                XpReward = xpReward;
                 CardIds = cardIds;
             }
 
@@ -155,6 +157,8 @@ namespace Game.Unity.EditorTools.Content
             public int MaxHealth { get; }
 
             public int StartingShield { get; }
+
+            public int XpReward { get; }
 
             public string[] CardIds { get; }
         }

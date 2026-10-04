@@ -82,6 +82,10 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
   causes (wasted bonuses, broken shield, weakest card), or a time-limit outcome.
 - Class data: `ClassAsset` (id, max health, starting shield, starting line capacity, starting deck and level-up
   card pool) converts to the Core `ClassDefinition`, with errors that name the asset.
+- XP and levels: enemies carry an XP reward (`EnemyDefinition.XpReward`, `EnemyAsset`); a won fight gives the XP of
+  every enemy of its encounter; the level curve (`LevelCurve`, authored as `LevelCurveAsset`: explicit costs, then a
+  fixed increase per level, no cap) is part of `RunRules`; the run tracks its level and pending level-ups for the
+  linked choice, and each fight report gives the XP and levels gained.
 
 ### Changed
 

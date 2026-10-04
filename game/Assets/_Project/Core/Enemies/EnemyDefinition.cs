@@ -17,12 +17,16 @@ namespace Game.Core.Enemies
         /// <param name="maxHealth">Max health at the start of a fight. Greater than zero.</param>
         /// <param name="shield">Shield at the start of a fight. Zero or more.</param>
         /// <param name="spellLine">The cards the enemy casts, in order, in a loop. At least one card.</param>
+        /// <param name="xpReward">
+        /// XP the hero earns when this enemy is defeated (<c>docs/adr/0009-vertical-slice-run-pacing.md</c>). Zero or
+        /// more; mini-bosses simply carry more XP in their data.
+        /// </param>
         /// <exception cref="ArgumentException">
         /// <paramref name="id"/> is null, empty or whitespace, or <paramref name="spellLine"/> is empty.
         /// </exception>
-        /// <exception cref="ArgumentOutOfRangeException">A stat is out of range.</exception>
+        /// <exception cref="ArgumentOutOfRangeException">A stat or <paramref name="xpReward"/> is out of range.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="spellLine"/> or one of its cards is null.</exception>
-        public EnemyDefinition(string id, int maxHealth, int shield, IEnumerable<CardDefinition> spellLine)
+        public EnemyDefinition(string id, int maxHealth, int shield, IEnumerable<CardDefinition> spellLine, int xpReward = 0)
         {
             if (string.IsNullOrWhiteSpace(id))
             {
@@ -37,6 +41,11 @@ namespace Game.Core.Enemies
             if (shield < 0)
             {
                 throw new ArgumentOutOfRangeException(nameof(shield), shield, "Shield cannot be negative.");
+            }
+
+            if (xpReward < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(xpReward), xpReward, "XP reward cannot be negative.");
             }
 
             if (spellLine == null)
@@ -59,6 +68,7 @@ namespace Game.Core.Enemies
             MaxHealth = maxHealth;
             Shield = shield;
             SpellLine = new ReadOnlyCollection<CardDefinition>(cards);
+            XpReward = xpReward;
         }
 
         /// <summary>Stable identifier, unique among enemies.</summary>
@@ -72,6 +82,9 @@ namespace Game.Core.Enemies
 
         /// <summary>The cards the enemy casts, in line order.</summary>
         public IReadOnlyList<CardDefinition> SpellLine { get; }
+
+        /// <summary>XP the hero earns when this enemy is defeated.</summary>
+        public int XpReward { get; }
 
         /// <summary>Creates a new fight participant at full health, with its own combatant and spell line.</summary>
         public FightParticipant CreateParticipant()
