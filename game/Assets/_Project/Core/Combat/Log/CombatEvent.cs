@@ -136,21 +136,6 @@ namespace Game.Core.Combat.Log
             IncomingCardId = incomingCardId;
         }
 
-        /// <summary>
-        /// Creates a <see cref="CombatEventKind.LineChanged"/> event: the player changed the hero's line. Its
-        /// <see cref="Position"/> and <see cref="CardId"/> are the line card that moved or left for the reserve; the
-        /// hero is both <see cref="CasterIndex"/> and <see cref="TargetIndex"/>, and the amounts are zero.
-        /// </summary>
-        /// <param name="sequence">Index of the event in its log.</param>
-        /// <param name="change">The change, with its tick.</param>
-        /// <param name="cardId">
-        /// Id of the line card at <see cref="Game.Core.Combat.LineChange.Position"/> before the change.
-        /// </param>
-        /// <param name="incomingCardId">Id of the card that arrived in the line (the same card for a move).</param>
-        /// <param name="heroHealth">The hero's health at that moment.</param>
-        /// <param name="heroShield">The hero's shield at that moment.</param>
-        /// <exception cref="ArgumentNullException"><paramref name="change"/> is null.</exception>
-        /// <exception cref="ArgumentException">A card id is null or empty.</exception>
         private CombatEvent(
             int sequence,
             int tick,
@@ -174,6 +159,47 @@ namespace Game.Core.Combat.Log
             WastedBonus = EffectBonus.None;
             EvolutionStage = stage;
             EvolutionCasts = casts;
+        }
+
+        /// <summary>
+        /// Creates a <see cref="CombatEventKind.LineChanged"/> event: the player changed the hero's line. Its
+        /// <see cref="Position"/> and <see cref="CardId"/> are the line card that moved or left for the reserve; the
+        /// hero is both <see cref="CasterIndex"/> and <see cref="TargetIndex"/>, and the amounts are zero.
+        /// </summary>
+        /// <param name="sequence">Index of the event in its log.</param>
+        /// <param name="change">The change, with its tick.</param>
+        /// <param name="cardId">
+        /// Id of the line card at <see cref="Game.Core.Combat.LineChange.Position"/> before the change.
+        /// </param>
+        /// <param name="incomingCardId">Id of the card that arrived in the line (the same card for a move).</param>
+        /// <param name="heroHealth">The hero's health at that moment.</param>
+        /// <param name="heroShield">The hero's shield at that moment.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="change"/> is null.</exception>
+        /// <exception cref="ArgumentException">A card id is null or empty.</exception>
+        public static CombatEvent ForLineChange(
+            int sequence,
+            LineChange change,
+            string cardId,
+            string incomingCardId,
+            int heroHealth,
+            int heroShield)
+        {
+            if (change == null)
+            {
+                throw new ArgumentNullException(nameof(change));
+            }
+
+            if (string.IsNullOrEmpty(cardId))
+            {
+                throw new ArgumentException("Card id cannot be null or empty.", nameof(cardId));
+            }
+
+            if (string.IsNullOrEmpty(incomingCardId))
+            {
+                throw new ArgumentException("Card id cannot be null or empty.", nameof(incomingCardId));
+            }
+
+            return new CombatEvent(sequence, change, cardId, incomingCardId, heroHealth, heroShield);
         }
 
         /// <summary>
@@ -217,32 +243,6 @@ namespace Game.Core.Combat.Log
             }
 
             return new CombatEvent(sequence, tick, cardId, position, stage, casts, heroHealth, heroShield);
-        }
-
-        public static CombatEvent ForLineChange(
-            int sequence,
-            LineChange change,
-            string cardId,
-            string incomingCardId,
-            int heroHealth,
-            int heroShield)
-        {
-            if (change == null)
-            {
-                throw new ArgumentNullException(nameof(change));
-            }
-
-            if (string.IsNullOrEmpty(cardId))
-            {
-                throw new ArgumentException("Card id cannot be null or empty.", nameof(cardId));
-            }
-
-            if (string.IsNullOrEmpty(incomingCardId))
-            {
-                throw new ArgumentException("Card id cannot be null or empty.", nameof(incomingCardId));
-            }
-
-            return new CombatEvent(sequence, change, cardId, incomingCardId, heroHealth, heroShield);
         }
 
         /// <summary>

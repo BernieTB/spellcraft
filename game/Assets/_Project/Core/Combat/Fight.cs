@@ -72,7 +72,7 @@ namespace Game.Core.Combat
     /// </list>
     /// <para>
     /// The details above are recorded in <c>docs/adr/0015-live-spell-line-editing-details.md</c> (confirmed by
-    /// the owner on 2026-10-05), including that a cast takes its pending bonus when it starts, which refines
+    /// the owner on 2026-10-04), including that a cast takes its pending bonus when it starts, which refines
     /// ADR 0005. Enemies never change their lines. Applied changes are listed in
     /// <see cref="FightResult.LineChanges"/>, so a run can replay them on its own spell line and reserve.
     /// </para>
@@ -82,9 +82,9 @@ namespace Game.Core.Combat
     /// move it. When a resolved cast brings a copy to the casts required by an evolution stage, the card becomes its
     /// evolved form, in the line or in the reserve: the cast that reached the stage resolved with the old form, and
     /// the next cast of the copy uses the new one (same id and cast time, new effects and modifiers; this timing was
-    /// confirmed by the owner on 2026-10-05). Each evolution is listed in <see cref="FightResult.Evolutions"/>, and the final counts in
-    /// <see cref="FightResult.HeroCardCasts"/>, so a run can keep them for the next fight. Only the hero's cards
-    /// evolve, and a fight not given the counts does not count casts or evolve anything.
+    /// confirmed by the owner on 2026-10-04). Each evolution is listed in <see cref="FightResult.Evolutions"/>, and
+    /// the final counts in <see cref="FightResult.HeroCardCasts"/>, so a run can keep them for the next fight. Only
+    /// the hero's cards evolve, and a fight not given the counts does not count casts or evolve anything.
     /// </para>
     /// <para>
     /// Every resolution produces a <see cref="CastRecord"/> in <see cref="FightResult.Casts"/>; that is the
@@ -297,7 +297,8 @@ namespace Game.Core.Combat
                 var line = _spellLines[HeroIndex];
                 var states = new List<HeroCardState>(line.Count + _heroReserve.Count);
                 _lineStates = CreateStates(line.Cards, heroLineCasts, nameof(heroLineCasts), "line", states);
-                _reserveStates = CreateStates(_heroReserve, heroReserveCasts, nameof(heroReserveCasts), "reserve", states);
+                _reserveStates = CreateStates(
+                    _heroReserve, heroReserveCasts, nameof(heroReserveCasts), "reserve", states);
                 _allStates = states.ToArray();
             }
         }
@@ -612,8 +613,8 @@ namespace Game.Core.Combat
                 if (cards[i].Stage != cards[i].StageForCasts(casts[i]))
                 {
                     throw new ArgumentException(
-                        $"The hero's {where} card {i} ('{cards[i].Id}') is at stage {cards[i].Stage} but {casts[i]} casts "
-                        + $"reach stage {cards[i].StageForCasts(casts[i])}.",
+                        $"The hero's {where} card {i} ('{cards[i].Id}') is at stage {cards[i].Stage} but "
+                        + $"{casts[i]} casts reach stage {cards[i].StageForCasts(casts[i])}.",
                         paramName);
                 }
 

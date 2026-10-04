@@ -451,5 +451,30 @@ namespace Game.Core.Tests.Upgrades
 
             Assert.That(((IAmountEffect)upgraded.SpellLine[0].AtStage(2).Effects[0]).Amount, Is.EqualTo(Damage * 3 + X));
         }
+
+        [Test]
+        public void ApplyTo_NeighbourBonus_ReachesModifiersThatOnlyAnEvolvedStageHas()
+        {
+            var card = new CardDefinition(
+                "test_card_01",
+                2,
+                new IEffect[] { new DealDamageEffect(Damage) },
+                new NeighbourModifier[0],
+                new[]
+                {
+                    new CardEvolution(
+                        3,
+                        new IEffect[] { new DealDamageEffect(Damage) },
+                        new[] { new NeighbourModifier(BonusKind.Heal, NeighbourDirection.Previous, ModifierAmount) }),
+                });
+
+            var upgraded = Set(NeighbourBonus(X)).ApplyTo(card);
+
+            Assert.That(upgraded.NeighbourModifiers, Is.Empty);
+            Assert.That(upgraded.AtStage(1).NeighbourModifiers, Has.Count.EqualTo(1));
+            Assert.That(upgraded.AtStage(1).NeighbourModifiers[0].Amount, Is.EqualTo(ModifierAmount + X));
+            Assert.That(upgraded.AtStage(1).NeighbourModifiers[0].Kind, Is.EqualTo(BonusKind.Heal));
+            Assert.That(upgraded.AtStage(1).NeighbourModifiers[0].Direction, Is.EqualTo(NeighbourDirection.Previous));
+        }
     }
 }

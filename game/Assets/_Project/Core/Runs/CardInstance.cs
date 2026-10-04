@@ -41,15 +41,20 @@ namespace Game.Core.Runs
         /// <summary>The card as this copy is now: the card at its <see cref="Stage"/>.</summary>
         public CardDefinition CurrentDefinition => Definition.AtStage(Stage);
 
-        // Set by the run after a fight, from the counts the fight reports.
-        internal void SetCasts(int casts)
+        // Checked by the run for every copy before it sets any, so a bad count changes nothing.
+        internal void EnsureCanSetCasts(int casts)
         {
             if (casts < Casts)
             {
                 throw new ArgumentOutOfRangeException(
                     nameof(casts), casts, $"The casts of {this} cannot go down from {Casts}.");
             }
+        }
 
+        // Set by the run after a fight, from the counts the fight reports.
+        internal void SetCasts(int casts)
+        {
+            EnsureCanSetCasts(casts);
             Casts = casts;
         }
 

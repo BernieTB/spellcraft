@@ -27,7 +27,7 @@ namespace Game.Core.Runs
     /// <para>
     /// Line changes apply to the run's own card instances as they happen, so <see cref="Run.Line"/> and
     /// <see cref="Run.Reserve"/> always show the current state, which is the state replaying
-    /// <see cref="FightResult.LineChanges"/> on the instances would give. A fight that is cancelled (confirmed by the owner on 2026-10-05) keeps the changes
+    /// <see cref="FightResult.LineChanges"/> on the instances would give. A fight that is cancelled (confirmed by the owner on 2026-10-04) keeps the changes
     /// made so far: they are edits of the player's build. The fight itself is not counted and no random draw is
     /// consumed, so beginning the same step again plays the same encounter.
     /// </para>
@@ -39,7 +39,7 @@ namespace Game.Core.Runs
     /// Card evolution (<c>docs/adr/0013-card-evolution.md</c>): the fight counts the casts of every card copy of the
     /// hero, in the line and in the reserve, starting from the counts the run's <see cref="CardInstance"/>s already
     /// have, and evolves the cards in the fight (the next cast of a copy uses the stage it just reached, confirmed by
-    /// the owner on 2026-10-05). <see cref="Complete"/> hands the final counts to the instances, by the copies
+    /// the owner on 2026-10-04). <see cref="Complete"/> hands the final counts to the instances, by the copies
     /// they belong to, so a card swapped into the reserve while casting keeps its count and stage. A session that is
     /// cancelled does not count the fight, so it keeps none of its casts either: unlike the line changes, which are
     /// edits of the player's build and stay, the counters belong to a fight that never counted. Beginning the step

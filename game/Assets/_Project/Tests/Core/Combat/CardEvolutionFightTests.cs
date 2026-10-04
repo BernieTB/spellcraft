@@ -477,5 +477,98 @@ namespace Game.Core.Tests.Combat
             Assert.That(heroCards[0].Casts, Is.EqualTo(3));
             Assert.That(heroCards[0].Damage, Is.EqualTo(BaseDamage + BaseDamage + FirstDamage));
         }
+
+        // --- Evolution and neighbour bonuses (ADR 0005, ADR 0013) ---
+
+        private static NeighbourModifier NextDamage(int amount) =>
+            new NeighbourModifier(BonusKind.Damage, NeighbourDirection.Next, amount);
+
+        private static CardEvolution Stage(int casts, int damage, params NeighbourModifier[] modifiers) =>
+            new CardEvolution(casts, new IEffect[] { new DealDamageEffect(damage) }, modifiers);
+
+        private static List<int> DamagesOf(FightResult result, string cardId)
+        {
+            var damages = new List<int>();
+            foreach (var cast in result.Casts)
+            {
+                if (cast.CasterIndex == Hero && cast.Card.Id == cardId)
+                {
+                    damages.Add(cast.Outcome.Damage.Total);
+                }
+            }
+
+            return damages;
+        }
+
+        [Test]
+        public void Run_GiverEvolvesWithItsModifiers_TheBonusAlreadyGrantedStaysTheOldStages()
+        {
+            // The giver grants +2 damage to the next card; after one cast it evolves and grants +10.
+            var giver = new CardDefinition(
+                "test_card_01",
+                1,
+                new IEffect[0],
+                new[] { NextDamage(2) },
+                new[] { new CardEvolution(1, new IEffect[0], new[] { NextDamage(10) }) });
+            var receiver = new CardDefinition("test_card_02", 1, new IEffect[] { new DealDamageEffect(1) });
+            var fight = CountingFight(Participant(30, giver, receiver), new[] { 0, 0 }, maxTicks: 4);
+
+            var result = fight.Run();
+
+            // Tick 1: the giver's cast evolves it, but grants the old +2. Tick 2: the receiver deals 1 + 2.
+            // Tick 3: the evolved giver grants +10. Tick 4: the receiver deals 1 + 10.
+            Assert.That(DamagesOf(result, "test_card_02"), Is.EqualTo(new[] { 3, 11 }));
+            Assert.That(result.Evolutions, Has.Count.EqualTo(1));
+            Assert.That(result.Evolutions[0].Tick, Is.EqualTo(1));
+            Assert.That(result.Casts[1].Bonus.Damage, Is.EqualTo(2));
+            Assert.That(result.Casts[3].Bonus.Damage, Is.EqualTo(10));
+        }
+
+        [Test]
+        public void Run_ReceiverEvolves_TakesItsBonusWhenTheCastStartsAndKeepsItOnTheNextStage()
+        {
+            var giver = new CardDefinition("test_card_01", 1, new IEffect[0], new[] { NextDamage(2) });
+            var receiver = new CardDefinition(
+                "test_card_02",
+                1,
+                new IEffect[] { new DealDamageEffect(1) },
+                new NeighbourModifier[0],
+                new[] { Stage(1, 5) });
+            var fight = CountingFight(Participant(30, giver, receiver), new[] { 0, 0 }, maxTicks: 4);
+
+            var result = fight.Run();
+
+            // The first receiver cast (old stage 1 + 2) evolves it; the second one deals 5 + 2.
+            Assert.That(DamagesOf(result, "test_card_02"), Is.EqualTo(new[] { 3, 7 }));
+            Assert.That(result.Evolutions, Has.Count.EqualTo(1));
+            Assert.That((result.Evolutions[0].Tick, result.Evolutions[0].Position), Is.EqualTo((2, 1)));
+            Assert.That(result.Casts[1].WastedBonus.IsNone, Is.True);
+        }
+
+        [Test]
+        public void Run_MovingACardMidCastThenItEvolves_ResolvesAndEvolvesAtItsNewPosition()
+        {
+            var slow = new CardDefinition(
+                "test_card_01",
+                3,
+                new IEffect[] { new DealDamageEffect(1) },
+                new NeighbourModifier[0],
+                new[] { Stage(1, 8) });
+            var hero = Participant(30, slow, Idle("test_card_02", 1));
+            var fight = CountingFight(hero, new[] { 0, 0 }, maxTicks: 4);
+
+            // The slow card starts on tick 1 at position 0; it is moved to position 1 on tick 2 and resolves there.
+            var result = fight.Run(new[] { LineChange.Move(2, 0, 1) });
+
+            Assert.That(result.Evolutions, Has.Count.EqualTo(1));
+            Assert.That((result.Evolutions[0].Tick, result.Evolutions[0].Position), Is.EqualTo((3, 1)));
+            Assert.That(fight.HeroLine[1].Id, Is.EqualTo("test_card_01"));
+            Assert.That(fight.HeroLine[1].Stage, Is.EqualTo(1));
+            Assert.That(fight.HeroLine[0].Stage, Is.EqualTo(0));
+            // The evolved card's next cast (started on tick 5, so not in this fight) would deal 8; the cast that
+            // evolved it dealt the old 1.
+            Assert.That(DamagesOf(result, "test_card_01"), Is.EqualTo(new[] { 1 }));
+            Assert.That(result.HeroCardCasts, Is.EqualTo(new[] { 1, 1 }));
+        }
     }
 }

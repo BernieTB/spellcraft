@@ -275,7 +275,7 @@ namespace Game.Core.Runs
         /// <summary>
         /// Marks one pending level-up as handled, once its linked choice is taken (#76). Allowed after the run ends,
         /// so a level reached in the last fight can still be shown, and while a fight session is open (confirmed by
-        /// the owner on 2026-10-05): a passive upgrade taken then applies from the next fight, not to the one playing.
+        /// the owner on 2026-10-04): a passive upgrade taken then applies from the next fight, not to the one playing.
         /// </summary>
         /// <exception cref="InvalidOperationException">There is no pending level-up.</exception>
         public void ConsumePendingLevelUp()
@@ -545,6 +545,17 @@ namespace Game.Core.Runs
             {
                 throw new InvalidOperationException(
                     $"The fight counted the casts of {casts.Count} card copies, the run has {startLine.Count + startReserve.Count}.");
+            }
+
+            // Every count is checked before any is applied, so a failure leaves the run unchanged.
+            for (var i = 0; i < startLine.Count; i++)
+            {
+                startLine[i].EnsureCanSetCasts(casts[i]);
+            }
+
+            for (var i = 0; i < startReserve.Count; i++)
+            {
+                startReserve[i].EnsureCanSetCasts(casts[startLine.Count + i]);
             }
 
             for (var i = 0; i < startLine.Count; i++)
