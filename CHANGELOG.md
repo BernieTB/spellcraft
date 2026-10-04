@@ -80,6 +80,8 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
 - Fight recap in Core, built only from the combat log: per-card casts, damage, healing and shield for every
   side, neighbour bonuses used and wasted (with the reason), and for a lost fight the turning point and its
   causes (wasted bonuses, broken shield, weakest card), or a time-limit outcome.
+- Class data: `ClassAsset` (id, max health, starting shield, starting line capacity, starting deck and level-up
+  card pool) converts to the Core `ClassDefinition`, with errors that name the asset.
 
 ### Changed
 
