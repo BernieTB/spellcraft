@@ -80,6 +80,10 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
 - Fight recap in Core, built only from the combat log: per-card casts, damage, healing and shield for every
   side, neighbour bonuses used and wasted (with the reason), and for a lost fight the turning point and its
   causes (wasted bonuses, broken shield, weakest card), or a time-limit outcome.
+- XP and levels: enemies carry an XP reward (`EnemyDefinition.XpReward`, `EnemyAsset`); a won fight gives the XP of
+  every enemy of its encounter; the level curve (`LevelCurve`, authored as `LevelCurveAsset`: explicit costs, then a
+  fixed increase per level, no cap) is part of `RunRules`; the run tracks its level and pending level-ups for the
+  linked choice, and each fight report gives the XP and levels gained.
 
 ### Changed
 
