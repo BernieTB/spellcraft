@@ -138,6 +138,20 @@ namespace Game.Core.SpellLines
 
         /// <summary>Exchanges the cards at two positions. Swapping a position with itself does nothing.</summary>
         /// <exception cref="ArgumentOutOfRangeException">A position is not valid.</exception>
+        /// <summary>Replaces the card at <paramref name="position"/>, keeping its position and the order of the others.</summary>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="position"/> is outside the line.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="card"/> is null.</exception>
+        public void Replace(int position, TCard card)
+        {
+            ValidatePosition(position, nameof(position));
+            if (card == null)
+            {
+                throw new ArgumentNullException(nameof(card));
+            }
+
+            _cards[position] = card;
+        }
+
         public void Swap(int firstPosition, int secondPosition)
         {
             ValidatePosition(firstPosition, nameof(firstPosition));

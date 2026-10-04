@@ -265,5 +265,108 @@ namespace Game.Unity.Tests.Cards
         {
             Assert.Throws<InvalidOperationException>(() => _asset.ToDefinition());
         }
+
+        // --- Evolutions (ADR 0013) ---
+
+        /// <summary>
+        /// Writes the evolution list through its serialized fields, as the inspector would. Each stage has its casts
+        /// required and the damage of its single effect.
+        /// </summary>
+        private void AuthorEvolutions(params (int casts, int damage)[] stages)
+        {
+            var serialized = new SerializedObject(_asset);
+            var list = serialized.FindProperty("_evolutions");
+            list.arraySize = stages.Length;
+            for (var i = 0; i < stages.Length; i++)
+            {
+                var entry = list.GetArrayElementAtIndex(i);
+                entry.FindPropertyRelative("_castsRequired").intValue = stages[i].casts;
+                var effects = entry.FindPropertyRelative("_effects");
+                effects.arraySize = 1;
+                effects.GetArrayElementAtIndex(0).FindPropertyRelative("_kind").intValue = (int)EffectKind.DealDamage;
+                effects.GetArrayElementAtIndex(0).FindPropertyRelative("_amount").intValue = stages[i].damage;
+                var modifiers = entry.FindPropertyRelative("_neighbourModifiers");
+                modifiers.arraySize = 1;
+                modifiers.GetArrayElementAtIndex(0).FindPropertyRelative("_kind").intValue = (int)BonusKind.Heal;
+                modifiers.GetArrayElementAtIndex(0).FindPropertyRelative("_direction").intValue = (int)NeighbourDirection.Previous;
+                modifiers.GetArrayElementAtIndex(0).FindPropertyRelative("_amount").intValue = stages[i].damage + 1;
+            }
+
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        [Test]
+        public void ToDefinition_NoEvolutions_HasNone()
+        {
+            Author(Id, CastTime, ((int)EffectKind.DealDamage, 3));
+
+            var card = _asset.ToDefinition();
+
+            Assert.That(card.Evolutions, Is.Empty);
+            Assert.That(card.Stage, Is.EqualTo(0));
+        }
+
+        [Test]
+        public void ToDefinition_TwoEvolutions_ConvertsEachStage()
+        {
+            Author(Id, CastTime, ((int)EffectKind.DealDamage, 3));
+            AuthorEvolutions((2, 6), (5, 9));
+
+            var card = _asset.ToDefinition();
+
+            Assert.That(card.Evolutions, Has.Count.EqualTo(2));
+            Assert.That(card.Evolutions[0].CastsRequired, Is.EqualTo(2));
+            Assert.That(card.Evolutions[1].CastsRequired, Is.EqualTo(5));
+            Assert.That(((IAmountEffect)card.AtStage(1).Effects[0]).Amount, Is.EqualTo(6));
+            Assert.That(((IAmountEffect)card.AtStage(2).Effects[0]).Amount, Is.EqualTo(9));
+            Assert.That(card.AtStage(2).NeighbourModifiers[0].Kind, Is.EqualTo(BonusKind.Heal));
+            Assert.That(card.AtStage(2).NeighbourModifiers[0].Direction, Is.EqualTo(NeighbourDirection.Previous));
+            Assert.That(card.AtStage(2).NeighbourModifiers[0].Amount, Is.EqualTo(10));
+        }
+
+        [Test]
+        public void ToDefinition_Evolutions_NeverChangeTheIdOrTheCastTime()
+        {
+            Author(Id, CastTime, ((int)EffectKind.DealDamage, 3));
+            AuthorEvolutions((2, 6), (5, 9));
+
+            var card = _asset.ToDefinition();
+
+            Assert.That(card.AtStage(1).Id, Is.EqualTo(Id));
+            Assert.That(card.AtStage(2).CastTime, Is.EqualTo(CastTime));
+        }
+
+        [Test]
+        public void ToDefinition_EvolutionsNotIncreasing_ThrowsNamingTheAsset()
+        {
+            Author(Id, CastTime, ((int)EffectKind.DealDamage, 3));
+            AuthorEvolutions((5, 6), (5, 9));
+
+            var exception = Assert.Throws<InvalidOperationException>(() => _asset.ToDefinition());
+
+            StringAssert.Contains("TestCardAsset", exception.Message);
+        }
+
+        [Test]
+        public void ToDefinition_ThreeEvolutions_ThrowsNamingTheAsset()
+        {
+            Author(Id, CastTime, ((int)EffectKind.DealDamage, 3));
+            AuthorEvolutions((1, 4), (2, 5), (3, 6));
+
+            var exception = Assert.Throws<InvalidOperationException>(() => _asset.ToDefinition());
+
+            StringAssert.Contains("TestCardAsset", exception.Message);
+        }
+
+        [Test]
+        public void ToDefinition_EvolutionWithZeroCasts_ThrowsNamingTheAsset()
+        {
+            Author(Id, CastTime, ((int)EffectKind.DealDamage, 3));
+            AuthorEvolutions((0, 6));
+
+            var exception = Assert.Throws<InvalidOperationException>(() => _asset.ToDefinition());
+
+            StringAssert.Contains("TestCardAsset", exception.Message);
+        }
     }
 }

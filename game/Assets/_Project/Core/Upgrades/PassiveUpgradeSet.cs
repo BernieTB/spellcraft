@@ -159,7 +159,8 @@ namespace Game.Core.Upgrades
 
         /// <summary>
         /// The card with its effect amounts and neighbour modifiers upgraded; the same instance when no upgrade
-        /// changes cards.
+        /// changes cards. A card that evolves (<c>docs/adr/0013-card-evolution.md</c>) keeps its evolutions, upgraded
+        /// like the card itself, and its stage.
         /// </summary>
         /// <exception cref="ArgumentNullException"><paramref name="card"/> is null.</exception>
         /// <exception cref="OverflowException">An upgraded amount exceeds <see cref="int.MaxValue"/>.</exception>
@@ -175,6 +176,12 @@ namespace Game.Core.Upgrades
                 return card;
             }
 
+            return card.MapForms(UpgradeForm);
+        }
+
+        // One stage of a card, as a card of its own.
+        private CardDefinition UpgradeForm(CardDefinition card)
+        {
             var effects = new List<IEffect>(card.Effects.Count);
             foreach (var effect in card.Effects)
             {

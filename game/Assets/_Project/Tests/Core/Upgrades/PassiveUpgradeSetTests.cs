@@ -386,5 +386,70 @@ namespace Game.Core.Tests.Upgrades
         {
             public EffectOutcome Apply(EffectContext context) => EffectOutcome.None;
         }
+
+        // --- Evolving cards (ADR 0013) ---
+
+        private static CardDefinition EvolvingCard(int stage = 0)
+        {
+            var card = new CardDefinition(
+                "test_card_01",
+                2,
+                new IEffect[] { new DealDamageEffect(Damage) },
+                new[] { new NeighbourModifier(BonusKind.Damage, NeighbourDirection.Next, ModifierAmount) },
+                new[]
+                {
+                    new CardEvolution(
+                        3,
+                        new IEffect[] { new DealDamageEffect(Damage * 2) },
+                        new[] { new NeighbourModifier(BonusKind.Damage, NeighbourDirection.Next, ModifierAmount * 2) }),
+                    new CardEvolution(
+                        7,
+                        new IEffect[] { new DealDamageEffect(Damage * 3) },
+                        new[] { new NeighbourModifier(BonusKind.Damage, NeighbourDirection.Next, ModifierAmount * 3) }),
+                });
+            return card.AtStage(stage);
+        }
+
+        [Test]
+        public void ApplyTo_EvolvingCard_UpgradesEveryStageAndKeepsTheEvolutions()
+        {
+            var upgraded = Set(EffectAmount(BonusKind.Damage, X), NeighbourBonus(1)).ApplyTo(EvolvingCard());
+
+            Assert.That(upgraded.Evolutions, Has.Count.EqualTo(2));
+            Assert.That(upgraded.Evolutions[0].CastsRequired, Is.EqualTo(3));
+            Assert.That(upgraded.Evolutions[1].CastsRequired, Is.EqualTo(7));
+            Assert.That(((IAmountEffect)upgraded.Effects[0]).Amount, Is.EqualTo(Damage + X));
+            Assert.That(((IAmountEffect)upgraded.AtStage(1).Effects[0]).Amount, Is.EqualTo(Damage * 2 + X));
+            Assert.That(((IAmountEffect)upgraded.AtStage(2).Effects[0]).Amount, Is.EqualTo(Damage * 3 + X));
+            Assert.That(upgraded.AtStage(2).NeighbourModifiers[0].Amount, Is.EqualTo(ModifierAmount * 3 + 1));
+            Assert.That(upgraded.AtStage(1).CastTime, Is.EqualTo(2));
+        }
+
+        [Test]
+        public void ApplyTo_EvolvingCardAtAnEvolvedStage_KeepsItsStage()
+        {
+            var upgraded = Set(EffectAmount(BonusKind.Damage, X)).ApplyTo(EvolvingCard(stage: 1));
+
+            Assert.That(upgraded.Stage, Is.EqualTo(1));
+            Assert.That(((IAmountEffect)upgraded.Effects[0]).Amount, Is.EqualTo(Damage * 2 + X));
+        }
+
+        [Test]
+        public void ApplyTo_EvolvingCardWithoutUpgradesThatChangeCards_IsTheSameInstance()
+        {
+            var card = EvolvingCard();
+
+            Assert.That(Set(MaxHealth(5)).ApplyTo(card), Is.SameAs(card));
+        }
+
+        [Test]
+        public void ApplyTo_Hero_EvolvedFormsOfTheLineAreUpgradedToo()
+        {
+            var hero = Hero(EvolvingCard());
+
+            var upgraded = Set(EffectAmount(BonusKind.Damage, X)).ApplyTo(hero);
+
+            Assert.That(((IAmountEffect)upgraded.SpellLine[0].AtStage(2).Effects[0]).Amount, Is.EqualTo(Damage * 3 + X));
+        }
     }
 }
