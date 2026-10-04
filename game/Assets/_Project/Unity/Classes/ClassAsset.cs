@@ -18,7 +18,7 @@ namespace Game.Unity.Classes
     public sealed class ClassAsset : ScriptableObject, IPlaceholderContent
     {
         [SerializeField]
-        [Tooltip("Stable identifier, unique among classes (placeholder ids such as CLASS_A until the owner names it).")]
+        [Tooltip("Stable identifier, unique among classes (test ids such as test_class_01; the MVP class's working name is CLASS_A).")]
         private string _id;
 
         [SerializeField]

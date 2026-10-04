@@ -8,7 +8,7 @@ namespace Game.Unity.EditorTools.Content
 {
     /// <summary>
     /// Finds references to placeholder content (any asset implementing <see cref="IPlaceholderContent"/> with
-    /// <see cref="IPlaceholderContent.IsPlaceholder"/> set: cards, enemies, encounters) so test-only content cannot
+    /// <see cref="IPlaceholderContent.IsPlaceholder"/> set: cards, enemies, encounters, classes) so test-only content cannot
     /// ship by accident. Used by <see cref="PlaceholderBuildCheck"/> before every build and by an EditMode test.
     /// </summary>
     /// <remarks>
@@ -27,7 +27,7 @@ namespace Game.Unity.EditorTools.Content
     /// </remarks>
     public static class PlaceholderGuard
     {
-        /// <summary>Folder holding the placeholder content assets (cards, enemies, encounters).</summary>
+        /// <summary>Folder holding the placeholder content assets (cards, enemies, encounters, classes).</summary>
         public const string PlaceholderFolder = "Assets/_Project/Unity/Content/Placeholders";
 
         /// <summary>Folder holding the tests, which may reference placeholders.</summary>
