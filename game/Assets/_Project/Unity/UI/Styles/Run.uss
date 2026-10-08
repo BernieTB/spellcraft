@@ -1,0 +1,291 @@
+/* Run screen (#73): flat placeholder shapes, colours and sizes from Common.uss (ADR 0008). */
+.run-screen {
+    align-items: stretch;
+    justify-content: flex-start;
+    padding: 20px 40px;
+}
+
+.hud {
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 12px 20px;
+    background-color: var(--color-panel);
+}
+
+.hud-block {
+    min-width: 280px;
+    margin-right: 40px;
+}
+
+.hud-level {
+    font-size: var(--font-size-body);
+    -unity-font-style: bold;
+    color: var(--color-ink);
+}
+
+.hud-text {
+    font-size: var(--font-size-small);
+    color: var(--color-ink-muted);
+}
+
+.hud-pending {
+    font-size: var(--font-size-small);
+    -unity-font-style: bold;
+    color: var(--color-accent);
+}
+
+.objectives {
+    flex-grow: 1;
+}
+
+.objective {
+    flex-direction: row;
+    align-items: center;
+}
+
+.objective-text {
+    flex-grow: 1;
+    font-size: var(--font-size-small);
+    color: var(--color-ink-muted);
+}
+
+.objective-progress {
+    margin-left: 16px;
+    font-size: var(--font-size-small);
+    color: var(--color-ink);
+}
+
+.objective--unlocked .objective-progress {
+    color: var(--color-accent);
+}
+
+.objective--cleared .objective-progress {
+    color: var(--color-success);
+}
+
+.status {
+    margin: 12px 0;
+    font-size: var(--font-size-body);
+    color: var(--color-ink);
+}
+
+.bar {
+    height: 14px;
+    margin: 4px 0;
+    background-color: var(--color-background);
+}
+
+.bar-fill {
+    height: 100%;
+    background-color: var(--color-success);
+}
+
+.xp-fill {
+    background-color: var(--color-accent);
+}
+
+.arena {
+    flex-grow: 1;
+    min-height: 380px;
+    justify-content: center;
+}
+
+.panel {
+    padding: 20px 24px;
+    background-color: var(--color-panel);
+    align-items: center;
+}
+
+.steps {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.step {
+    width: 420px;
+    margin: 8px;
+    align-items: stretch;
+}
+
+.step-reason {
+    font-size: var(--font-size-small);
+    color: var(--color-ink-muted);
+    white-space: normal;
+}
+
+.button {
+    margin: 4px;
+    padding: 10px 20px;
+    font-size: var(--font-size-body);
+    color: var(--color-ink);
+    background-color: var(--color-panel);
+    border-width: 2px;
+    border-color: var(--color-ink-muted);
+}
+
+.button:disabled {
+    color: var(--color-ink-muted);
+    border-color: var(--color-background);
+    opacity: 0.6;
+}
+
+.button--accent {
+    border-color: var(--color-accent);
+}
+
+.button--danger {
+    border-color: var(--color-danger);
+}
+
+.fight-panel {
+    flex-direction: row;
+    flex-grow: 1;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.side {
+    flex-direction: row;
+    flex-wrap: wrap;
+    flex-basis: 50%;
+}
+
+.side--enemies {
+    justify-content: flex-end;
+}
+
+.combatant-box {
+    width: 360px;
+    margin: 8px 24px;
+    align-items: stretch;
+}
+
+.shape {
+    height: 160px;
+    background-color: var(--color-accent);
+    border-width: 4px;
+    border-color: var(--color-ink);
+}
+
+.shape--enemy {
+    background-color: var(--color-danger);
+    border-radius: 40px;
+}
+
+.combatant-box--dead .shape {
+    opacity: 0.25;
+}
+
+.combatant-name {
+    font-size: var(--font-size-small);
+    -unity-font-style: bold;
+    color: var(--color-ink);
+}
+
+.health-fill {
+    background-color: var(--color-success);
+}
+
+.cast-bar {
+    height: 8px;
+}
+
+.cast-fill {
+    background-color: var(--color-ink-muted);
+}
+
+.combatant-text {
+    font-size: var(--font-size-small);
+    color: var(--color-ink-muted);
+}
+
+.controls {
+    flex-direction: row;
+    align-items: center;
+    margin: 8px 0;
+}
+
+.controls .hud-text {
+    flex-grow: 1;
+}
+
+.edit-hint {
+    font-size: var(--font-size-small);
+    color: var(--color-ink-muted);
+}
+
+.row-title {
+    margin-top: 8px;
+    font-size: var(--font-size-small);
+    -unity-font-style: bold;
+    color: var(--color-ink);
+}
+
+.slots {
+    flex-direction: row;
+    flex-wrap: wrap;
+    min-height: 40px;
+}
+
+.slot {
+    width: 220px;
+    margin: 4px;
+    padding: 8px;
+    background-color: var(--color-panel);
+    border-width: 3px;
+    border-color: var(--color-panel);
+}
+
+.slot--next {
+    border-color: var(--color-ink-muted);
+}
+
+.slot--casting {
+    border-color: var(--color-accent);
+}
+
+.slot--selected {
+    border-color: var(--color-ink);
+    background-color: var(--color-background);
+}
+
+.slot-title {
+    font-size: var(--font-size-small);
+    -unity-font-style: bold;
+    color: var(--color-ink);
+}
+
+.slot-detail {
+    font-size: 18px;
+    color: var(--color-ink-muted);
+    white-space: normal;
+}
+
+.slot-bonus {
+    margin-top: 4px;
+    padding: 2px 6px;
+    font-size: 18px;
+    color: var(--color-background);
+    background-color: var(--color-accent);
+}
+
+.result-title {
+    font-size: var(--font-size-heading);
+    -unity-font-style: bold;
+    color: var(--color-danger);
+}
+
+.result-title--victory {
+    color: var(--color-success);
+}
+
+.result-line {
+    font-size: var(--font-size-body);
+    color: var(--color-ink);
+}
+
+.result-lines {
+    margin: 12px 0;
+    align-items: center;
+}

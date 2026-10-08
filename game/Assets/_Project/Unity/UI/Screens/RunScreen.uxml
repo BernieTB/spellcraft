@@ -1,0 +1,54 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <Style src="../Styles/Common.uss" />
+    <Style src="../Styles/Run.uss" />
+    <ui:VisualElement name="screen" class="screen run-screen">
+        <ui:VisualElement name="hud" class="hud">
+            <ui:VisualElement class="hud-block">
+                <ui:Label name="hud-level" class="hud-level" text="Level 1" />
+                <ui:VisualElement class="bar xp-bar">
+                    <ui:VisualElement name="xp-fill" class="bar-fill xp-fill" />
+                </ui:VisualElement>
+                <ui:Label name="hud-xp" class="hud-text" text="XP 0/0" />
+            </ui:VisualElement>
+            <ui:VisualElement class="hud-block">
+                <ui:Label name="hud-line" class="hud-text" text="Line 0/0" />
+                <ui:Label name="hud-reserve" class="hud-text" text="Reserve 0" />
+                <ui:Label name="hud-pending" class="hud-pending hidden" text="Level-up waiting" />
+            </ui:VisualElement>
+            <ui:VisualElement name="objectives" class="hud-block objectives" />
+        </ui:VisualElement>
+
+        <ui:Label name="status" class="status" text="Status" />
+
+        <ui:VisualElement name="arena" class="arena">
+            <ui:VisualElement name="steps-panel" class="panel steps-panel hidden">
+                <ui:VisualElement name="steps" class="steps" />
+                <ui:Button name="pending-choice-button" class="button button--accent hidden" text="Choose level-up" />
+            </ui:VisualElement>
+
+            <ui:VisualElement name="fight-panel" class="fight-panel hidden">
+                <ui:VisualElement name="hero" class="side side--hero" />
+                <ui:VisualElement name="enemies" class="side side--enemies" />
+            </ui:VisualElement>
+
+            <ui:VisualElement name="result-panel" class="panel result-panel hidden">
+                <ui:Label name="result-title" class="result-title" text="Result" />
+                <ui:VisualElement name="result-lines" class="result-lines" />
+                <ui:Button name="continue-button" class="button button--accent" text="Continue" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <ui:VisualElement name="controls" class="controls hidden">
+            <ui:Label name="fight-info" class="hud-text" text="Tick 0" />
+            <ui:Button name="pause-button" class="button" text="Pause" />
+            <ui:Button name="speed-button" class="button" text="Speed x1" />
+            <ui:Button name="leave-button" class="button button--danger" text="Leave fight" />
+        </ui:VisualElement>
+
+        <ui:Label name="edit-hint" class="edit-hint" text="" />
+        <ui:Label class="row-title" text="Spell line" />
+        <ui:VisualElement name="line" class="slots" />
+        <ui:Label class="row-title" text="Reserve" />
+        <ui:VisualElement name="reserve" class="slots" />
+    </ui:VisualElement>
+</ui:UXML>

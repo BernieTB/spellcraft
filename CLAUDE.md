@@ -152,7 +152,7 @@ this project first (verified; menu: **Tools > Game > Rebuild Bootstrap Scene**):
 
 Look at the screens without playing a run: **Tools > Game > Preview Screens** opens an editor window with one
 button per screen, filled with demo data (the recap on a victory, a defeat and a fight that runs out of time,
-played by Core from `demo_*` cards built in `ScreenPreviewFights`). It uses the game's runtime theme, layouts and
+played by Core from `demo_*` cards built in `ScreenPreviewFights`). The run screen (#73) has four states there (next step, regular fight, level-up pending, fight result), played by a demo run built in `ScreenPreviewRuns`; its screen code is in `Unity/UI/RunScreen/` (controller, view model and pacer are plain C#, `RunScreenView` only binds them). It uses the game's runtime theme, layouts and
 `ScreenHost`; it is editor-only (`Game.Unity.EditorTools`, never in a build) and changes no asset. A new screen adds
 one line to `ScreenPreviews.All` (name, layout path, how to fill it). The editor window does not scale to the
 1920x1080 reference resolution of the game panel, so judge proportions by resizing it.
