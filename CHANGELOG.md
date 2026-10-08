@@ -148,6 +148,14 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
   `FightTimeLimitAsset` (the global fight time limit). Ids are working names (`CARD_ENEMY_01`, `ENEMY_01`...), assets
   are flagged placeholder and the placeholder guard accepts their folder. A test plays the whole biome headless with
   `CLASS_A` through the run model.
+- Level-up offer generator (#76, ADR 0012): `LevelUpOfferGenerator` draws 3 packages, each a card of the class's
+  card pool plus a passive of the passive pool, with the run's offer sequence (`Run.LevelUpOfferSequence`), so the
+  same seed and choices give the same offers (duplicates allowed, no rarity). `Run.GetLevelUpOffer` keeps the
+  offer until it is taken; `Run.TakeLevelUpPackage` gives the passive and a new card (end of the line, reserve if
+  the line is full, or in place of a chosen line card that goes to the reserve) and consumes one pending level-up,
+  all or nothing. `Run.HasPendingChoice` tells that a choice waits. Decision: the choice is mandatory before the next
+  fight, but the screen / game loop (#77) imposes it, not `Run` (`Play` and `BeginFight` still accept a fight with
+  levels pending, as existing run tests and tools rely on it).
 
 ### Changed
 
