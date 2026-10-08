@@ -53,7 +53,7 @@ namespace Game.Core.Runs
     /// <para>Extension points for later systems, not implemented here:</para>
     /// <list type="bullet">
     /// <item>Level-up offers (#76): <see cref="GetLevelUpOffer"/> draws the packages of a pending level-up and
-    /// <see cref="TakeLevelUpPackage"/> applies one. Whether a pending choice must be made before the next fight is left to the caller (<see cref="HasPendingChoice"/>).</item>
+    /// <see cref="TakeLevelUpPackage"/> applies one. The choice is mandatory before the next fight, but the screen / game loop (#77) imposes it, using <see cref="HasPendingChoice"/>; <c>Run</c> does not refuse a fight.</item>
     /// <item>The report returned by <see cref="Play"/> or <see cref="RunFightSession.Complete"/> tells which rooms the
     /// fight unlocked and what a first victory gave (<see cref="RunFightReport.SecretRoomRewards"/>), whose
     /// revelation the caller records in the bestiary and saves.</item>
@@ -157,8 +157,8 @@ namespace Game.Core.Runs
 
         /// <summary>
         /// True while a level-up waits for its linked choice. The run does not force the choice before the next fight:
-        /// existing run tests and tools play several fights with levels pending, so the screen (#77) or the caller
-        /// decides, using this flag. The owner's answer to the #76 question is still open.
+        /// existing run tests and tools play several fights with levels pending, so the screen / game loop (#77)
+        /// imposes the owner's decision (the choice is mandatory before the next fight), using this flag.
         /// </summary>
         public bool HasPendingChoice => PendingLevelUps > 0;
 

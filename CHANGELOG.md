@@ -143,8 +143,9 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
   same seed and choices give the same offers (duplicates allowed, no rarity). `Run.GetLevelUpOffer` keeps the
   offer until it is taken; `Run.TakeLevelUpPackage` gives the passive and a new card (end of the line, reserve if
   the line is full, or in place of a chosen line card that goes to the reserve) and consumes one pending level-up,
-  all or nothing. `Run.HasPendingChoice` tells that a choice waits; the run does not force it before the next
-  fight (existing run tests play several fights with levels pending), the owner's answer is still open.
+  all or nothing. `Run.HasPendingChoice` tells that a choice waits. Decision: the choice is mandatory before the next
+  fight, but the screen / game loop (#77) imposes it, not `Run` (`Play` and `BeginFight` still accept a fight with
+  levels pending, as existing run tests and tools rely on it).
 
 ### Changed
 
