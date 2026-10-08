@@ -6,6 +6,7 @@ using Game.Core.Classes;
 using Game.Core.Combat;
 using Game.Core.Combat.Log;
 using Game.Core.Enemies;
+using Game.Core.Meta;
 using Game.Core.Randomness;
 using Game.Core.SpellLines;
 using Game.Core.Upgrades;
@@ -414,6 +415,44 @@ namespace Game.Core.Runs
             {
                 state.IsUnlocked = true;
             }
+        }
+
+        /// <summary>
+        /// Opens the preparation phase before a mini-boss or professor fight (#82,
+        /// <c>docs/adr/0012-linked-choices-and-spell-line-editing.md</c>, <c>docs/adr/0014-boss-preparation-and-recap.md</c>).
+        /// The player edits the line and the reserve through the returned <see cref="BossPreparation"/>, then starts
+        /// the fight with <see cref="BossPreparation.Start"/>; the line is fixed from then on.
+        /// </summary>
+        /// <param name="step">A secret room or the professor.</param>
+        /// <param name="bestiary">
+        /// What the player already knows about the professor. Null means nothing is known (an empty bestiary).
+        /// </param>
+        /// <exception cref="ArgumentNullException"><paramref name="step"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="step"/> has no preparation phase (a regular fight).</exception>
+        /// <exception cref="InvalidOperationException">
+        /// The run is over, the step is not available, or a fight session is open.
+        /// </exception>
+        public BossPreparation BeginPreparation(RunStep step, Bestiary bestiary = null)
+        {
+            if (step == null)
+            {
+                throw new ArgumentNullException(nameof(step));
+            }
+
+            if (!step.RequiresPreparation)
+            {
+                throw new ArgumentException($"The step {step} has no preparation phase.", nameof(step));
+            }
+
+            EnsureCanChange();
+            if (!IsAvailable(step))
+            {
+                throw new InvalidOperationException($"The step {step} is not available.");
+            }
+
+            return step.Kind == RunStepKind.Professor
+                ? new BossPreparation(this, step, null, (bestiary ?? new Bestiary()).GetKnowledge(Biome.Professor))
+                : new BossPreparation(this, step, FindSecretRoom(step.SecretRoomId).Encounter, null);
         }
 
         /// <summary>Moves a card of the spell line to another position, shifting the cards in between.</summary>

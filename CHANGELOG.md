@@ -133,6 +133,11 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
   `BiomeDefinition` now names its professor (an enemy of the professor encounter, matched by id) instead of
   assuming the first enemy. `Run.UnlockSecretRoom` compares mini-boss encounters by id, not by reference, so data
   converted twice no longer clashes.
+- Boss preparation model in Core (#82, ADR 0012 and 0014): `Run.BeginPreparation(step, bestiary)` opens a
+  `BossPreparation` before a mini-boss or professor fight. The player rearranges the line and swaps with the
+  reserve (no size limit) through the run's own line edits; `Start()` begins the fight and fixes the line (further
+  edits throw). For the professor it exposes only a `ProfessorKnowledge` read from the bestiary (health, shield
+  and cards hidden unless revealed); a lost fight ends the run, so there is no retry.
 
 ### Changed
 
