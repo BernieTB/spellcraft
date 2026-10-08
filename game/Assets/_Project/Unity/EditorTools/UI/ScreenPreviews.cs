@@ -81,6 +81,14 @@ namespace Game.Unity.EditorTools.UI
                 "Recap: out of time",
                 BootstrapSceneBuilder.RecapScreenPath,
                 root => RecapScreenView.Bind(root, ScreenPreviewFights.TimeLimit())),
+            new ScreenPreview(
+                "Level-up: free slot",
+                BootstrapSceneBuilder.LevelUpScreenPath,
+                root => LevelUpScreenView.Bind(root, ScreenPreviewLevelUps.FreeSlot(), choice => { })),
+            new ScreenPreview(
+                "Level-up: full line",
+                BootstrapSceneBuilder.LevelUpScreenPath,
+                root => LevelUpScreenView.Bind(root, ScreenPreviewLevelUps.FullLine(), choice => { })),
         }.AsReadOnly();
     }
 }
