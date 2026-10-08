@@ -1,0 +1,20 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <Style src="../Styles/Common.uss" />
+    <Style src="../Styles/Preparation.uss" />
+    <ui:VisualElement name="screen" class="screen prep-screen">
+        <ui:Label name="title" class="prep-title" text="Preparation" />
+        <ui:VisualElement name="boss-info" class="prep-boss-info" />
+        <ui:Label class="prep-heading" text="Spell line" />
+        <ui:VisualElement name="line" class="prep-cards" />
+        <ui:VisualElement class="prep-controls">
+            <ui:Button name="move-left" class="prep-button" text="Move left" />
+            <ui:Button name="move-right" class="prep-button" text="Move right" />
+            <ui:Button name="swap" class="prep-button" text="Swap with reserve" />
+            <ui:Button name="to-reserve" class="prep-button" text="To reserve" />
+            <ui:Button name="to-line" class="prep-button" text="To line" />
+        </ui:VisualElement>
+        <ui:Label class="prep-heading" text="Reserve" />
+        <ui:VisualElement name="reserve" class="prep-cards" />
+        <ui:Button name="start" class="prep-start" text="Start the fight" />
+    </ui:VisualElement>
+</ui:UXML>

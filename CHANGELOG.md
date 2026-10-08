@@ -117,6 +117,12 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
   with the reason, and for a lost fight the turning point and its causes, the main one highlighted together with
   the cards it blames (cards that wasted a bonus, the weakest card, or the enemy card that broke the shield).
   It is not yet part of the game flow (#88).
+- Preparation screen (`Screens/PreparationScreen.uxml`, `PreparationScreenView`, `PreparationViewModel`, #84): before a
+  mini-boss or the professor, rearrange the spell line (move left or right), swap a line card with the reserve or move
+  cards between them (select a card, then press a button), see what is known of the boss ("Unknown" for the hidden
+  health, shield and cards of the professor) and start the fight, which fixes the line. Rules stay in Core
+  (`BossPreparation`); the view-model only holds the selection and is tested without Play mode. It is not yet part of
+  the game flow. Three demo variants were added to the Preview Screens window.
 - `ScreenHost`: shows one UI Toolkit screen at a time in a container, so the single bootstrap scene can switch
   screens in code (ADR 0008); a screen can pass a callback that runs once when it stops being shown.
 - Editor window **Tools > Game > Preview Screens**: shows the title screen and the recap (victory, defeat, out of

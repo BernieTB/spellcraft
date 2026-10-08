@@ -83,6 +83,18 @@ namespace Game.Unity.EditorTools.UI
                 BootstrapSceneBuilder.RecapScreenPath,
                 root => RecapScreenView.Bind(root, ScreenPreviewFights.TimeLimit())),
             new ScreenPreview(
+                "Preparation: mini-boss",
+                PreparationScreenView.LayoutPath,
+                root => PreparationScreenView.Bind(root, new PreparationViewModel(ScreenPreviewPreparations.MiniBoss()))),
+            new ScreenPreview(
+                "Preparation: professor unknown",
+                PreparationScreenView.LayoutPath,
+                root => PreparationScreenView.Bind(root, new PreparationViewModel(ScreenPreviewPreparations.ProfessorUnknown()))),
+            new ScreenPreview(
+                "Preparation: professor partly known",
+                PreparationScreenView.LayoutPath,
+                root => PreparationScreenView.Bind(root, new PreparationViewModel(ScreenPreviewPreparations.ProfessorPartlyKnown()))),
+            new ScreenPreview(
                 "Run: next step",
                 BootstrapSceneBuilder.RunScreenPath,
                 root => RunScreenView.Bind(root, ScreenPreviewRuns.ChoosingStep())),

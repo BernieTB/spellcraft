@@ -1,0 +1,79 @@
+/* Preparation screen (ADR 0014): flat placeholder shapes, colours and sizes from Common.uss (ADR 0008). */
+.prep-screen {
+    align-items: stretch;
+    justify-content: flex-start;
+    padding: 32px 48px;
+}
+
+.prep-title {
+    font-size: var(--font-size-title);
+    -unity-font-style: bold;
+    color: var(--color-ink);
+}
+
+.prep-boss-info {
+    flex-direction: row;
+    margin-top: 16px;
+    padding: 16px;
+    background-color: var(--color-panel);
+}
+
+.prep-enemy {
+    margin-right: 32px;
+}
+
+.prep-enemy-stat,
+.prep-enemy-card {
+    font-size: var(--font-size-small);
+    color: var(--color-ink);
+}
+
+.unknown {
+    color: var(--color-ink-muted);
+    -unity-font-style: italic;
+}
+
+.prep-heading {
+    margin-top: 24px;
+    font-size: var(--font-size-heading);
+    color: var(--color-ink);
+}
+
+.prep-cards {
+    flex-direction: row;
+    flex-wrap: wrap;
+    min-height: 64px;
+}
+
+.prep-card {
+    margin: 4px;
+    padding: 8px 16px;
+    font-size: var(--font-size-small);
+    color: var(--color-ink);
+    background-color: var(--color-panel);
+}
+
+.prep-card--selected {
+    border-width: 3px;
+    border-color: var(--color-accent);
+}
+
+.prep-controls {
+    flex-direction: row;
+    flex-wrap: wrap;
+    margin-top: 8px;
+}
+
+.prep-button {
+    margin-right: 8px;
+    font-size: var(--font-size-small);
+}
+
+.prep-start {
+    align-self: flex-end;
+    margin-top: 24px;
+    padding: 12px 32px;
+    font-size: var(--font-size-body);
+    background-color: var(--color-accent);
+    color: var(--color-background);
+}
