@@ -155,3 +155,7 @@
     color: var(--color-danger);
     -unity-font-style: bold;
 }
+
+.recap-screen .menu-button {
+    align-self: center;
+}

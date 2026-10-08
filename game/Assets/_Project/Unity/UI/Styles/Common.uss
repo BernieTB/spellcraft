@@ -49,3 +49,28 @@
 .screen-slot {
     flex-grow: 1;
 }
+
+/* Buttons of the title and end screens. */
+.menu-button {
+    min-width: 360px;
+    margin-top: 24px;
+    padding: 12px 24px;
+    font-size: var(--font-size-body);
+    color: var(--color-ink);
+    background-color: var(--color-panel);
+    border-width: 2px;
+    border-color: var(--color-ink-muted);
+}
+
+.menu-button--accent {
+    border-color: var(--color-accent);
+}
+
+/* The end screen title takes the colour of the outcome. */
+.title--victory {
+    color: var(--color-success);
+}
+
+.title--defeat {
+    color: var(--color-danger);
+}

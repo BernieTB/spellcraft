@@ -1,4 +1,6 @@
 using System.Linq;
+using Game.Unity.EditorTools.Content;
+using Game.Unity.Flow;
 using Game.Unity.UI;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -14,7 +16,7 @@ namespace Game.Unity.EditorTools.UI
     /// <remarks>
     /// Run from the menu <c>Tools &gt; Game &gt; Rebuild Bootstrap Scene</c>, or headless with
     /// <c>-executeMethod Game.Unity.EditorTools.UI.BootstrapSceneBuilder.Build</c>. The scene is rebuilt every time
-    /// (a camera, the <see cref="GameBootstrap"/> and a <see cref="UIDocument"/> showing the title screen) and set
+    /// (a camera, the <see cref="GameBootstrap"/> and a <see cref="UIDocument"/> driven by the <see cref="GameFlowBehaviour"/>, which references the game config) and set
     /// as the only scene in the build settings. The panel settings are only created when they do not exist, so
     /// edits made in the inspector survive a rebuild.
     /// </remarks>
@@ -53,6 +55,12 @@ namespace Game.Unity.EditorTools.UI
         /// <summary>Path of the level-up choice screen layout.</summary>
         public const string LevelUpScreenPath = UiFolder + "/Screens/LevelUpScreen.uxml";
 
+        /// <summary>Path of the end-of-run screen layout.</summary>
+        public const string EndScreenPath = UiFolder + "/Screens/EndScreen.uxml";
+
+        /// <summary>Path of the game configuration the scene references (class, biome, rules, pool, screen layouts).</summary>
+        public const string GameConfigPath = "Assets/_Project/Unity/Content/GameConfig.asset";
+
         [MenuItem("Tools/Game/Rebuild Bootstrap Scene")]
         public static void Build()
         {
@@ -67,8 +75,7 @@ namespace Game.Unity.EditorTools.UI
             // loaded before it.
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             var panelSettings = LoadOrCreatePanelSettings();
-            var titleScreen = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(TitleScreenPath)
-                ?? throw new System.InvalidOperationException($"Title screen layout missing at {TitleScreenPath}.");
+            var config = WriteGameConfig();
 
             var cameraObject = new GameObject("Main Camera") { tag = "MainCamera" };
             var camera = cameraObject.AddComponent<Camera>();
@@ -82,15 +89,16 @@ namespace Game.Unity.EditorTools.UI
             var uiObject = new GameObject("UI");
             var document = uiObject.AddComponent<UIDocument>();
             document.panelSettings = panelSettings;
-            document.visualTreeAsset = titleScreen;
-            uiObject.AddComponent<TitleScreenView>();
+            var flow = uiObject.AddComponent<GameFlowBehaviour>();
+            var flowObject = new SerializedObject(flow);
+            flowObject.FindProperty("_config").objectReferenceValue = config;
+            flowObject.ApplyModifiedPropertiesWithoutUndo();
 
             EditorSceneManager.SaveScene(scene, ScenePath);
 
-            if (document.panelSettings == null || document.visualTreeAsset == null)
+            if (document.panelSettings == null || flow.GetComponent<UIDocument>() != document)
             {
-                throw new System.InvalidOperationException(
-                    $"Could not assign {PanelSettingsPath} and {TitleScreenPath} to the UI document.");
+                throw new System.InvalidOperationException($"Could not assign {PanelSettingsPath} to the UI document.");
             }
 
             var removed = EditorBuildSettings.scenes
@@ -105,6 +113,45 @@ namespace Game.Unity.EditorTools.UI
             }
 
             Debug.Log($"Bootstrap scene written to {ScenePath} and set as the only scene in the build settings.");
+        }
+
+        /// <summary>
+        /// Creates or updates the game configuration asset (<see cref="GameConfigPath"/>) and points it to the class,
+        /// biome, rules, passive pool and screen layouts. The assets must already exist (regenerate the content first).
+        /// </summary>
+        public static GameConfigAsset WriteGameConfig()
+        {
+            var config = AssetDatabase.LoadAssetAtPath<GameConfigAsset>(GameConfigPath);
+            if (config == null)
+            {
+                config = ScriptableObject.CreateInstance<GameConfigAsset>();
+                AssetDatabase.CreateAsset(config, GameConfigPath);
+            }
+
+            var serialized = new SerializedObject(config);
+            Set(serialized, "_heroClass", MvpClassContentGenerator.ClassPath);
+            Set(serialized, "_biome", PlaceholderBiomeGenerator.BiomePath);
+            Set(serialized, "_fightTimeLimit", PlaceholderBiomeGenerator.FightTimeLimitPath);
+            Set(serialized, "_levelCurve", PlaceholderBiomeGenerator.LevelCurvePath);
+            Set(serialized, "_passivePool", PassiveUpgradePoolGenerator.PoolPath);
+            Set(serialized, "_titleScreen", TitleScreenPath);
+            Set(serialized, "_runScreen", RunScreenPath);
+            Set(serialized, "_levelUpScreen", LevelUpScreenPath);
+            Set(serialized, "_preparationScreen", PreparationScreenView.LayoutPath);
+            Set(serialized, "_recapScreen", RecapScreenPath);
+            Set(serialized, "_endScreen", EndScreenPath);
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(config);
+            AssetDatabase.SaveAssets();
+            config.Validate();
+            return config;
+        }
+
+        private static void Set(SerializedObject serialized, string field, string assetPath)
+        {
+            var asset = AssetDatabase.LoadAssetAtPath<Object>(assetPath)
+                ?? throw new System.InvalidOperationException($"Asset missing at {assetPath} (needed by the game config).");
+            serialized.FindProperty(field).objectReferenceValue = asset;
         }
 
         private static PanelSettings LoadOrCreatePanelSettings()

@@ -14,5 +14,6 @@
             <ui:VisualElement name="hero" class="combatants" />
             <ui:VisualElement name="enemies" class="combatants" />
         </ui:ScrollView>
+        <ui:Button name="continue-button" class="menu-button menu-button--accent" text="Continue" />
     </ui:VisualElement>
 </ui:UXML>

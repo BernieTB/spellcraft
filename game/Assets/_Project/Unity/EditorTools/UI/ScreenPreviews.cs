@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Game.Core.Runs;
 using Game.Unity.UI;
 using Game.Unity.UI.RunScreen;
 using UnityEngine.UIElements;
@@ -69,7 +70,15 @@ namespace Game.Unity.EditorTools.UI
         /// <summary>Every previewable screen, in the order of the window's buttons.</summary>
         public static IReadOnlyList<ScreenPreview> All { get; } = new List<ScreenPreview>
         {
-            new ScreenPreview("Title", BootstrapSceneBuilder.TitleScreenPath, TitleScreenView.Bind),
+            new ScreenPreview("Title", BootstrapSceneBuilder.TitleScreenPath, root => TitleScreenView.Bind(root)),
+            new ScreenPreview(
+                "End: victory",
+                BootstrapSceneBuilder.EndScreenPath,
+                root => EndScreenView.Bind(root, RunOutcome.Victory, "Level 6, 10 fights played, 8 regular fights won.", null)),
+            new ScreenPreview(
+                "End: defeat",
+                BootstrapSceneBuilder.EndScreenPath,
+                root => EndScreenView.Bind(root, RunOutcome.Defeat, "Level 3, 4 fights played, 3 regular fights won.", null)),
             new ScreenPreview(
                 "Recap: victory",
                 BootstrapSceneBuilder.RecapScreenPath,

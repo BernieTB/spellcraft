@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 932c27d91acece54bb691fa9441167dc, type: 3}
+  m_Name: GameConfig
+  m_EditorClassIdentifier: Game.Unity::Game.Unity.Flow.GameConfigAsset
+  _heroClass: {fileID: 11400000, guid: 26df4a6f24628c44081911a58c598930, type: 2}
+  _biome: {fileID: 11400000, guid: da4fb90891deb3942bc1ce4a94404865, type: 2}
+  _fightTimeLimit: {fileID: 11400000, guid: badd02b5e2d85894cb0b1c227921cbea, type: 2}
+  _levelCurve: {fileID: 11400000, guid: 9ba6e71273f968b46864dffd7796f010, type: 2}
+  _passivePool: {fileID: 11400000, guid: ab451a68e2f12934697609504f26f4d1, type: 2}
+  _titleScreen: {fileID: 9197481963319205126, guid: 4ed2aa965a052a040b362531b9277edf, type: 3}
+  _runScreen: {fileID: 9197481963319205126, guid: 7d2e6239091edbe4bb4c563418ff9116, type: 3}
+  _levelUpScreen: {fileID: 9197481963319205126, guid: e008781e5e117434882b1ca66afb97d7, type: 3}
+  _preparationScreen: {fileID: 9197481963319205126, guid: e6befd248728fbf428c6b99d758fc62f, type: 3}
+  _recapScreen: {fileID: 9197481963319205126, guid: ce66f7a653dd8254b9c9f806dbeeae37, type: 3}
+  _endScreen: {fileID: 9197481963319205126, guid: 2871bc9725ac99c4cb16eb15199f82f5, type: 3}

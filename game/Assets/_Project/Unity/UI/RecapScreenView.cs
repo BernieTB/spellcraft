@@ -102,6 +102,9 @@ namespace Game.Unity.UI
 
         private static readonly string[] OutcomeClasses = { VictoryClass, DefeatClass, TimeLimitClass };
 
+        /// <summary>Name of the button that leaves the recap (hooked up by the game flow, #88).</summary>
+        public const string ContinueButtonElement = "continue-button";
+
         /// <summary>The table columns, in order: title and class of every cell of the column.</summary>
         private static readonly (string Title, string Class)[] Columns =
         {
