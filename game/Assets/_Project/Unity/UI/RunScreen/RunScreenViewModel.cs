@@ -86,8 +86,12 @@ namespace Game.Unity.UI.RunScreen
             bool isCasting,
             bool isNext,
             bool isSelected,
-            double castFraction)
+            double castFraction,
+            int stage = 0,
+            bool justEvolved = false)
         {
+            Stage = stage;
+            JustEvolved = justEvolved;
             Index = index;
             CardId = cardId;
             DetailText = detailText;
@@ -123,6 +127,20 @@ namespace Game.Unity.UI.RunScreen
 
         /// <summary>Progress of the cast being made on this slot, 0 to 1 (0 when it is not casting).</summary>
         public double CastFraction { get; }
+
+        /// <summary>Evolution stage of the card (0 = base form, ADR 0013).</summary>
+        public int Stage { get; }
+
+        /// <summary>
+        /// The stage mark of an evolved card: "*" at stage 1, "**" at stage 2, empty text at stage 0. It is only a
+        /// mark: the screen shows no progress toward the next stage (ADR 0013).
+        /// </summary>
+        public string StageMarkText => Stage > 0 ? new string('*', Stage) : string.Empty;
+
+        public bool HasStageMark => Stage > 0;
+
+        /// <summary>True for a few ticks after the card evolved in the fight on screen: the screen shows a short cue.</summary>
+        public bool JustEvolved { get; }
     }
 
     /// <summary>One side of the fight: a hero or an enemy.</summary>
@@ -406,6 +424,9 @@ namespace Game.Unity.UI.RunScreen
                 objectives.AsReadOnly());
         }
 
+        /// <summary>How many ticks the cue of a fresh evolution stays on a card.</summary>
+        public const int EvolutionCueTicks = 12;
+
         private static void BuildRunLists(RunScreenViewModel model, Run run)
         {
             var line = new List<CardSlotViewModel>(run.Line.Count);
@@ -440,7 +461,8 @@ namespace Game.Unity.UI.RunScreen
                     casting,
                     next,
                     controller.SelectedLinePosition == i,
-                    fraction));
+                    fraction,
+                    HasJustEvolved(session, i)));
             }
 
             var reserve = new List<CardSlotViewModel>(session.HeroReserve.Count);
@@ -460,9 +482,30 @@ namespace Game.Unity.UI.RunScreen
             bool isCasting,
             bool isNext,
             bool isSelected,
-            double castFraction)
+            double castFraction,
+            bool justEvolved = false)
         {
-            return new CardSlotViewModel(index, card.Id, DescribeCard(card), pendingBonus, isCasting, isNext, isSelected, castFraction);
+            return new CardSlotViewModel(
+                index, card.Id, DescribeCard(card), pendingBonus, isCasting, isNext, isSelected, castFraction, card.Stage, justEvolved);
+        }
+
+        // An evolution of the line slot's card in the last ticks. The record's position is where the cast was; the
+        // card must still be there at that stage, else it was moved or swapped out and no cue is shown.
+        private static bool HasJustEvolved(RunFightSession session, int position)
+        {
+            var card = session.HeroLine[position];
+            foreach (var evolution in session.HeroEvolutions)
+            {
+                if (evolution.Position == position
+                    && evolution.Card.Id == card.Id
+                    && evolution.Card.Stage <= card.Stage
+                    && session.Tick - evolution.Tick < EvolutionCueTicks)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static FightViewModel BuildFight(RunScreenController controller, RunFightSession session)

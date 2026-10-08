@@ -10,6 +10,10 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
 
 ### Added
 
+- Evolution made visible (#80, ADR 0013): the run screen shows a stage mark (`*`, `**`) on each evolved card and a short
+  highlight when a card evolves during a fight, with no progress gauge (view model `CardSlotViewModel.Stage`,
+  `JustEvolved`; `RunFightSession.HeroEvolutions` exposes the evolutions of the fight so far). The `evolution` event was
+  already in the combat log, text and JSON (#79).
 - Unity 6 project (URP 2D) in `game/`, with Git LFS for binary assets and enforced LF line endings.
 - Architecture skeleton: `Game.Core` (pure C# logic), `Game.Unity` (presentation) and `Game.Core.Tests`
   (EditMode tests) assemblies, plus `.editorconfig` code style.

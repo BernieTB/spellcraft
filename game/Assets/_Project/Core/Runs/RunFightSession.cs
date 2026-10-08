@@ -133,6 +133,9 @@ namespace Game.Core.Runs
         /// <summary>The hero's reserve as the fight sees it now (upgraded cards), in order. Read-only live view.</summary>
         public IReadOnlyList<CardDefinition> HeroReserve => Fight.HeroReserve;
 
+        /// <summary>The evolutions of the hero's cards so far in this fight, in order (ADR 0013). Read-only live view.</summary>
+        public IReadOnlyList<EvolutionRecord> HeroEvolutions => Fight.HeroEvolutions;
+
         /// <summary>The hero's current health.</summary>
         public int HeroHealth => _participants[Core.Combat.Fight.HeroIndex].Combatant.CurrentHealth;
 

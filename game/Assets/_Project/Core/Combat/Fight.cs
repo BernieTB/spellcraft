@@ -113,6 +113,7 @@ namespace Game.Core.Combat
         private readonly HeroCardState[] _allStates;
         private HeroCardState _heroCastState;
         private readonly List<EvolutionRecord> _evolutions = new List<EvolutionRecord>();
+        private IReadOnlyList<EvolutionRecord> _evolutionsView;
         private readonly List<CastRecord> _casts = new List<CastRecord>();
         private readonly List<LineChangeRecord> _lineChanges = new List<LineChangeRecord>();
         private readonly int _maxTicks;
@@ -314,6 +315,13 @@ namespace Game.Core.Combat
 
         /// <summary>True once a side has won or the maximum number of ticks is reached.</summary>
         public bool IsOver => _winner != FightWinner.None || Tick >= _maxTicks;
+
+        /// <summary>
+        /// The evolutions of the hero's cards so far, in order (ADR 0013). A read-only live view, so a screen can show
+        /// an evolution as it happens; <see cref="FightResult.Evolutions"/> has the same list once the fight is over.
+        /// </summary>
+        public IReadOnlyList<EvolutionRecord> HeroEvolutions =>
+            _evolutionsView ?? (_evolutionsView = new ReadOnlyCollection<EvolutionRecord>(_evolutions));
 
         /// <summary>The hero's spell line as it is now, in order. Read-only live view.</summary>
         public IReadOnlyList<CardDefinition> HeroLine => _spellLines[HeroIndex].Cards;

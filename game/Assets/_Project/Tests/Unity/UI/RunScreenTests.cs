@@ -469,6 +469,94 @@ namespace Game.Unity.Tests.UI
             Assert.IsTrue(controller.LastReport.Log.Events.Any(e => e.Kind == Game.Core.Combat.Log.CombatEventKind.LineChanged));
         }
 
+        // --- Evolution (ADR 0013) ---
+
+        // A hero with one card that evolves after its first cast, against a very tough enemy that never hurts.
+        private static RunScreenController EvolvingController()
+        {
+            var card = new CardDefinition(
+                "demo_grow",
+                1,
+                new IEffect[] { new DealDamageEffect(1) },
+                new NeighbourModifier[0],
+                new[] { new CardEvolution(1, new IEffect[] { new DealDamageEffect(2) }, new NeighbourModifier[0]) });
+            var hero = new ClassDefinition("demo_grower", 100, 0, 2, new[] { card }, new CardDefinition[0]);
+            var dummy = new CardDefinition("demo_idle", 50, new IEffect[0]);
+            var wall = new EnemyDefinition("demo_wall", 5000, 0, new[] { dummy }, 5);
+            var encounter = new EncounterDefinition("demo_wall_encounter", new[] { wall });
+            var biome = new BiomeDefinition("demo_evo_biome", new[] { encounter }, 1, encounter, wall);
+            var run = new Run(hero, biome, new RunRules(1000, new LevelCurve(new[] { 10 }, 5)), 1UL);
+            var controller = new RunScreenController(run, new RunScreenSettings(4d, new[] { 1d }));
+            controller.ChooseStep(RunStep.RegularFight);
+            return controller;
+        }
+
+        [Test]
+        public void ViewModel_UnevolvedCard_HasNoStageMark()
+        {
+            var controller = EvolvingController();
+
+            var slot = RunScreenViewModel.From(controller).Line[0];
+
+            Assert.AreEqual(0, slot.Stage);
+            Assert.AreEqual(string.Empty, slot.StageMarkText);
+            Assert.IsFalse(slot.HasStageMark);
+            Assert.IsFalse(slot.JustEvolved);
+        }
+
+        [Test]
+        public void ViewModel_EvolvedCard_ShowsItsStageMark_AndTheCueFadesAfterAFewTicks()
+        {
+            var controller = EvolvingController();
+            controller.StepOneTick();
+            controller.StepOneTick();
+
+            var slot = RunScreenViewModel.From(controller).Line[0];
+
+            Assert.AreEqual(1, slot.Stage);
+            Assert.AreEqual("*", slot.StageMarkText);
+            Assert.IsTrue(slot.JustEvolved);
+
+            for (var i = 0; i < RunScreenViewModel.EvolutionCueTicks; i++)
+            {
+                controller.StepOneTick();
+            }
+
+            slot = RunScreenViewModel.From(controller).Line[0];
+            Assert.AreEqual("*", slot.StageMarkText, "The mark stays; only the cue goes.");
+            Assert.IsFalse(slot.JustEvolved);
+        }
+
+        [Test]
+        public void View_EvolvedCard_ShowsTheMarkAndTheCue()
+        {
+            var controller = EvolvingController();
+            var root = CloneRunScreen();
+            using (var binding = RunScreenView.Bind(root, controller))
+            {
+                controller.StepOneTick();
+                controller.StepOneTick();
+                binding.Refresh();
+
+                var element = root.Q<VisualElement>(className: RunScreenView.SlotClass);
+
+                Assert.AreEqual("*", element.Q<Label>("slot-stage").text);
+                Assert.IsTrue(element.ClassListContains(RunScreenView.SlotEvolvedClass));
+            }
+        }
+
+        [Test]
+        public void ViewModel_NoProgressTowardTheNextStageIsShown()
+        {
+            var controller = EvolvingController();
+            controller.StepOneTick();
+
+            var slot = RunScreenViewModel.From(controller).Line[0];
+
+            StringAssert.DoesNotContain("/", slot.StageMarkText);
+            StringAssert.DoesNotContain("cast", slot.DetailText);
+        }
+
         // --- View model ---
 
         [Test]
