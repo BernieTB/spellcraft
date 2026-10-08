@@ -47,9 +47,9 @@ namespace Game.Unity.Tests.Content
         }
 
         [Test]
-        public void IsInPlaceholderArea_PlaceholderBiomeFolder_IsTrue()
+        public void IsInPlaceholderArea_SliceBiomeFolder_IsFalse()
         {
-            Assert.IsTrue(PlaceholderGuard.IsInPlaceholderArea(PlaceholderGuard.PlaceholderBiomeFolder + "/x.asset"));
+            Assert.IsFalse(PlaceholderGuard.IsInPlaceholderArea(PlaceholderBiomeGenerator.Folder + "/x.asset"));
         }
 
         [Test]

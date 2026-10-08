@@ -30,7 +30,7 @@ namespace Game.Unity.Tests.Content
 
         private static List<T> LoadAll<T>() where T : UnityEngine.Object
         {
-            return AssetDatabase.FindAssets("t:" + typeof(T).Name, new[] { PlaceholderGuard.PlaceholderBiomeFolder })
+            return AssetDatabase.FindAssets("t:" + typeof(T).Name, new[] { PlaceholderBiomeGenerator.Folder })
                 .Select(AssetDatabase.GUIDToAssetPath)
                 .OrderBy(path => path, StringComparer.Ordinal)
                 .Select(AssetDatabase.LoadAssetAtPath<T>)
@@ -87,30 +87,30 @@ namespace Game.Unity.Tests.Content
         }
 
         [Test]
-        public void Assets_AreFlaggedAsPlaceholderWithWorkingNames()
+        public void Assets_AreSliceContentNotFlaggedAsPlaceholderWithWorkingNames()
         {
             foreach (var card in LoadAll<CardAsset>())
             {
-                Assert.IsTrue(card.IsPlaceholder, card.name);
+                Assert.IsFalse(card.IsPlaceholder, card.name);
                 StringAssert.IsMatch("^CARD_(ENEMY|UNIQUE)_[0-9]{2}$", card.ToDefinition().Id);
             }
 
             foreach (var enemy in LoadAll<EnemyAsset>())
             {
-                Assert.IsTrue(enemy.IsPlaceholder, enemy.name);
+                Assert.IsFalse(enemy.IsPlaceholder, enemy.name);
                 StringAssert.StartsWith("ENEMY_", enemy.Id);
             }
 
             foreach (var encounter in LoadAll<EncounterAsset>())
             {
-                Assert.IsTrue(encounter.IsPlaceholder, encounter.name);
+                Assert.IsFalse(encounter.IsPlaceholder, encounter.name);
                 StringAssert.StartsWith("ENCOUNTER_", encounter.Id);
             }
 
-            Assert.IsTrue(LoadBiome().IsPlaceholder);
-            Assert.IsTrue(Load<LevelCurveAsset>(PlaceholderBiomeGenerator.LevelCurveId).IsPlaceholder);
-            Assert.IsTrue(Load<FightTimeLimitAsset>(PlaceholderBiomeGenerator.FightTimeLimitId).IsPlaceholder);
-            Assert.That(LoadAll<SecretRoomAsset>(), Has.All.Matches<SecretRoomAsset>(room => room.IsPlaceholder));
+            Assert.IsFalse(LoadBiome().IsPlaceholder);
+            Assert.IsFalse(Load<LevelCurveAsset>(PlaceholderBiomeGenerator.LevelCurveId).IsPlaceholder);
+            Assert.IsFalse(Load<FightTimeLimitAsset>(PlaceholderBiomeGenerator.FightTimeLimitId).IsPlaceholder);
+            Assert.That(LoadAll<SecretRoomAsset>(), Has.None.Matches<SecretRoomAsset>(room => room.IsPlaceholder));
         }
 
         [Test]
