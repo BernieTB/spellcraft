@@ -44,6 +44,9 @@ namespace Game.Unity.EditorTools.UI
         /// <summary>Path of the recap screen style sheet.</summary>
         public const string RecapStylePath = UiFolder + "/Styles/Recap.uss";
 
+        /// <summary>Path of the level-up choice screen layout.</summary>
+        public const string LevelUpScreenPath = UiFolder + "/Screens/LevelUpScreen.uxml";
+
         [MenuItem("Tools/Game/Rebuild Bootstrap Scene")]
         public static void Build()
         {
