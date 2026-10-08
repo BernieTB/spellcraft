@@ -5,7 +5,11 @@ using Game.Core.Effects;
 using Game.Core.Enemies;
 using Game.Core.Meta;
 using Game.Core.Runs;
+using Game.Unity.Classes;
+using Game.Unity.EditorTools.Content;
+using Game.Unity.Runs;
 using Game.Unity.UI.RunScreen;
+using UnityEditor;
 
 namespace Game.Unity.EditorTools.UI
 {
@@ -61,6 +65,39 @@ namespace Game.Unity.EditorTools.UI
             }
 
             return controller;
+        }
+
+        /// <summary>A new run on the placeholder biome (#72) with the MVP class: the real content, to judge pacing.</summary>
+        public static RunScreenController PlaceholderBiomeChoosingStep()
+        {
+            return new RunScreenController(NewPlaceholderBiomeRun());
+        }
+
+        /// <summary>A regular fight of the placeholder biome in progress.</summary>
+        public static RunScreenController PlaceholderBiomeFighting()
+        {
+            var controller = new RunScreenController(NewPlaceholderBiomeRun());
+            controller.StartFight(RunStep.RegularFight);
+            return controller;
+        }
+
+        /// <summary>A run of the MVP class on the placeholder biome with its level curve and time limit.</summary>
+        /// <exception cref="System.InvalidOperationException">An asset is missing (regenerate the placeholder biome).</exception>
+        public static Run NewPlaceholderBiomeRun()
+        {
+            var heroClass = Load<ClassAsset>(MvpClassContentGenerator.ClassPath).ToDefinition();
+            var biome = Load<BiomeAsset>(PlaceholderBiomeGenerator.BiomePath).ToDefinition();
+            var rules = new RunRules(
+                Load<FightTimeLimitAsset>(PlaceholderBiomeGenerator.FightTimeLimitPath).MaxTicks,
+                Load<LevelCurveAsset>(PlaceholderBiomeGenerator.LevelCurvePath).ToDefinition());
+            return new Run(heroClass, biome, rules, Seed);
+        }
+
+        private static T Load<T>(string path)
+            where T : UnityEngine.Object
+        {
+            return AssetDatabase.LoadAssetAtPath<T>(path)
+                ?? throw new System.InvalidOperationException($"Asset missing at {path}.");
         }
 
         /// <summary>A demo run with a full line of three cards, a card in the reserve and one secret room.</summary>

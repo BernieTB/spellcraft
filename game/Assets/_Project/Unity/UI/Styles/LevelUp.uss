@@ -1,0 +1,92 @@
+/* Level-up choice screen (#77): flat placeholder shapes, colours and sizes from Common.uss (ADR 0008). */
+.levelup-screen {
+    justify-content: flex-start;
+    padding: 32px 48px;
+}
+
+.levelup-title {
+    font-size: var(--font-size-heading);
+    -unity-font-style: bold;
+    color: var(--color-ink);
+    margin-bottom: 24px;
+}
+
+.packages {
+    flex-direction: row;
+    justify-content: center;
+    align-self: stretch;
+}
+
+.package {
+    width: 320px;
+    margin: 0 12px;
+    padding: 16px 20px;
+    background-color: var(--color-panel);
+    border-width: 4px;
+    border-color: var(--color-panel);
+}
+
+.package--selected {
+    border-color: var(--color-accent);
+}
+
+.package-card-name {
+    font-size: var(--font-size-body);
+    -unity-font-style: bold;
+    color: var(--color-ink);
+}
+
+.package-card-summary {
+    margin-top: 8px;
+    font-size: var(--font-size-small);
+    color: var(--color-ink-muted);
+}
+
+.package-passive {
+    margin-top: 16px;
+    font-size: var(--font-size-small);
+    color: var(--color-success);
+}
+
+.destination-panel {
+    margin-top: 24px;
+    padding: 16px 20px;
+    align-self: stretch;
+    background-color: var(--color-panel);
+}
+
+.destination-text,
+.destination-hint {
+    font-size: var(--font-size-small);
+    color: var(--color-ink);
+    margin-bottom: 8px;
+}
+
+.line-cards {
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.line-card {
+    margin: 4px 8px 4px 0;
+    padding: 8px 12px;
+    font-size: var(--font-size-small);
+    color: var(--color-ink);
+    background-color: var(--color-background);
+    border-width: 3px;
+    border-color: var(--color-background);
+}
+
+.line-card--selected {
+    border-color: var(--color-accent);
+}
+
+.reserve-button--selected {
+    border-color: var(--color-accent);
+}
+
+.confirm-button {
+    margin-top: 24px;
+    align-self: center;
+    font-size: var(--font-size-body);
+}

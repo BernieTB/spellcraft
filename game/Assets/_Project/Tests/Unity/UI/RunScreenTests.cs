@@ -838,6 +838,19 @@ namespace Game.Unity.Tests.UI
         }
 
         [Test]
+        public void Previews_PlaceholderBiome_PlaysARegularFightToItsResult()
+        {
+            var controller = ScreenPreviewRuns.PlaceholderBiomeFighting();
+            Assert.IsTrue(controller.CanEditLine);
+
+            PlayToEnd(controller);
+
+            Assert.AreEqual(RunScreenPhase.FightResult, controller.Phase);
+            Assert.AreEqual(1, controller.Run.FightsPlayed);
+            Assert.AreEqual(RunScreenPhase.ChoosingStep, ScreenPreviewRuns.PlaceholderBiomeChoosingStep().Phase);
+        }
+
+        [Test]
         public void Previews_RunFight_ShowsALiveFight()
         {
             var host = new ScreenHost(new VisualElement());

@@ -98,6 +98,22 @@ namespace Game.Unity.EditorTools.UI
                 "Run: fight result",
                 BootstrapSceneBuilder.RunScreenPath,
                 root => RunScreenView.Bind(root, ScreenPreviewRuns.FightResult())),
+            new ScreenPreview(
+                "Run: placeholder biome",
+                BootstrapSceneBuilder.RunScreenPath,
+                root => RunScreenView.Bind(root, ScreenPreviewRuns.PlaceholderBiomeChoosingStep())),
+            new ScreenPreview(
+                "Run: placeholder biome fight",
+                BootstrapSceneBuilder.RunScreenPath,
+                root => RunScreenView.Bind(root, ScreenPreviewRuns.PlaceholderBiomeFighting())),
+            new ScreenPreview(
+                "Level-up: free slot",
+                BootstrapSceneBuilder.LevelUpScreenPath,
+                root => LevelUpScreenView.Bind(root, ScreenPreviewLevelUps.FreeSlot(), choice => { })),
+            new ScreenPreview(
+                "Level-up: full line",
+                BootstrapSceneBuilder.LevelUpScreenPath,
+                root => LevelUpScreenView.Bind(root, ScreenPreviewLevelUps.FullLine(), choice => { })),
         }.AsReadOnly();
     }
 }
