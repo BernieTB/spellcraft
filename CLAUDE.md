@@ -107,6 +107,16 @@ defined in `MvpClassContentGenerator`; not flagged as placeholder content). Clos
   -executeMethod Game.Unity.EditorTools.Content.MvpClassContentGenerator.Generate -logFile <scratch-dir>/generate.log
 ```
 
+Regenerate the MVP passive pool (`PASSIVE_A`...`PASSIVE_J` and the pool asset `PASSIVE_POOL_A` in
+`game/Assets/_Project/Unity/Content/Classes/`, defined in `PassiveUpgradePoolGenerator`; not flagged as placeholder
+content). The caller of `Run.GetLevelUpOffer` passes `PassiveUpgradePoolAsset.ToUpgrades()` as the passive pool. Close the
+editor on this project first (menu: **Tools > Game > Regenerate MVP Passive Pool**):
+
+```powershell
+& "C:\Program Files\Unity\Hub\Editor\6000.3.24f1\Editor\Unity.exe" -batchmode -quit -projectPath <absolute path to game> `
+  -executeMethod Game.Unity.EditorTools.Content.PassiveUpgradePoolGenerator.Generate -logFile <scratch-dir>/generate.log
+```
+
 Regenerate the placeholder biome of the Vertical slice (`BIOME_01`, its enemies `ENEMY_*`, encounters `ENCOUNTER_*`, cards
 `CARD_ENEMY_*`/`CARD_UNIQUE_*`, secret rooms, level curve and `FIGHT_TIME_LIMIT` in
 `game/Assets/_Project/Unity/Content/PlaceholderBiome/`, numbers in `PlaceholderBiomeSpecs`; flagged as placeholder).

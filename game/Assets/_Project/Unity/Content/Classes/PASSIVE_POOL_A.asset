@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 25224af96bcab4244b20314955c1b2ad, type: 3}
+  m_Name: PASSIVE_POOL_A
+  m_EditorClassIdentifier: Game.Unity::Game.Unity.Upgrades.PassiveUpgradePoolAsset
+  _id: PASSIVE_POOL_A
+  _upgrades:
+  - {fileID: 11400000, guid: b0d880a3f5986d449bfded67a6341b40, type: 2}
+  - {fileID: 11400000, guid: b1545fba4d82a7c4b847145dd126341b, type: 2}
+  - {fileID: 11400000, guid: 9a6121fdbbf13404f8b3b333ee3fe333, type: 2}
+  - {fileID: 11400000, guid: f6a46ddf965180d44836c3468a893e43, type: 2}
+  - {fileID: 11400000, guid: 5fbdc7778afdbba4b9e09a5eaceafdb3, type: 2}
+  - {fileID: 11400000, guid: 3d57397c14f407440979af853507a720, type: 2}
+  - {fileID: 11400000, guid: 41f29901fd52b644495900c0316b1eea, type: 2}
+  - {fileID: 11400000, guid: 107c3530568317644a70bf6868414886, type: 2}
+  - {fileID: 11400000, guid: bc62893fb73a11d41a7a4839a6eabe45, type: 2}
+  - {fileID: 11400000, guid: 74a04cc14b0a1bf469d39a68fbc5d42f, type: 2}
