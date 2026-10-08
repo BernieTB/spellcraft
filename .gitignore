@@ -89,3 +89,6 @@ CLAUDE.local.md
 results.xml
 TestResults/
 coverage/
+
+# Unity CLI test output
+/test-results.xml
