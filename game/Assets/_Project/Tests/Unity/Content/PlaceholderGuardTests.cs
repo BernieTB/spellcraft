@@ -47,6 +47,12 @@ namespace Game.Unity.Tests.Content
         }
 
         [Test]
+        public void IsInPlaceholderArea_PlaceholderBiomeFolder_IsTrue()
+        {
+            Assert.IsTrue(PlaceholderGuard.IsInPlaceholderArea(PlaceholderGuard.PlaceholderBiomeFolder + "/x.asset"));
+        }
+
+        [Test]
         public void IsInPlaceholderArea_TestsFolder_IsTrue()
         {
             Assert.IsTrue(PlaceholderGuard.IsInPlaceholderArea(PlaceholderGuard.TestsFolder + "/x.asset"));
