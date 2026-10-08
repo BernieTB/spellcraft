@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Game.Unity.UI;
+using Game.Unity.UI.RunScreen;
 using UnityEngine.UIElements;
 
 namespace Game.Unity.EditorTools.UI
@@ -81,6 +82,22 @@ namespace Game.Unity.EditorTools.UI
                 "Recap: out of time",
                 BootstrapSceneBuilder.RecapScreenPath,
                 root => RecapScreenView.Bind(root, ScreenPreviewFights.TimeLimit())),
+            new ScreenPreview(
+                "Run: next step",
+                BootstrapSceneBuilder.RunScreenPath,
+                root => RunScreenView.Bind(root, ScreenPreviewRuns.ChoosingStep())),
+            new ScreenPreview(
+                "Run: regular fight",
+                BootstrapSceneBuilder.RunScreenPath,
+                root => RunScreenView.Bind(root, ScreenPreviewRuns.Fighting())),
+            new ScreenPreview(
+                "Run: level-up pending",
+                BootstrapSceneBuilder.RunScreenPath,
+                root => RunScreenView.Bind(root, ScreenPreviewRuns.LevelUpPending())),
+            new ScreenPreview(
+                "Run: fight result",
+                BootstrapSceneBuilder.RunScreenPath,
+                root => RunScreenView.Bind(root, ScreenPreviewRuns.FightResult())),
         }.AsReadOnly();
     }
 }

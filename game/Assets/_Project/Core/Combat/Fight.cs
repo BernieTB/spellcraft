@@ -322,6 +322,46 @@ namespace Game.Core.Combat
         public IReadOnlyList<CardDefinition> HeroReserve => _heroReserveView;
 
         /// <summary>
+        /// Where combatant <paramref name="combatantIndex"/> is in its line: the card being cast and its progress, or
+        /// the position that will be cast next. A read-only snapshot for display.
+        /// </summary>
+        /// <exception cref="ArgumentOutOfRangeException">The index is not a combatant of the fight.</exception>
+        public CastProgress GetCastProgress(int combatantIndex)
+        {
+            CheckCombatant(combatantIndex);
+            var card = _castCards[combatantIndex];
+            return card == null
+                ? new CastProgress(false, _positions[combatantIndex], null, 0, 0)
+                : new CastProgress(true, _castPositions[combatantIndex], card.Id, _elapsedTicks[combatantIndex], card.CastTime);
+        }
+
+        /// <summary>
+        /// The neighbour bonus waiting at a line position of a combatant (the next cast there takes it). Bonuses stay
+        /// at their position when the hero's line is edited (ADR 0012).
+        /// </summary>
+        /// <exception cref="ArgumentOutOfRangeException">The index is not a combatant, or the position is not in its line.</exception>
+        public EffectBonus GetPendingBonus(int combatantIndex, int position)
+        {
+            CheckCombatant(combatantIndex);
+            var pending = _pendingBonuses[combatantIndex];
+            if (position < 0 || position >= pending.Length)
+            {
+                throw new ArgumentOutOfRangeException(nameof(position), position, $"The line has {pending.Length} positions.");
+            }
+
+            return pending[position];
+        }
+
+        private void CheckCombatant(int combatantIndex)
+        {
+            if (combatantIndex < 0 || combatantIndex >= _combatants.Length)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(combatantIndex), combatantIndex, $"There are {_combatants.Length} combatants.");
+            }
+        }
+
+        /// <summary>
         /// Changes the hero's line at the start of the next tick (see the remarks of <see cref="Fight"/>).
         /// <paramref name="change"/> must be stamped with that tick, <c>Tick + 1</c>.
         /// </summary>
