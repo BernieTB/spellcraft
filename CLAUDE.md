@@ -98,6 +98,15 @@ editor on this project first (verified; menu: **Tools > Game > Regenerate Placeh
   -executeMethod Game.Unity.EditorTools.Content.PlaceholderEnemyGenerator.Generate -logFile <scratch-dir>/generate.log
 ```
 
+Regenerate the MVP class content (`CLASS_A` and its cards `CARD_A`...`CARD_N` in `game/Assets/_Project/Unity/Content/Classes/`,
+defined in `MvpClassContentGenerator`; not flagged as placeholder content). Close the editor on this project first
+(menu: **Tools > Game > Regenerate MVP Class Content**):
+
+```powershell
+& "C:\Program Files\Unity\Hub\Editor\6000.3.24f1\Editor\Unity.exe" -batchmode -quit -projectPath <absolute path to game> `
+  -executeMethod Game.Unity.EditorTools.Content.MvpClassContentGenerator.Generate -logFile <scratch-dir>/generate.log
+```
+
 Placeholder cards, enemies and encounters are flagged `_isPlaceholder` (`IPlaceholderContent`). Only
 `Unity/Content/Placeholders/`, `Tests/` and `Unity/DebugTools/` may reference them: otherwise an EditMode test
 fails, and `PlaceholderBuildCheck` fails any player build. `PlaceholderBuildCheck` also fails a build whose scenes,
