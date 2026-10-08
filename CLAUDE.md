@@ -107,8 +107,18 @@ defined in `MvpClassContentGenerator`; not flagged as placeholder content). Clos
   -executeMethod Game.Unity.EditorTools.Content.MvpClassContentGenerator.Generate -logFile <scratch-dir>/generate.log
 ```
 
+Regenerate the placeholder biome of the Vertical slice (`BIOME_01`, its enemies `ENEMY_*`, encounters `ENCOUNTER_*`, cards
+`CARD_ENEMY_*`/`CARD_UNIQUE_*`, secret rooms, level curve and `FIGHT_TIME_LIMIT` in
+`game/Assets/_Project/Unity/Content/PlaceholderBiome/`, numbers in `PlaceholderBiomeSpecs`; flagged as placeholder).
+Close the editor on this project first (menu: **Tools > Game > Regenerate Placeholder Biome**):
+
+```powershell
+& "C:\Program Files\Unity\Hub\Editor\6000.3.24f1\Editor\Unity.exe" -batchmode -quit -projectPath <absolute path to game> `
+  -executeMethod Game.Unity.EditorTools.Content.PlaceholderBiomeGenerator.Generate -logFile <scratch-dir>/generate.log
+```
+
 Placeholder cards, enemies and encounters are flagged `_isPlaceholder` (`IPlaceholderContent`). Only
-`Unity/Content/Placeholders/`, `Tests/` and `Unity/DebugTools/` may reference them: otherwise an EditMode test
+`Unity/Content/Placeholders/`, `Unity/Content/PlaceholderBiome/`, `Tests/` and `Unity/DebugTools/` may reference them: otherwise an EditMode test
 fails, and `PlaceholderBuildCheck` fails any player build. `PlaceholderBuildCheck` also fails a build whose scenes,
 `Resources` assets or preloaded assets lie in one of those three folders: never add the debug scene to the build
 settings.
