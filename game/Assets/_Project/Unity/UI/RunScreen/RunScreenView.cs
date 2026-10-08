@@ -47,6 +47,7 @@ namespace Game.Unity.UI.RunScreen
         public const string SlotCastingClass = "slot--casting";
         public const string SlotNextClass = "slot--next";
         public const string SlotSelectedClass = "slot--selected";
+        public const string SlotEvolvedClass = "slot--evolved";
         public const string StepClass = "step";
         public const string ObjectiveClass = "objective";
         public const string CombatantBoxClass = "combatant-box";
@@ -408,6 +409,10 @@ namespace Game.Unity.UI.RunScreen
                     var bonus = element.Q<Label>("slot-bonus");
                     bonus.text = slot.PendingBonusText == null ? string.Empty : $"Waiting: {slot.PendingBonusText}";
                     SetVisible(bonus, slot.HasPendingBonus);
+                    var mark = element.Q<Label>("slot-stage");
+                    mark.text = slot.StageMarkText;
+                    SetVisible(mark, slot.HasStageMark);
+                    element.EnableInClassList(SlotEvolvedClass, slot.JustEvolved);
                     element.EnableInClassList(SlotCastingClass, slot.IsCasting);
                     element.EnableInClassList(SlotNextClass, slot.IsNext);
                     element.EnableInClassList(SlotSelectedClass, slot.IsSelected);
@@ -424,9 +429,12 @@ namespace Game.Unity.UI.RunScreen
                 title.AddToClassList("slot-title");
                 var detail = new Label { name = "slot-detail" };
                 detail.AddToClassList("slot-detail");
+                var stage = new Label { name = "slot-stage" };
+                stage.AddToClassList("slot-stage");
                 var bonus = new Label { name = "slot-bonus" };
                 bonus.AddToClassList("slot-bonus");
                 slot.Add(title);
+                slot.Add(stage);
                 slot.Add(detail);
                 slot.Add(bonus);
                 var castBar = Bar("slot-cast-fill", "cast-fill");
