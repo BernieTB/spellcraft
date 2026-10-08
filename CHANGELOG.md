@@ -138,6 +138,13 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
   reserve (no size limit) through the run's own line edits; `Start()` begins the fight and fixes the line (further
   edits throw). For the professor it exposes only a `ProfessorKnowledge` read from the bestiary (health, shield
   and cards hidden unless revealed); a lost fight ends the run, so there is no retry.
+- Level-up offer generator (#76, ADR 0012): `LevelUpOfferGenerator` draws 3 packages, each a card of the class's
+  card pool plus a passive of the passive pool, with the run's offer sequence (`Run.LevelUpOfferSequence`), so the
+  same seed and choices give the same offers (duplicates allowed, no rarity). `Run.GetLevelUpOffer` keeps the
+  offer until it is taken; `Run.TakeLevelUpPackage` gives the passive and a new card (end of the line, reserve if
+  the line is full, or in place of a chosen line card that goes to the reserve) and consumes one pending level-up,
+  all or nothing. `Run.HasPendingChoice` tells that a choice waits; the run does not force it before the next
+  fight (existing run tests play several fights with levels pending), the owner's answer is still open.
 
 ### Changed
 

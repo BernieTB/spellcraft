@@ -43,7 +43,7 @@ namespace Game.Core.Runs
     /// </para>
     /// <list type="bullet">
     /// <item>sequence <see cref="EncounterDrawSequence"/> (0): drawing regular encounters;</item>
-    /// <item>sequence <see cref="LevelUpOfferSequence"/> (1): reserved for level-up offers (#76);</item>
+    /// <item>sequence <see cref="LevelUpOfferSequence"/> (1): level-up offers (#76), one draw per offer;</item>
     /// <item>sequence <see cref="FirstFightSequence"/> + k (2 + k): fight number k, counted from 0.</item>
     /// </list>
     /// <para>
@@ -52,8 +52,8 @@ namespace Game.Core.Runs
     /// </para>
     /// <para>Extension points for later systems, not implemented here:</para>
     /// <list type="bullet">
-    /// <item>Level-up offers (#76) read <see cref="PendingLevelUps"/> and call <see cref="ConsumePendingLevelUp"/>,
-    /// then <see cref="TakeUpgrade"/> and <see cref="AddCard"/>.</item>
+    /// <item>Level-up offers (#76): <see cref="GetLevelUpOffer"/> draws the packages of a pending level-up and
+    /// <see cref="TakeLevelUpPackage"/> applies one. Whether a pending choice must be made before the next fight is left to the caller (<see cref="HasPendingChoice"/>).</item>
     /// <item>The report returned by <see cref="Play"/> or <see cref="RunFightSession.Complete"/> tells which rooms the
     /// fight unlocked and what a first victory gave (<see cref="RunFightReport.SecretRoomRewards"/>), whose
     /// revelation the caller records in the bestiary and saves.</item>
@@ -74,13 +74,15 @@ namespace Game.Core.Runs
         /// <summary>Generator sequence used to draw regular encounters.</summary>
         public const ulong EncounterDrawSequence = 0UL;
 
-        /// <summary>Generator sequence reserved for level-up offers (#76).</summary>
+        /// <summary>Generator sequence used to draw level-up offers (#76).</summary>
         public const ulong LevelUpOfferSequence = 1UL;
 
         /// <summary>Generator sequence of the first fight; fight k (from 0) uses this value + k.</summary>
         public const ulong FirstFightSequence = 2UL;
 
         private Pcg32Random _drawRandom;
+        private readonly Pcg32Random _offerRandom;
+        private LevelUpOffer _currentOffer;
         private readonly List<CardInstance> _reserve = new List<CardInstance>();
         private readonly ReadOnlyCollection<CardInstance> _readOnlyReserve;
         private readonly List<SecretRoom> _secretRooms = new List<SecretRoom>();
@@ -102,6 +104,7 @@ namespace Game.Core.Runs
             Rules = rules ?? throw new ArgumentNullException(nameof(rules));
             Seed = seed;
             _drawRandom = new Pcg32Random(seed, EncounterDrawSequence);
+            _offerRandom = new Pcg32Random(seed, LevelUpOfferSequence);
             _readOnlyReserve = _reserve.AsReadOnly();
 
             _line = new SpellLine<CardInstance>(heroClass.StartingLineCapacity);
@@ -151,6 +154,13 @@ namespace Game.Core.Runs
         /// (#76) removes one with <see cref="ConsumePendingLevelUp"/>.
         /// </summary>
         public int PendingLevelUps { get; private set; }
+
+        /// <summary>
+        /// True while a level-up waits for its linked choice. The run does not force the choice before the next fight:
+        /// existing run tests and tools play several fights with levels pending, so the screen (#77) or the caller
+        /// decides, using this flag. The owner's answer to the #76 question is still open.
+        /// </summary>
+        public bool HasPendingChoice => PendingLevelUps > 0;
 
         /// <summary>True once enough regular fights are won to face the professor.</summary>
         public bool IsProfessorAvailable => RegularFightsWon >= Biome.MinimumRegularFights;
@@ -314,6 +324,107 @@ namespace Game.Core.Runs
             }
 
             PendingLevelUps--;
+        }
+
+        /// <summary>
+        /// The packages offered for the next pending level-up (#76, ADR 0012). Drawn the first time it is asked, with
+        /// the run's offer sequence, then kept until a package is taken, so asking again gives the same offer and the
+        /// draws depend only on the seed and the choices made. The next pending level-up then draws a new offer.
+        /// <paramref name="passivePool"/> is only read when the offer is drawn.
+        /// </summary>
+        /// <param name="passivePool">The passive upgrades that can be offered, from data. Not empty.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="passivePool"/> is null.</exception>
+        /// <exception cref="InvalidOperationException">
+        /// The run is over, a fight session is open, there is no pending level-up, or a pool is empty.
+        /// </exception>
+        public LevelUpOffer GetLevelUpOffer(IReadOnlyList<PassiveUpgrade> passivePool)
+        {
+            if (passivePool == null)
+            {
+                throw new ArgumentNullException(nameof(passivePool));
+            }
+
+            EnsureCanChange();
+            if (!HasPendingChoice)
+            {
+                throw new InvalidOperationException("There is no pending level-up.");
+            }
+
+            if (_currentOffer == null)
+            {
+                _currentOffer = LevelUpOfferGenerator.Generate(HeroClass.CardPool, passivePool, _offerRandom);
+            }
+
+            return _currentOffer;
+        }
+
+        /// <summary>
+        /// Takes one package of the current offer (<see cref="GetLevelUpOffer"/>): gives the hero its passive upgrade
+        /// and a new copy of its card, and consumes one pending level-up, all or nothing. The card goes at the end of
+        /// the spell line when a slot is free, otherwise to the reserve, or in place of the line card at
+        /// <paramref name="replacedLinePosition"/>, which goes to the reserve (ADR 0012, ADR 0009). Replacing is only
+        /// possible when the line is full.
+        /// </summary>
+        /// <param name="packageIndex">Index in <see cref="LevelUpOffer.Packages"/>.</param>
+        /// <param name="replacedLinePosition">
+        /// Position of the line card the new card replaces, or null to add it at the end (line not full) or to the
+        /// reserve (line full).
+        /// </param>
+        /// <returns>The new card instance.</returns>
+        /// <exception cref="InvalidOperationException">
+        /// The run is over, a fight session is open, no offer was drawn, or a position is given while the line is not
+        /// full.
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException">The index or the position is not valid.</exception>
+        /// <exception cref="OverflowException">A total of the upgrades exceeds <see cref="int.MaxValue"/>.</exception>
+        public CardInstance TakeLevelUpPackage(int packageIndex, int? replacedLinePosition = null)
+        {
+            EnsureCanChange();
+            if (!HasPendingChoice || _currentOffer == null)
+            {
+                throw new InvalidOperationException("No level-up offer is waiting: call GetLevelUpOffer first.");
+            }
+
+            if (packageIndex < 0 || packageIndex >= _currentOffer.Packages.Count)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(packageIndex), packageIndex, $"The offer has {_currentOffer.Packages.Count} packages.");
+            }
+
+            if (replacedLinePosition.HasValue)
+            {
+                if (!_line.IsFull)
+                {
+                    throw new InvalidOperationException("A line card can only be replaced when the spell line is full.");
+                }
+
+                if (replacedLinePosition.Value < 0 || replacedLinePosition.Value >= _line.Count)
+                {
+                    throw new ArgumentOutOfRangeException(
+                        nameof(replacedLinePosition), replacedLinePosition.Value, "Not a position of the spell line.");
+                }
+            }
+
+            // Everything that can throw is done before anything changes.
+            var package = _currentOffer.Packages[packageIndex];
+            var upgrades = _upgrades.With(package.Passive);
+
+            _upgrades = upgrades;
+            CardInstance added;
+            if (replacedLinePosition.HasValue)
+            {
+                added = NewInstance(package.Card);
+                _reserve.Add(_line[replacedLinePosition.Value]);
+                _line.Replace(replacedLinePosition.Value, added);
+            }
+            else
+            {
+                added = AddCardCore(package.Card);
+            }
+
+            ConsumePendingLevelUp();
+            _currentOffer = null;
+            return added;
         }
 
         /// <summary>
