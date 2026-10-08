@@ -350,20 +350,17 @@ namespace Game.Unity.Tests.UI
         }
 
         [Test]
-        public void Bind_Start_DisablesTheControlsAndTellsTheCaller()
+        public void Bind_AfterStart_DisablesTheControls()
         {
             var model = Model();
             var layout = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(PreparationScreenView.LayoutPath);
             var root = layout.CloneTree();
-            var started = false;
-            PreparationScreenView.Bind(root, model, () => started = true);
+            PreparationScreenView.Bind(root, model);
 
             model.SelectLine(0);
             model.Start();
-            // The view's own Start button is what calls onStart; here the model started directly.
             Assert.IsFalse(root.Q<Button>(PreparationScreenView.StartButton).enabledSelf);
             Assert.IsFalse(root.Q<Button>(PreparationScreenView.MoveRightButton).enabledSelf);
-            Assert.IsFalse(started);
         }
 
         [Test]
