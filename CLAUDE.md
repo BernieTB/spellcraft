@@ -29,6 +29,7 @@ The Unity project lives in `game/`, not at the repo root.
 | `game/Assets/_Project/Unity/` | `Game.Unity` | Rendering, UI, scenes, ScriptableObjects. References `Game.Core` |
 | `game/Assets/_Project/Unity/EditorTools/` | `Game.Unity.EditorTools` | Editor-only tools: content generators, build checks, headless simulation runner |
 | `game/Assets/_Project/Unity/UI/` | `Game.Unity` | Game screens (UI Toolkit): views (`Game.Unity.UI`), `Screens/*.uxml`, `Styles/*.uss`, `Themes/`, panel settings |
+| `game/Assets/_Project/Unity/Flow/` | `Game.Unity` | Game flow (#88): `GameFlow` state machine (plain C#), `GameFlowPresenter`, thin `GameFlowBehaviour`, `GameConfigAsset` |
 | `game/Assets/_Project/Unity/Scenes/` | `Game.Unity` | `Bootstrap.unity`, the only scene in the build (generated) |
 | `game/Assets/_Project/Unity/DebugTools/` | `Game.Unity` | Debug fight viewer: scene, setup asset, playback (never in builds) |
 | `game/Assets/_Project/Tests/Core/` | `Game.Core.Tests` | EditMode tests for `Game.Core` (Editor only, NUnit) |
@@ -117,9 +118,11 @@ editor on this project first (menu: **Tools > Game > Regenerate MVP Passive Pool
   -executeMethod Game.Unity.EditorTools.Content.PassiveUpgradePoolGenerator.Generate -logFile <scratch-dir>/generate.log
 ```
 
-Regenerate the placeholder biome of the Vertical slice (`BIOME_01`, its enemies `ENEMY_*`, encounters `ENCOUNTER_*`, cards
+Regenerate the biome of the Vertical slice (`BIOME_01`, its enemies `ENEMY_*`, encounters `ENCOUNTER_*`, cards
 `CARD_ENEMY_*`/`CARD_UNIQUE_*`, secret rooms, level curve and `FIGHT_TIME_LIMIT` in
-`game/Assets/_Project/Unity/Content/PlaceholderBiome/`, numbers in `PlaceholderBiomeSpecs`; flagged as placeholder).
+`game/Assets/_Project/Unity/Content/Biome01/`, numbers in `PlaceholderBiomeSpecs`). Since #88 it is NOT flagged as placeholder
+and lies outside the guarded folders, because it ships in the playable build (its names and numbers remain working values the
+owner will replace).
 Close the editor on this project first (menu: **Tools > Game > Regenerate Placeholder Biome**):
 
 ```powershell
@@ -128,10 +131,11 @@ Close the editor on this project first (menu: **Tools > Game > Regenerate Placeh
 ```
 
 Placeholder cards, enemies and encounters are flagged `_isPlaceholder` (`IPlaceholderContent`). Only
-`Unity/Content/Placeholders/`, `Unity/Content/PlaceholderBiome/`, `Tests/` and `Unity/DebugTools/` may reference them: otherwise an EditMode test
+`Unity/Content/Placeholders/`, `Tests/` and `Unity/DebugTools/` may reference them: otherwise an EditMode test
 fails, and `PlaceholderBuildCheck` fails any player build. `PlaceholderBuildCheck` also fails a build whose scenes,
 `Resources` assets or preloaded assets lie in one of those three folders: never add the debug scene to the build
-settings.
+settings. The playable build holds only real or slice content: the biome of the slice (`Unity/Content/Biome01/`) is not
+flagged, so the bootstrap scene may reference it through the game config.
 
 Rebuild the debug fight scene (`Unity/DebugTools/DebugFight.unity`, see README "Watch a simulated fight") with
 code, never by editing its YAML. It keeps an existing `DebugFightSetup.asset`, where the fight's numbers live.
@@ -159,6 +163,16 @@ this project first (verified; menu: **Tools > Game > Rebuild Bootstrap Scene**):
 & "C:\Program Files\Unity\Hub\Editor\6000.3.24f1\Editor\Unity.exe" -batchmode -quit -projectPath <absolute path to game> `
   -executeMethod Game.Unity.EditorTools.UI.BootstrapSceneBuilder.Build -logFile <scratch-dir>/bootstrap-scene.log
 ```
+
+The playable game (#88): `Bootstrap.unity` holds a camera, `GameBootstrap` and one object with the `UIDocument` and the thin
+`GameFlowBehaviour`, which references `Unity/Content/GameConfig.asset` (`GameConfigAsset`: class `CLASS_A`, biome `BIOME_01`,
+fight time limit, level curve, passive pool `PASSIVE_POOL_A` and the layout of every screen; no `Resources`, no path in code).
+`Game.Unity.Flow.GameFlow` is the plain C# state machine (title, run, level-up, preparation, recap, end of run, title): it adds
+no rule, it listens to `RunScreenController` and owns the bestiary (saved after every reveal). `GameFlowPresenter` shows the
+current screen through `ScreenHost`. The run seed comes from the clock in `GameFlowBehaviour` (never in Core). Rebuild the scene
+and the config with the command above (`BootstrapSceneBuilder` rewrites `GameConfig.asset` from the generated content, so
+regenerate the content first if it changed). Play it in the editor with Play on `Bootstrap.unity`, or from the CI artifact
+(README "Play the Vertical slice").
 
 Look at the screens without playing a run: **Tools > Game > Preview Screens** opens an editor window with one
 button per screen, filled with demo data (the recap on a victory, a defeat and a fight that runs out of time,

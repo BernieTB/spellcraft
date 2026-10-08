@@ -4,5 +4,7 @@
         <ui:Label name="title" class="title" text="Title" />
         <ui:VisualElement name="accent-bar" class="accent-bar" />
         <ui:Label name="subtitle" class="subtitle" text="Work in progress" />
+        <ui:Button name="start-button" class="menu-button menu-button--accent" text="New run" />
+        <ui:Button name="quit-button" class="menu-button" text="Quit" />
     </ui:VisualElement>
 </ui:UXML>

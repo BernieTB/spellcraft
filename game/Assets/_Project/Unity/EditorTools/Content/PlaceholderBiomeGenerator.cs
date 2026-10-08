@@ -11,7 +11,7 @@ namespace Game.Unity.EditorTools.Content
 {
     /// <summary>
     /// Creates or updates the placeholder biome of the Vertical slice (#72) in
-    /// <see cref="PlaceholderGuard.PlaceholderBiomeFolder"/>: regular monsters with one attack card each and their
+    /// <see cref="Folder"/>: regular monsters with one attack card each and their
     /// encounter pool, two mini-bosses and a professor with worked spell lines, two secret rooms, the biome, the
     /// global fight time limit and a level curve (ADR 0009, 0010, 0011).
     /// </summary>
@@ -19,7 +19,8 @@ namespace Game.Unity.EditorTools.Content
     /// <para>
     /// The ids and numbers come from <see cref="PlaceholderBiomeSpecs"/>. They are working names and first-pass values
     /// that let the MVP class finish the biome, not game content or balance: final names, words and creatures are
-    /// written by the project owner. Every generated asset is flagged as placeholder.
+    /// written by the project owner. The assets are working content of the Vertical slice, NOT flagged as placeholder (#88): the biome
+    /// ships in the playable build, so it lies outside the placeholder guard.
     /// </para>
     /// <para>
     /// Run from the menu <c>Tools &gt; Game &gt; Regenerate Placeholder Biome</c>, or headless with
@@ -29,6 +30,12 @@ namespace Game.Unity.EditorTools.Content
     /// </remarks>
     public static class PlaceholderBiomeGenerator
     {
+        /// <summary>
+        /// Folder of the generated assets. It is not a placeholder folder (<see cref="PlaceholderGuard.IsInPlaceholderArea"/>):
+        /// the biome is the content of the playable Vertical slice (#88).
+        /// </summary>
+        public const string Folder = "Assets/_Project/Unity/Content/Biome01";
+
         /// <summary>Asset name of the level curve.</summary>
         public const string LevelCurveId = "LEVEL_CURVE_01";
 
@@ -49,7 +56,7 @@ namespace Game.Unity.EditorTools.Content
         public static IReadOnlyList<string> RoomIds { get; } = PlaceholderBiomeSpecs.Rooms.Select(spec => spec.Id).ToArray();
 
         /// <summary>Path of the asset named <paramref name="id"/>.</summary>
-        public static string AssetPath(string id) => $"{PlaceholderGuard.PlaceholderBiomeFolder}/{id}.asset";
+        public static string AssetPath(string id) => $"{Folder}/{id}.asset";
 
         /// <summary>Path of the biome asset.</summary>
         public static string BiomePath => AssetPath(PlaceholderBiomeSpecs.BiomeId);
@@ -63,7 +70,7 @@ namespace Game.Unity.EditorTools.Content
         [MenuItem("Tools/Game/Regenerate Placeholder Biome")]
         public static void Generate()
         {
-            EnsureFolder(PlaceholderGuard.PlaceholderBiomeFolder);
+            EnsureFolder(Folder);
 
             foreach (var spec in PlaceholderBiomeSpecs.Cards)
             {
@@ -94,7 +101,7 @@ namespace Game.Unity.EditorTools.Content
             WriteFightTimeLimit(LoadOrCreate<FightTimeLimitAsset>(FightTimeLimitPath));
 
             AssetDatabase.SaveAssets();
-            Debug.Log($"Generated the placeholder biome in {PlaceholderGuard.PlaceholderBiomeFolder}: "
+            Debug.Log($"Generated the placeholder biome in {Folder}: "
                 + $"{PlaceholderBiomeSpecs.Cards.Length} cards, {PlaceholderBiomeSpecs.Enemies.Length} enemies, "
                 + $"{PlaceholderBiomeSpecs.Encounters.Length} encounters, {PlaceholderBiomeSpecs.Rooms.Length} secret rooms.");
         }
@@ -127,7 +134,7 @@ namespace Game.Unity.EditorTools.Content
             var serialized = new SerializedObject(asset);
             serialized.FindProperty("_id").stringValue = spec.Id;
             serialized.FindProperty("_castTime").intValue = spec.CastTime;
-            serialized.FindProperty("_isPlaceholder").boolValue = true;
+            serialized.FindProperty("_isPlaceholder").boolValue = false;
 
             var effects = serialized.FindProperty("_effects");
             effects.arraySize = spec.Effects.Length;
@@ -161,7 +168,7 @@ namespace Game.Unity.EditorTools.Content
             serialized.FindProperty("_maxHealth").intValue = spec.MaxHealth;
             serialized.FindProperty("_startingShield").intValue = spec.Shield;
             serialized.FindProperty("_xpReward").intValue = spec.Xp;
-            serialized.FindProperty("_isPlaceholder").boolValue = true;
+            serialized.FindProperty("_isPlaceholder").boolValue = false;
             WriteReferences(serialized.FindProperty("_spellLine"), spec.CardIds, Load<CardAsset>);
             serialized.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(asset);
@@ -171,7 +178,7 @@ namespace Game.Unity.EditorTools.Content
         {
             var serialized = new SerializedObject(asset);
             serialized.FindProperty("_id").stringValue = spec.Id;
-            serialized.FindProperty("_isPlaceholder").boolValue = true;
+            serialized.FindProperty("_isPlaceholder").boolValue = false;
             WriteReferences(serialized.FindProperty("_enemies"), spec.EnemyIds, Load<EnemyAsset>);
             serialized.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(asset);
@@ -195,7 +202,7 @@ namespace Game.Unity.EditorTools.Content
                 positions.GetArrayElementAtIndex(i).intValue = spec.RevealedPositions[i];
             }
 
-            serialized.FindProperty("_isPlaceholder").boolValue = true;
+            serialized.FindProperty("_isPlaceholder").boolValue = false;
             serialized.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(asset);
         }
@@ -208,7 +215,7 @@ namespace Game.Unity.EditorTools.Content
             serialized.FindProperty("_professorEncounter").objectReferenceValue =
                 Load<EncounterAsset>(PlaceholderBiomeSpecs.ProfessorEncounterId);
             serialized.FindProperty("_professor").objectReferenceValue = Load<EnemyAsset>(PlaceholderBiomeSpecs.ProfessorId);
-            serialized.FindProperty("_isPlaceholder").boolValue = true;
+            serialized.FindProperty("_isPlaceholder").boolValue = false;
             WriteReferences(serialized.FindProperty("_regularEncounters"), PlaceholderBiomeSpecs.RegularPool, Load<EncounterAsset>);
             WriteReferences(serialized.FindProperty("_secretRooms"), RoomIds.ToArray(), Load<SecretRoomAsset>);
             serialized.ApplyModifiedPropertiesWithoutUndo();
@@ -226,7 +233,7 @@ namespace Game.Unity.EditorTools.Content
             }
 
             serialized.FindProperty("_costIncreaseAfterList").intValue = PlaceholderBiomeSpecs.CostIncreaseAfterList;
-            serialized.FindProperty("_isPlaceholder").boolValue = true;
+            serialized.FindProperty("_isPlaceholder").boolValue = false;
             serialized.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(asset);
         }
@@ -235,7 +242,7 @@ namespace Game.Unity.EditorTools.Content
         {
             var serialized = new SerializedObject(asset);
             serialized.FindProperty("_maxTicks").intValue = PlaceholderBiomeSpecs.FightTimeLimit;
-            serialized.FindProperty("_isPlaceholder").boolValue = true;
+            serialized.FindProperty("_isPlaceholder").boolValue = false;
             serialized.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(asset);
         }

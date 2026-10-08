@@ -1,6 +1,7 @@
 using System.Linq;
 using Game.Unity.EditorTools.Content;
 using Game.Unity.EditorTools.UI;
+using Game.Unity.Flow;
 using Game.Unity.UI;
 using NUnit.Framework;
 using UnityEditor;
@@ -25,7 +26,7 @@ namespace Game.Unity.Tests.UI
         }
 
         [Test]
-        public void Scene_HasADocumentShowingTheTitleScreen()
+        public void Scene_HasADocumentDrivenByTheGameFlow()
         {
             var scene = EditorSceneManager.OpenScene(BootstrapSceneBuilder.ScenePath, OpenSceneMode.Additive);
             try
@@ -36,8 +37,11 @@ namespace Game.Unity.Tests.UI
 
                 var document = documents[0];
                 Assert.AreEqual(AssetDatabase.LoadAssetAtPath<PanelSettings>(BootstrapSceneBuilder.PanelSettingsPath), document.panelSettings);
-                Assert.AreEqual(AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(BootstrapSceneBuilder.TitleScreenPath), document.visualTreeAsset);
-                Assert.IsNotNull(document.GetComponent<TitleScreenView>());
+                var flow = document.GetComponent<GameFlowBehaviour>();
+                Assert.IsNotNull(flow);
+                Assert.AreEqual(
+                    AssetDatabase.LoadAssetAtPath<GameConfigAsset>(BootstrapSceneBuilder.GameConfigPath),
+                    new SerializedObject(flow).FindProperty("_config").objectReferenceValue);
 
                 Assert.IsTrue(roots.Any(root => root.GetComponent<GameBootstrap>() != null), "The scene needs the game bootstrap.");
                 Assert.IsTrue(roots.Any(root => root.GetComponent<Camera>() != null), "The scene needs a camera.");

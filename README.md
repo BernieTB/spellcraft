@@ -126,8 +126,35 @@ are printed in the log. In the editor, use **Tools > Game > Run Simulation**. De
 
 Every push to `main` builds the Windows player (workflow **Build**, which can also be run manually). Open the
 run in the **Actions** tab and download the `Spellcraft-Windows64-<short-sha>` artifact. Artifacts are kept for
-7 days. Unzip it and run `Spellcraft.exe`. The build opens on a placeholder title screen, the only screen so far
-([ADR 0008](docs/adr/0008-ui-toolkit-and-placeholder-visuals.md)).
+7 days. Unzip it and run `Spellcraft.exe`. The next section explains how to play.
+
+### Play the Vertical slice
+
+The build holds the whole Vertical slice (#88): one class (`CLASS_A`), one biome (`BIOME_01`) and one professor, all
+with working names and placeholder visuals (flat shapes), played from the title screen to the end of the run.
+
+1. Download the artifact (see above), unzip it, run `Spellcraft.exe` (windowed, 1920x1080 reference; the UI scales).
+2. **Title**: **New run** starts a run with a seed taken from the clock (shown on the end screen, useful in bug
+   reports); **Quit** closes the game.
+3. **Run screen**: pick the next step with the buttons: a regular fight, an unlocked secret room (mini-boss) or, after
+   enough regular fights, the professor. The fight plays by itself; use **Pause** and the speed button
+   (x1/x2/x4/x8). During a regular fight, click a line slot, then another slot or a reserve card, to move or swap
+   cards live. **Leave** abandons the fight (it does not count).
+4. **Level-up**: each level gives a mandatory choice of one of three packages (a card and a passive); no fight can
+   start before it. With a full line, send the new card to the reserve or replace a line card.
+5. **Mini-boss and professor**: the preparation screen lets you arrange the line and the reserve (the line is fixed
+   once the fight starts). The first win in a secret room reveals part of the professor to the **bestiary**.
+6. **Recap** after every fight, then the **end screen** (victory or defeat) and back to the title.
+
+The bestiary is the only save. It is loaded at startup, saved after every reveal and kept between runs, in
+`%USERPROFILE%\AppData\LocalLow\DefaultCompany\game\bestiary.json` (company and product name are the placeholder
+values of the Unity player settings; the game logs the exact path at startup in
+`%USERPROFILE%\AppData\LocalLow\DefaultCompany\game\Player.log`, and in the editor the path is under
+`%USERPROFILE%\AppData\LocalLow\DefaultCompany\game\` too). To reset what the game knows, close the game and
+delete `bestiary.json` and any `bestiary.unreadable*.json` next to it. There is no other save: a run is lost if the
+window is closed.
+
+In the editor, open `game/Assets/_Project/Unity/Scenes/Bootstrap.unity` and press Play: it is the same flow.
 
 ## Contributing
 

@@ -1,0 +1,8 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <Style src="../Styles/Common.uss" />
+    <ui:VisualElement name="screen" class="screen">
+        <ui:Label name="end-title" class="title" text="End of the run" />
+        <ui:Label name="end-summary" class="subtitle" text="" />
+        <ui:Button name="back-button" class="menu-button menu-button--accent" text="Back to the title" />
+    </ui:VisualElement>
+</ui:UXML>

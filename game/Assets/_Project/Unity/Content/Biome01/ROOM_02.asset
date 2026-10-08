@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 50f791eac71882148b54eae5218c3f0f, type: 3}
+  m_Name: ROOM_02
+  m_EditorClassIdentifier: Game.Unity::Game.Unity.Runs.SecretRoomAsset
+  _id: ROOM_02
+  _objectiveEnemy: {fileID: 11400000, guid: 068c96df52cc6724ca3e844859473fb2, type: 2}
+  _objectiveCount: 3
+  _miniBossEncounter: {fileID: 11400000, guid: 63106cbebc78876468bc4886ad8de8ac, type: 2}
+  _bonusLineSlots: 1
+  _uniqueCard: {fileID: 11400000, guid: 342a6b75dfb57914e97227561ccd8910, type: 2}
+  _revealsProfessorHealth: 1
+  _revealsProfessorShield: 0
+  _revealedProfessorCardPositions: 0200000003000000
+  _isPlaceholder: 0
