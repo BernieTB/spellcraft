@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4d806a631afdeb46b741258d041ad45, type: 3}
+  m_Name: CLASS_A
+  m_EditorClassIdentifier: Game.Unity::Game.Unity.Classes.ClassAsset
+  _id: CLASS_A
+  _maxHealth: 30
+  _startingShield: 0
+  _startingLineCapacity: 4
+  _startingDeck:
+  - {fileID: 11400000, guid: 0428ba9530a7b094ab4b05d24165cd3a, type: 2}
+  - {fileID: 11400000, guid: 053274ae714e7be4b9e1704c888d293a, type: 2}
+  - {fileID: 11400000, guid: bf8d9018a2fc28c49b84b4be03a8736a, type: 2}
+  - {fileID: 11400000, guid: 3bf23e5ab7613784e93db7c686334a44, type: 2}
+  _cardPool:
+  - {fileID: 11400000, guid: 5f16154efd4030043aefbee73ffd359a, type: 2}
+  - {fileID: 11400000, guid: 2266b8a7985e30f4f8d2336ca6105e44, type: 2}
+  - {fileID: 11400000, guid: 207c5001f331a434a9c80c7bf06eaa9a, type: 2}
+  - {fileID: 11400000, guid: d5921249bd660874a88569c203000677, type: 2}
+  - {fileID: 11400000, guid: aa59f141f026f1942bdc090da15e0c4a, type: 2}
+  - {fileID: 11400000, guid: ebd22e829178b9140848f524d8d9f322, type: 2}
+  - {fileID: 11400000, guid: 4ca4b458c6709554084c9ea1d7e6388f, type: 2}
+  - {fileID: 11400000, guid: 9518c56066a9bc047b73b00362bcc1f4, type: 2}
+  - {fileID: 11400000, guid: 7db6723280cf4bf46a1a27ad19a3bb6d, type: 2}
+  - {fileID: 11400000, guid: c261880a66bdf654e872c0465574404a, type: 2}
+  _isPlaceholder: 0
