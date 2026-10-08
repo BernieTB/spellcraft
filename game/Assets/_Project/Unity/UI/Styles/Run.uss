@@ -250,6 +250,16 @@
     background-color: var(--color-background);
 }
 
+.slot--evolved {
+    border-color: var(--color-success);
+}
+
+.slot-stage {
+    font-size: var(--font-size-small);
+    -unity-font-style: bold;
+    color: var(--color-success);
+}
+
 .slot-title {
     font-size: var(--font-size-small);
     -unity-font-style: bold;
