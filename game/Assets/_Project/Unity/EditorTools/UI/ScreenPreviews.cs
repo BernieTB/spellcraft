@@ -93,6 +93,14 @@ namespace Game.Unity.EditorTools.UI
                 "Preparation: professor partly known",
                 PreparationScreenView.LayoutPath,
                 root => PreparationScreenView.Bind(root, new PreparationViewModel(ScreenPreviewPreparations.ProfessorPartlyKnown()))),
+            new ScreenPreview(
+                "Level-up: free slot",
+                BootstrapSceneBuilder.LevelUpScreenPath,
+                root => LevelUpScreenView.Bind(root, ScreenPreviewLevelUps.FreeSlot(), choice => { })),
+            new ScreenPreview(
+                "Level-up: full line",
+                BootstrapSceneBuilder.LevelUpScreenPath,
+                root => LevelUpScreenView.Bind(root, ScreenPreviewLevelUps.FullLine(), choice => { })),
         }.AsReadOnly();
     }
 }

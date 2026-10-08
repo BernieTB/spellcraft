@@ -162,6 +162,9 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
   all or nothing. `Run.HasPendingChoice` tells that a choice waits. Decision: the choice is mandatory before the next
   fight, but the screen / game loop (#77) imposes it, not `Run` (`Play` and `BeginFight` still accept a fight with
   levels pending, as existing run tests and tools rely on it).
+- Level-up choice screen (#77, UI Toolkit): shows the 3 offered packages (card and passive upgrade); when the
+  spell line is full the player sends the new card to the reserve or replaces a line card. Rules stay in Core
+  (`Run.TakeLevelUpPackage`); `LevelUpScreenModel` is a plain, tested view-model. Added to **Tools > Game > Preview Screens**.
 
 ### Changed
 

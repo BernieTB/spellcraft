@@ -1,0 +1,15 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <Style src="../Styles/Common.uss" />
+    <Style src="../Styles/LevelUp.uss" />
+    <ui:VisualElement name="screen" class="screen levelup-screen">
+        <ui:Label name="levelup-title" class="levelup-title" text="Level up: choose a package" />
+        <ui:VisualElement name="packages" class="packages" />
+        <ui:VisualElement name="destination-panel" class="destination-panel hidden">
+            <ui:Label name="destination-text" class="destination-text" text="" />
+            <ui:Button name="reserve-button" class="reserve-button" text="Send the new card to the reserve" />
+            <ui:Label class="destination-hint" text="Or replace a card of the line (it goes to the reserve):" />
+            <ui:VisualElement name="line-cards" class="line-cards" />
+        </ui:VisualElement>
+        <ui:Button name="confirm-button" class="confirm-button" text="Take this package" />
+    </ui:VisualElement>
+</ui:UXML>
