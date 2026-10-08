@@ -13,7 +13,7 @@ namespace Game.Unity.EditorTools.Content
     /// </summary>
     /// <remarks>
     /// <para>
-    /// Only the placeholder folder, the test folder and the debug tools folder may hold or reference placeholders.
+    /// Only the placeholder folders, the test folder and the debug tools folder may hold or reference placeholders.
     /// Any other asset that is placeholder content or depends on some (directly or through other assets) is a
     /// violation (<see cref="FindProjectViolations"/>). This is stricter than checking only what a build includes,
     /// and needs no knowledge of how content gets into a build (scenes, Resources, later Addressables).
@@ -30,6 +30,13 @@ namespace Game.Unity.EditorTools.Content
         /// <summary>Folder holding the placeholder content assets (cards, enemies, encounters, classes, passive upgrades, secret rooms, level curves).</summary>
         public const string PlaceholderFolder = "Assets/_Project/Unity/Content/Placeholders";
 
+        /// <summary>
+        /// Folder holding the placeholder biome of the Vertical slice (#72): its enemies, encounters, cards, secret
+        /// rooms, biome, level curve and fight time limit, flagged as placeholder. It is separate from
+        /// <see cref="PlaceholderFolder"/>, whose test ids and contents are checked by their own tests.
+        /// </summary>
+        public const string PlaceholderBiomeFolder = "Assets/_Project/Unity/Content/PlaceholderBiome";
+
         /// <summary>Folder holding the tests, which may reference placeholders.</summary>
         public const string TestsFolder = "Assets/_Project/Tests";
 
@@ -45,6 +52,7 @@ namespace Game.Unity.EditorTools.Content
         public static bool IsInPlaceholderArea(string assetPath)
         {
             return assetPath.StartsWith(PlaceholderFolder + "/", StringComparison.Ordinal)
+                || assetPath.StartsWith(PlaceholderBiomeFolder + "/", StringComparison.Ordinal)
                 || assetPath.StartsWith(TestsFolder + "/", StringComparison.Ordinal)
                 || assetPath.StartsWith(DebugFolder + "/", StringComparison.Ordinal);
         }
