@@ -156,6 +156,21 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
   all or nothing. `Run.HasPendingChoice` tells that a choice waits. Decision: the choice is mandatory before the next
   fight, but the screen / game loop (#77) imposes it, not `Run` (`Play` and `BeginFight` still accept a fight with
   levels pending, as existing run tests and tools rely on it).
+- Run screen (#73, ADR 0008, 0009, 0012, 0015): `Screens/RunScreen.uxml` + `Styles/Run.uss` and the `Game.Unity.UI.RunScreen`
+  classes. The screen shows the level, XP progress, objectives with their progress, line capacity and reserve, lets the
+  player pick the next step (regular fight, unlocked secret room, professor with the number of fights still missing)
+  and plays the fight tick by tick from a Core `RunFightSession` as flat shapes (health, shield and cast bars). During
+  regular fights a click on a line slot then another slot (or a reserve card) rearranges the line at once through
+  Core; waiting neighbour bonuses are shown on their slots, the card being cast and the next one are marked. Playback
+  speed (x1 to x8) and pause. All logic is in plain C# and tested: `RunScreenController` (flow, events),
+  `RunScreenViewModel` (what is shown), `FightPacer` (real time to ticks). Leaving a fight calls
+  `RunFightSession.Cancel`. Hooks for the other screens: `PendingChoiceRequested` (a level-up waits, #77),
+  `PreparationRequested` (mini-boss or professor picked, #84, which then calls `StartFight`), `FightCompleted` and
+  `RunEnded` (report for the recap). A pending level-up is enforced here: no step starts while one waits. The screen
+  is in the **Tools > Game > Preview Screens** menu (demo run, and the placeholder biome).
+- Core read-only views for the run screen: `Fight.GetCastProgress` / `RunFightSession.HeroCast` / `EnemyCast`
+  (`CastProgress`: card being cast, ticks done, or the next position), `GetPendingBonus` / `HeroPendingBonus` (the
+  neighbour bonus waiting on a slot), `Run.XpIntoLevel` and `Run.XpForNextLevel`.
 - Level-up choice screen (#77, UI Toolkit): shows the 3 offered packages (card and passive upgrade); when the
   spell line is full the player sends the new card to the reserve or replaces a line card. Rules stay in Core
   (`Run.TakeLevelUpPackage`); `LevelUpScreenModel` is a plain, tested view-model. Added to **Tools > Game > Preview Screens**.

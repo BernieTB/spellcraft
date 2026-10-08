@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Game.Core.Cards;
 using Game.Core.Combat;
 using Game.Core.Combat.Log;
+using Game.Core.Effects;
 using Game.Core.Enemies;
 using Game.Core.Randomness;
 
@@ -155,6 +156,21 @@ namespace Game.Core.Runs
         /// <summary>The current shield of the enemy at <paramref name="enemyIndex"/>.</summary>
         /// <exception cref="ArgumentOutOfRangeException">The index is not an enemy.</exception>
         public int EnemyShield(int enemyIndex) => Enemy(enemyIndex).Shield;
+
+        /// <summary>Where the hero is in its line: the card being cast and its progress, or the next position.</summary>
+        public CastProgress HeroCast => Fight.GetCastProgress(Core.Combat.Fight.HeroIndex);
+
+        /// <summary>Where the enemy at <paramref name="enemyIndex"/> is in its line.</summary>
+        /// <exception cref="ArgumentOutOfRangeException">The index is not an enemy.</exception>
+        public CastProgress EnemyCast(int enemyIndex)
+        {
+            Enemy(enemyIndex);
+            return Fight.GetCastProgress(enemyIndex + 1);
+        }
+
+        /// <summary>The neighbour bonus waiting at a position of the hero's line (it stays there when the line is edited).</summary>
+        /// <exception cref="ArgumentOutOfRangeException">The position is not in the line.</exception>
+        public EffectBonus HeroPendingBonus(int position) => Fight.GetPendingBonus(Core.Combat.Fight.HeroIndex, position);
 
         /// <summary>True until the session is completed or cancelled.</summary>
         public bool IsOpen => !_closed;

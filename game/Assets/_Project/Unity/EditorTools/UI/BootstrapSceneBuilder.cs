@@ -44,6 +44,12 @@ namespace Game.Unity.EditorTools.UI
         /// <summary>Path of the recap screen style sheet.</summary>
         public const string RecapStylePath = UiFolder + "/Styles/Recap.uss";
 
+        /// <summary>Path of the run screen layout (not part of the bootstrap scene: screens are switched in code).</summary>
+        public const string RunScreenPath = UiFolder + "/Screens/RunScreen.uxml";
+
+        /// <summary>Path of the run screen style sheet.</summary>
+        public const string RunStylePath = UiFolder + "/Styles/Run.uss";
+
         /// <summary>Path of the level-up choice screen layout.</summary>
         public const string LevelUpScreenPath = UiFolder + "/Screens/LevelUpScreen.uxml";
 

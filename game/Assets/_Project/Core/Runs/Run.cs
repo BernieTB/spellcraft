@@ -149,6 +149,12 @@ namespace Game.Core.Runs
         /// <summary>The hero's level, from <see cref="TotalXp"/> and <see cref="RunRules.LevelCurve"/>. Starts at 1.</summary>
         public int Level { get; private set; } = 1;
 
+        /// <summary>XP earned since the hero reached its current level.</summary>
+        public long XpIntoLevel => TotalXp - XpToReachLevel(Level);
+
+        /// <summary>XP the current level costs to complete, from <see cref="RunRules.LevelCurve"/>.</summary>
+        public long XpForNextLevel => Rules.LevelCurve.CostToLevelUpFrom(Level);
+
         /// <summary>
         /// Levels reached whose linked choice has not been taken yet. Each level reached adds one; the level-up offer
         /// (#76) removes one with <see cref="ConsumePendingLevelUp"/>.
@@ -615,6 +621,18 @@ namespace Game.Core.Runs
 
             _line.Add(_reserve[reserveIndex]);
             _reserve.RemoveAt(reserveIndex);
+        }
+
+        // Total XP at which the given level starts (level 1 starts at 0).
+        private long XpToReachLevel(int level)
+        {
+            long total = 0;
+            for (var l = 1; l < level; l++)
+            {
+                total += Rules.LevelCurve.CostToLevelUpFrom(l);
+            }
+
+            return total;
         }
 
         private bool IsAvailable(RunStep step)
