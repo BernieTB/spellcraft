@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using UnityEngine.UIElements;
 
@@ -179,19 +180,17 @@ namespace Game.Unity.UI.RunScreen
                 ShowHud(model.Hud);
                 _status.text = model.StatusText;
 
-                var choosing = model.Phase == RunScreenPhase.ChoosingStep;
+                var choosing = model.Phase == RunScreenPhase.BetweenFights;
+                var hasSideSteps = (choosing || model.Phase == RunScreenPhase.Fighting) && model.Steps.Any(IsSideStep);
                 var fighting = model.Fight != null;
                 var hasResult = model.Result != null;
-                SetVisible(_stepsPanel, choosing);
+                SetVisible(_stepsPanel, hasSideSteps || (choosing && model.HasPendingChoice));
                 SetVisible(_fightPanel, fighting);
                 SetVisible(_resultPanel, hasResult);
                 SetVisible(_controls, fighting);
                 SetVisible(_pendingChoiceButton, choosing && model.HasPendingChoice);
 
-                if (choosing)
-                {
-                    ShowSteps(model.Steps);
-                }
+                ShowSteps(model.Steps);
 
                 if (fighting)
                 {
@@ -287,12 +286,16 @@ namespace Game.Unity.UI.RunScreen
                 return wrapper;
             }
 
+            // The regular fight has no button: the loop chains them (ADR 0016). Rooms and the professor are asked for.
+            private static bool IsSideStep(StepChoice choice) => choice.Step.RequiresPreparation;
+
             private void ShowSteps(IReadOnlyList<StepChoice> steps)
             {
                 var key = new StringBuilder();
-                foreach (var step in steps)
+                foreach (var step in steps.Where(IsSideStep))
                 {
-                    key.Append(step.Label).Append('|').Append(step.IsEnabled).Append('|').Append(step.DisabledReason).Append(';');
+                    key.Append(step.Label).Append('|').Append(step.IsEnabled).Append('|').Append(step.DisabledReason)
+                        .Append('|').Append(step.IsRequested).Append(';');
                 }
 
                 if (key.ToString() == _stepsKey)
@@ -302,12 +305,15 @@ namespace Game.Unity.UI.RunScreen
 
                 _stepsKey = key.ToString();
                 _steps.Clear();
-                foreach (var choice in steps)
+                foreach (var choice in steps.Where(IsSideStep))
                 {
                     var holder = new VisualElement();
                     holder.AddToClassList(StepClass);
                     var captured = choice;
-                    var button = new Button(() => Act(() => _controller.ChooseStep(captured.Step))) { text = choice.Label };
+                    var button = new Button(() => Act(() => _controller.RequestStep(captured.Step)))
+                    {
+                        text = choice.IsRequested ? choice.Label + " (next, click to cancel)" : choice.Label,
+                    };
                     button.AddToClassList("button");
                     button.SetEnabled(choice.IsEnabled);
                     holder.Add(button);

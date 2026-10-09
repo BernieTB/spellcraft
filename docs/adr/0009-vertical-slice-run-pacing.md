@@ -1,6 +1,6 @@
 # 0009. Run pacing for the Vertical slice biome
 
-- **Status:** Accepted
+- **Status:** Accepted (amended by [ADR 0016](0016-regular-fights-chain-automatically.md): regular fights chain automatically)
 - **Date:** 2026-10-03
 
 ## Context

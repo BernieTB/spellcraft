@@ -29,8 +29,8 @@ namespace Game.Unity.Tests.Flow
     }
 
     /// <summary>
-    /// Plays a <see cref="GameFlow"/> through its public methods only, as the player's clicks would: it prefers
-    /// secret rooms not yet cleared, then the professor, then a regular fight, always takes the first level-up package and starts
+    /// Plays a <see cref="GameFlow"/> through its public methods only, as the player's clicks would: it asks for
+    /// secret rooms not yet cleared, then the professor, and otherwise lets the regular fights chain, always takes the first level-up package and starts
     /// every preparation as it is.
     /// </summary>
     public static class FlowBot
@@ -65,13 +65,29 @@ namespace Game.Unity.Tests.Flow
             {
                 case GameScreen.Run:
                     var controller = flow.RunController;
+                    var wanted = PickStep(flow.Run);
                     if (controller.Phase == Game.Unity.UI.RunScreen.RunScreenPhase.Fighting)
                     {
+                        // Asks for a room or the professor during the fight, as the always-visible buttons allow.
+                        if (wanted.RequiresPreparation && controller.PendingStep == null)
+                        {
+                            controller.RequestStep(wanted);
+                        }
+
                         controller.StepOneTick();
                         return;
                     }
 
-                    controller.ChooseStep(PickStep(flow.Run));
+                    if (wanted.RequiresPreparation)
+                    {
+                        controller.RequestStep(wanted);
+                    }
+                    else
+                    {
+                        // Lets the loop's pause run out: the next regular fight starts by itself.
+                        controller.Advance(Game.Unity.UI.RunScreen.RunScreenSettings.DefaultNextFightDelaySeconds + 1d);
+                    }
+
                     return;
                 case GameScreen.LevelUp:
                     var model = flow.LevelUp;

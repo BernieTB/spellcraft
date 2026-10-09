@@ -116,48 +116,148 @@ namespace Game.Unity.Tests.Flow
         }
 
         [Test]
-        public void RegularFight_Won_ShowsTheRecapThenTheLevelUpChoiceBeforeAnyNextFight()
+        public void RegularFights_Won_ShowNoRecap_AndChainOrOpenTheLevelUpChoice()
         {
             using (var flow = NewFlow(new MemoryBestiaryStore()))
             {
                 flow.StartRun();
-                PlayRegularFightsUntilALevelIsPending(flow);
+                var levelUps = 0;
+                for (var fight = 0; fight < 12; fight++)
+                {
+                    flow.RunController.Advance(100d);
+                    Assert.AreEqual(RunScreenPhase.Fighting, flow.RunController.Phase);
+                    while (flow.RunController.Phase == RunScreenPhase.Fighting)
+                    {
+                        flow.RunController.StepOneTick();
+                    }
 
-                Assert.AreEqual(GameScreen.Recap, flow.Screen);
-                Assert.IsNotNull(flow.Recap);
-                Assert.IsTrue(flow.LastReport.HeroWon);
-                Assert.IsTrue(flow.Run.HasPendingChoice);
+                    Assert.IsTrue(flow.LastReport.HeroWon);
+                    Assert.IsNull(flow.Recap);
+                    if (flow.Run.HasPendingChoice)
+                    {
+                        Assert.AreEqual(GameScreen.LevelUp, flow.Screen);
+                        TakeLevelUp(flow);
+                        levelUps++;
+                    }
 
-                flow.ContinueFromRecap();
+                    Assert.AreEqual(GameScreen.Run, flow.Screen);
+                }
 
-                Assert.AreEqual(GameScreen.LevelUp, flow.Screen);
-                Assert.IsNotNull(flow.LevelUp);
-                Assert.IsNull(flow.Recap);
+                Assert.AreEqual(12, flow.Run.RegularFightsWon);
+                Assert.Greater(levelUps, 0);
             }
         }
 
         [Test]
-        public void RunScreen_WhileALevelUpWaits_StartingAFightOpensTheChoiceInstead()
+        public void LevelUp_StopsTheLoop_AndTheChoiceLetsItGoOn()
         {
             using (var flow = NewFlow(new MemoryBestiaryStore()))
             {
                 flow.StartRun();
                 PlayRegularFightsUntilALevelIsPending(flow);
 
-                flow.ContinueFromRecap();
                 Assert.AreEqual(GameScreen.LevelUp, flow.Screen);
-                flow.LevelUp.SelectPackage(0);
-                if (flow.LevelUp.LineIsFull)
-                {
-                    flow.LevelUp.SelectReserve();
-                }
+                Assert.IsNotNull(flow.LevelUp);
+                var fights = flow.Run.FightsPlayed;
+                flow.RunController.Advance(1000d);
+                Assert.IsNull(flow.Run.CurrentFight);
 
-                flow.TakeLevelUp(flow.LevelUp.Confirm());
-
+                TakeLevelUp(flow);
                 Assert.AreEqual(GameScreen.Run, flow.Screen);
                 Assert.IsFalse(flow.Run.HasPendingChoice);
-                Assert.IsTrue(flow.RunController.CanStartStep);
+                flow.RunController.Advance(1000d);
+
+                Assert.AreEqual(RunScreenPhase.Fighting, flow.RunController.Phase);
+                Assert.AreEqual(fights, flow.Run.FightsPlayed);
             }
+        }
+
+        [Test]
+        public void SecretRoom_RequestedDuringAFight_OpensThePreparationAfterTheFight()
+        {
+            using (var flow = NewDemoFlow(new MemoryBestiaryStore()))
+            {
+                flow.StartRun();
+                PlayUntilARoomIsUnlocked(flow);
+                var room = flow.Run.AvailableSteps.First(step => step.Kind == RunStepKind.SecretRoom);
+                flow.RunController.Advance(1000d);
+                Assert.AreEqual(RunScreenPhase.Fighting, flow.RunController.Phase);
+
+                Assert.IsTrue(flow.RunController.RequestStep(room));
+                flow.RunController.StepOneTick();
+                Assert.AreEqual(GameScreen.Run, flow.Screen);
+                while (flow.Screen == GameScreen.Run && flow.RunController.Phase == RunScreenPhase.Fighting)
+                {
+                    flow.RunController.StepOneTick();
+                }
+
+                if (flow.Screen == GameScreen.LevelUp)
+                {
+                    TakeLevelUp(flow);
+                }
+
+                Assert.AreEqual(GameScreen.Preparation, flow.Screen);
+                flow.Preparation.Start();
+                flow.PreparationStarted();
+                Assert.AreEqual(RunScreenPhase.Fighting, flow.RunController.Phase);
+                Assert.AreEqual(RunStepKind.SecretRoom, flow.RunController.Session.Step.Kind);
+            }
+        }
+
+        [Test]
+        public void MiniBossFight_ShowsTheRecap_ThenTheRegularLoopGoesOn()
+        {
+            using (var flow = NewDemoFlow(new MemoryBestiaryStore()))
+            {
+                flow.StartRun();
+                PlayUntilARoomIsUnlocked(flow);
+                var room = flow.Run.AvailableSteps.First(step => step.Kind == RunStepKind.SecretRoom);
+                flow.RunController.RequestStep(room);
+                flow.Preparation.Start();
+                flow.PreparationStarted();
+                while (flow.Screen == GameScreen.Run && flow.RunController.Phase == RunScreenPhase.Fighting)
+                {
+                    flow.RunController.StepOneTick();
+                }
+
+                Assert.AreEqual(GameScreen.Recap, flow.Screen);
+                Assert.IsNotNull(flow.Recap);
+                flow.ContinueFromRecap();
+                if (flow.Screen == GameScreen.LevelUp)
+                {
+                    TakeLevelUp(flow);
+                }
+
+                Assert.AreEqual(GameScreen.Run, flow.Screen);
+                flow.RunController.Advance(1000d);
+                Assert.AreEqual(RunStepKind.RegularFight, flow.RunController.Session.Step.Kind);
+            }
+        }
+
+        [Test]
+        public void Pause_StopsTheLoopBetweenFights()
+        {
+            using (var flow = NewFlow(new MemoryBestiaryStore()))
+            {
+                flow.StartRun();
+                flow.RunController.Pacer.IsPaused = true;
+
+                flow.RunController.Advance(1000d);
+
+                Assert.AreEqual(RunScreenPhase.BetweenFights, flow.RunController.Phase);
+                Assert.IsNull(flow.Run.CurrentFight);
+            }
+        }
+
+        private static void TakeLevelUp(GameFlow flow)
+        {
+            flow.LevelUp.SelectPackage(0);
+            if (flow.LevelUp.LineIsFull)
+            {
+                flow.LevelUp.SelectReserve();
+            }
+
+            flow.TakeLevelUp(flow.LevelUp.Confirm());
         }
 
         [Test]
@@ -316,31 +416,27 @@ namespace Game.Unity.Tests.Flow
             Assert.IsNull(run.CurrentFight);
         }
 
-        // Plays regular fights, taking the level-ups on the way, until a fight ends with a level-up waiting (the recap is shown).
+        // Lets the regular fights chain until a fight ends with a level-up waiting (the level-up screen opens).
         private static void PlayRegularFightsUntilALevelIsPending(GameFlow flow)
         {
-            for (var i = 0; i < 50; i++)
+            for (var i = 0; i < 5000 && flow.Screen == GameScreen.Run; i++)
             {
-                flow.RunController.ChooseStep(RunStep.RegularFight);
-                while (flow.Screen == GameScreen.Run)
+                if (flow.RunController.Phase == RunScreenPhase.Fighting)
                 {
                     flow.RunController.StepOneTick();
                 }
-
-                if (flow.Run.HasPendingChoice)
+                else
                 {
-                    return;
+                    flow.RunController.Advance(100d);
                 }
-
-                flow.ContinueFromRecap();
             }
 
-            Assert.Fail("No regular fight gave a level.");
+            Assert.AreEqual(GameScreen.LevelUp, flow.Screen, "No regular fight gave a level.");
         }
 
         private static void PlayUntilARoomIsUnlocked(GameFlow flow)
         {
-            for (var i = 0; i < 4000 && !(flow.Screen == GameScreen.Run && flow.Run.AvailableSteps.Any(step => step.Kind == RunStepKind.SecretRoom)); i++)
+            for (var i = 0; i < 4000 && !(flow.Screen == GameScreen.Run && flow.RunController.Phase == RunScreenPhase.BetweenFights && flow.Run.AvailableSteps.Any(step => step.Kind == RunStepKind.SecretRoom)); i++)
             {
                 switch (flow.Screen)
                 {
@@ -351,7 +447,7 @@ namespace Game.Unity.Tests.Flow
                         }
                         else
                         {
-                            flow.RunController.ChooseStep(RunStep.RegularFight);
+                            flow.RunController.Advance(100d);
                         }
 
                         break;

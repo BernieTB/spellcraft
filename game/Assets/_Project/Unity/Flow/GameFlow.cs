@@ -12,7 +12,8 @@ namespace Game.Unity.Flow
 {
     /// <summary>
     /// The state machine that chains the screens of the game (#88): title, run, level-up choice, preparation, recap,
-    /// end of run, back to the title. Plain C# with no Unity type and no rule of its own: what may happen comes
+    /// end of run, back to the title. Regular fights chain by themselves on the run screen (ADR 0016): only a level-up,
+    /// a mini-boss, the professor or a defeat leaves it. Plain C# with no Unity type and no rule of its own: what may happen comes
     /// from <see cref="Core.Runs.Run"/> (pending level-up, available steps, outcome) and
     /// <see cref="RunScreenController"/>; this class only decides which screen follows which event, and keeps the
     /// bestiary (loaded by the caller, saved after every reveal, ADR 0014).
@@ -89,7 +90,7 @@ namespace Game.Unity.Flow
         /// <summary>The preparation to show (<see cref="GameScreen.Preparation"/>), otherwise null.</summary>
         public PreparationViewModel Preparation => Screen == GameScreen.Preparation ? _preparation : null;
 
-        /// <summary>The report of the fight that just ended, from the end of the fight until the next fight starts.</summary>
+        /// <summary>The report of the last fight that ended (also a regular fight that chained into the next one).</summary>
         public RunFightReport LastReport { get; private set; }
 
         /// <summary>The recap of <see cref="LastReport"/> (<see cref="GameScreen.Recap"/>), otherwise null.</summary>
@@ -109,7 +110,10 @@ namespace Game.Unity.Flow
             SetScreen(GameScreen.Run);
         }
 
-        /// <summary>Gives the player's level-up choice to the run; shows the next pending one, or the run screen.</summary>
+        /// <summary>
+        /// Gives the player's level-up choice to the run; shows the next pending one, otherwise the preparation of the
+        /// room or professor the player asked for, otherwise the run screen (the loop goes on).
+        /// </summary>
         /// <exception cref="InvalidOperationException">The flow is not on the level-up screen.</exception>
         public void TakeLevelUp(LevelUpChoice choice)
         {
@@ -123,7 +127,10 @@ namespace Game.Unity.Flow
             }
 
             LevelUp = null;
-            SetScreen(GameScreen.Run);
+            if (Screen == GameScreen.LevelUp)
+            {
+                SetScreen(GameScreen.Run);
+            }
         }
 
         /// <summary>
@@ -255,12 +262,18 @@ namespace Game.Unity.Flow
         private void OnFightCompleted(RunFightReport report)
         {
             LastReport = report;
-            Recap = FightRecapBuilder.Build(report.Log);
             if (report.SecretRoomRewards != null && report.SecretRoomRewards.RevealTo(Bestiary))
             {
                 SaveBestiary();
             }
 
+            // A won regular fight has no recap: the loop goes straight on (ADR 0014 and 0016).
+            if (RunController.Phase != RunScreenPhase.FightResult)
+            {
+                return;
+            }
+
+            Recap = FightRecapBuilder.Build(report.Log);
             SetScreen(GameScreen.Recap);
         }
 

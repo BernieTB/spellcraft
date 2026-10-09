@@ -5,12 +5,13 @@ namespace Game.Unity.UI.RunScreen
     /// <summary>One entry of the next-step choice: a step, whether it can be picked now, and why not.</summary>
     public sealed class StepChoice
     {
-        public StepChoice(RunStep step, string label, bool isEnabled, string disabledReason)
+        public StepChoice(RunStep step, string label, bool isEnabled, string disabledReason, bool isRequested = false)
         {
             Step = step;
             Label = label;
             IsEnabled = isEnabled;
             DisabledReason = disabledReason;
+            IsRequested = isRequested;
         }
 
         /// <summary>The step.</summary>
@@ -21,6 +22,9 @@ namespace Game.Unity.UI.RunScreen
 
         /// <summary>True when the player can pick it now.</summary>
         public bool IsEnabled { get; }
+
+        /// <summary>True when the player asked for this step to be entered after the current fight.</summary>
+        public bool IsRequested { get; }
 
         /// <summary>Why it cannot be picked, or null when it can.</summary>
         public string DisabledReason { get; }
