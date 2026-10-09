@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Game.Core.Combat.Recap;
 using Game.Core.Effects;
+using Game.Unity.UI.Cards;
 using UnityEngine.UIElements;
 
 namespace Game.Unity.UI
@@ -121,9 +122,13 @@ namespace Game.Unity.UI
         /// <summary>
         /// Fills a cloned recap screen tree. Binding the same tree again replaces what was shown.
         /// </summary>
+        /// <param name="summaries">
+        /// Tells what a card of the table does (shown under its id, details on hover), or null for a card it does not
+        /// know (#123). Null shows ids only. See <see cref="RecapCardSummaries"/>.
+        /// </param>
         /// <exception cref="ArgumentNullException"><paramref name="root"/> or <paramref name="recap"/> is null.</exception>
         /// <exception cref="InvalidOperationException">The tree lacks one of the named elements.</exception>
-        public static void Bind(VisualElement root, FightRecap recap)
+        public static void Bind(VisualElement root, FightRecap recap, Func<CardRecap, CardSummary> summaries = null)
         {
             if (root == null)
             {
@@ -151,7 +156,7 @@ namespace Game.Unity.UI
             enemies.Clear();
             foreach (var combatant in recap.Combatants)
             {
-                var section = BuildCombatant(combatant, recap.Defeat);
+                var section = BuildCombatant(combatant, recap.Defeat, summaries);
                 (combatant.IsHero ? hero : enemies).Add(section);
             }
         }
@@ -260,7 +265,8 @@ namespace Game.Unity.UI
             }
         }
 
-        private static VisualElement BuildCombatant(CombatantRecap combatant, DefeatAnalysis defeat)
+        private static VisualElement BuildCombatant(
+            CombatantRecap combatant, DefeatAnalysis defeat, Func<CardRecap, CardSummary> summaries)
         {
             var section = new VisualElement();
             section.AddToClassList(CombatantClass);
@@ -272,10 +278,11 @@ namespace Game.Unity.UI
             section.Add(BuildRow(Columns.Select(column => column.Title).ToArray(), HeaderRowClass));
             foreach (var card in combatant.Cards)
             {
+                var cardSummary = summaries?.Invoke(card);
                 var cells = new[]
                 {
                     (card.Position + 1).ToString(),
-                    card.CardId,
+                    CardCellText(card, cardSummary),
                     card.Casts.ToString(),
                     card.Damage.ToString(),
                     card.Healing.ToString(),
@@ -284,6 +291,11 @@ namespace Game.Unity.UI
                     FormatBonus(card.BonusWasted),
                 };
                 var row = BuildRow(cells, null);
+                if (cardSummary != null)
+                {
+                    HoverDetail.Set(row, cardSummary.TooltipText);
+                }
+
                 if (IsCulprit(card, defeat))
                 {
                     row.AddToClassList(CulpritRowClass);
@@ -342,6 +354,18 @@ namespace Game.Unity.UI
                 default:
                     return false;
             }
+        }
+
+        /// <summary>The card column: the id (with the stage mark), then the compact summary when it is known.</summary>
+        private static string CardCellText(CardRecap card, CardSummary summary)
+        {
+            if (summary == null)
+            {
+                return card.CardId;
+            }
+
+            var mark = summary.HasStageMark ? " " + summary.StageMarkText : string.Empty;
+            return card.CardId + mark + "\n" + string.Join(", ", summary.CompactLines);
         }
 
         private static VisualElement BuildRow(IReadOnlyList<string> cells, string rowClass)
