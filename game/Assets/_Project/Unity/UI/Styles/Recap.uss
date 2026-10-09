@@ -125,7 +125,8 @@
 }
 
 .cell--card {
-    width: 260px;
+    width: 480px;
+    white-space: normal;
 }
 
 .cell--number {

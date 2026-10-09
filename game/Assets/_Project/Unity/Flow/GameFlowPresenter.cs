@@ -85,7 +85,10 @@ namespace Game.Unity.Flow
         private void ShowRecap()
         {
             var screen = _host.Show(_config.RecapScreen);
-            RecapScreenView.Bind(screen, _flow.Recap);
+            RecapScreenView.Bind(
+                screen,
+                _flow.Recap,
+                _flow.LastReport == null ? null : Game.Unity.UI.Cards.RecapCardSummaries.For(_flow.LastReport));
             var button = screen.Q<Button>(RecapScreenView.ContinueButtonElement)
                 ?? throw new InvalidOperationException($"The recap screen has no '{RecapScreenView.ContinueButtonElement}' button.");
             button.text = _flow.Run.IsInProgress ? "Continue" : "End of the run";

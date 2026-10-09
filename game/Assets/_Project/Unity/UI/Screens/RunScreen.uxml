@@ -46,9 +46,13 @@
         </ui:VisualElement>
 
         <ui:Label name="edit-hint" class="edit-hint" text="" />
-        <ui:Label class="row-title" text="Spell line" />
+        <ui:Label class="row-title" text="Spell line (hover a card for its details)" />
         <ui:VisualElement name="line" class="slots" />
         <ui:Label class="row-title" text="Reserve" />
         <ui:VisualElement name="reserve" class="slots" />
+        <ui:VisualElement name="passives-row" class="passives-row hidden">
+            <ui:Label class="row-title" text="Passives" />
+            <ui:VisualElement name="passives" class="passives" />
+        </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

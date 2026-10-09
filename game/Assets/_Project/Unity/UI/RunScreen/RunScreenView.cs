@@ -40,6 +40,8 @@ namespace Game.Unity.UI.RunScreen
         public const string EditHintElement = "edit-hint";
         public const string LineElement = "line";
         public const string ReserveElement = "reserve";
+        public const string PassivesRowElement = "passives-row";
+        public const string PassivesElement = "passives";
 
         /// <summary>Style classes the view toggles (defined in <c>Styles/Run.uss</c> and <c>Common.uss</c>).</summary>
         public const string HiddenClass = "hidden";
@@ -48,6 +50,7 @@ namespace Game.Unity.UI.RunScreen
         public const string SlotNextClass = "slot--next";
         public const string SlotSelectedClass = "slot--selected";
         public const string SlotEvolvedClass = "slot--evolved";
+        public const string PassiveClass = "passive";
         public const string StepClass = "step";
         public const string ObjectiveClass = "objective";
         public const string CombatantBoxClass = "combatant-box";
@@ -110,6 +113,8 @@ namespace Game.Unity.UI.RunScreen
             private readonly Label _editHint;
             private readonly VisualElement _line;
             private readonly VisualElement _reserve;
+            private readonly VisualElement _passivesRow;
+            private readonly VisualElement _passives;
             private IVisualElementScheduledItem _schedule;
             private string _stepsKey;
             private bool _disposed;
@@ -143,6 +148,8 @@ namespace Game.Unity.UI.RunScreen
                 _editHint = Find<Label>(root, EditHintElement);
                 _line = Find<VisualElement>(root, LineElement);
                 _reserve = Find<VisualElement>(root, ReserveElement);
+                _passivesRow = Find<VisualElement>(root, PassivesRowElement);
+                _passives = Find<VisualElement>(root, PassivesElement);
 
                 // Plain clicked callbacks: the controller decides what they mean.
                 _pendingChoiceButton.clicked += () => Act(() => _controller.OpenPendingChoiceIfAny());
@@ -207,6 +214,7 @@ namespace Game.Unity.UI.RunScreen
 
                 ShowSlots(_line, model.Line, lineClick);
                 ShowSlots(_reserve, model.Reserve, reserveClick);
+                ShowPassives(model.Passives);
             }
 
             /// <summary>Stops the refresh and cancels an open fight. Safe to call twice.</summary>
@@ -393,6 +401,23 @@ namespace Game.Unity.UI.RunScreen
                 SetVisible(_continueButton, _controller.Phase == RunScreenPhase.FightResult);
             }
 
+            private void ShowPassives(IReadOnlyList<Cards.PassiveSummaryLine> passives)
+            {
+                SetVisible(_passivesRow, passives.Count > 0);
+                Sync(_passives, passives.Count, () =>
+                {
+                    var chip = new Label();
+                    chip.AddToClassList(PassiveClass);
+                    return chip;
+                });
+                for (var i = 0; i < passives.Count; i++)
+                {
+                    var chip = (Label)_passives[i];
+                    chip.text = passives[i].Text;
+                    chip.tooltip = passives[i].TooltipText;
+                }
+            }
+
             private static void ShowSlots(VisualElement container, IReadOnlyList<CardSlotViewModel> slots, Action<int> onClick)
             {
                 var count = slots.Count;
@@ -405,7 +430,10 @@ namespace Game.Unity.UI.RunScreen
                     var element = container[i];
                     element.userData = onClick;
                     element.Q<Label>("slot-title").text = $"{slot.Index + 1}. {slot.CardId}";
-                    element.Q<Label>("slot-detail").text = slot.DetailText;
+                    // The compact summary (cast time, effects at the current stage, neighbour bonus); the details are
+                    // the hover tooltip (#123).
+                    element.Q<Label>("slot-detail").text = slot.Summary != null ? slot.Summary.CompactText : slot.DetailText;
+                    element.tooltip = slot.Summary != null ? slot.Summary.TooltipText : string.Empty;
                     var bonus = element.Q<Label>("slot-bonus");
                     bonus.text = slot.PendingBonusText == null ? string.Empty : $"Waiting: {slot.PendingBonusText}";
                     SetVisible(bonus, slot.HasPendingBonus);

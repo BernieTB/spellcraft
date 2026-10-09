@@ -86,7 +86,8 @@
 
 .arena {
     flex-grow: 1;
-    min-height: 380px;
+    flex-shrink: 1;
+    min-height: 280px;
     justify-content: center;
 }
 
@@ -162,7 +163,7 @@
 }
 
 .shape {
-    height: 160px;
+    height: 110px;
     background-color: var(--color-accent);
     border-width: 4px;
     border-color: var(--color-ink);
@@ -228,13 +229,17 @@
     min-height: 40px;
 }
 
+/* 4 to 6 cards per row at 1920x1080; they grow to fill the row and wrap when the window is narrower. */
 .slot {
-    width: 220px;
-    margin: 4px;
-    padding: 8px;
-    background-color: var(--color-panel);
+    flex-grow: 1;
+    flex-basis: var(--card-width);
+    min-width: var(--card-width);
+    max-width: var(--card-max-width);
+    margin: var(--space-small);
+    padding: var(--space-medium);
+    background-color: var(--color-panel-raised);
     border-width: 3px;
-    border-color: var(--color-panel);
+    border-color: var(--color-border);
 }
 
 .slot--next {
@@ -250,32 +255,37 @@
     background-color: var(--color-background);
 }
 
+.slot:hover {
+    border-color: var(--color-ink);
+}
+
 .slot--evolved {
     border-color: var(--color-success);
 }
 
 .slot-stage {
-    font-size: var(--font-size-small);
+    font-size: var(--font-size-card-title);
     -unity-font-style: bold;
     color: var(--color-success);
 }
 
 .slot-title {
-    font-size: var(--font-size-small);
+    font-size: var(--font-size-card-title);
     -unity-font-style: bold;
     color: var(--color-ink);
 }
 
 .slot-detail {
-    font-size: 18px;
-    color: var(--color-ink-muted);
+    margin-top: 2px;
+    font-size: var(--font-size-card);
+    color: var(--color-ink);
     white-space: normal;
 }
 
 .slot-bonus {
-    margin-top: 4px;
+    margin-top: var(--space-small);
     padding: 2px 6px;
-    font-size: 18px;
+    font-size: var(--font-size-card);
     color: var(--color-background);
     background-color: var(--color-accent);
 }
@@ -298,4 +308,31 @@
 .result-lines {
     margin: 12px 0;
     align-items: center;
+}
+
+/* Passive upgrades the hero owns, with their effect (#123). */
+.passives-row {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.passives-row .row-title {
+    margin-right: var(--space-medium);
+}
+
+.passives {
+    flex-direction: row;
+    flex-wrap: wrap;
+    flex-shrink: 1;
+}
+
+.passive {
+    margin: var(--space-small);
+    padding: 2px var(--space-medium);
+    font-size: var(--font-size-card);
+    color: var(--color-ink);
+    background-color: var(--color-panel-raised);
+    border-left-width: 4px;
+    border-left-color: var(--color-accent);
 }

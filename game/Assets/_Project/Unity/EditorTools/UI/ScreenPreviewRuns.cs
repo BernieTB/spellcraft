@@ -5,6 +5,7 @@ using Game.Core.Effects;
 using Game.Core.Enemies;
 using Game.Core.Meta;
 using Game.Core.Runs;
+using Game.Core.Upgrades;
 using Game.Unity.Classes;
 using Game.Unity.EditorTools.Content;
 using Game.Unity.Runs;
@@ -39,6 +40,22 @@ namespace Game.Unity.EditorTools.UI
             var controller = new RunScreenController(NewRun());
             controller.StartFight(RunStep.RegularFight);
             for (var i = 0; i < 6; i++)
+            {
+                controller.StepOneTick();
+            }
+
+            return controller;
+        }
+
+        /// <summary>
+        /// A regular fight with a full line of six cards (one evolving, one with a neighbour bonus), three cards in the
+        /// reserve and two passive upgrades, to judge that every slot stays readable (#123).
+        /// </summary>
+        public static RunScreenController CrowdedFighting()
+        {
+            var controller = new RunScreenController(NewCrowdedRun());
+            controller.StartFight(RunStep.RegularFight);
+            for (var i = 0; i < 8; i++)
             {
                 controller.StepOneTick();
             }
@@ -98,6 +115,46 @@ namespace Game.Unity.EditorTools.UI
         {
             return AssetDatabase.LoadAssetAtPath<T>(path)
                 ?? throw new System.InvalidOperationException($"Asset missing at {path}.");
+        }
+
+        /// <summary>A demo run with a line of six cards, three in the reserve and two passive upgrades taken.</summary>
+        public static Run NewCrowdedRun()
+        {
+            var evolving = new CardDefinition(
+                "demo_grow",
+                2,
+                new IEffect[] { new DealDamageEffect(2) },
+                new NeighbourModifier[0],
+                new[] { new CardEvolution(1, new IEffect[] { new DealDamageEffect(5), new GainShieldEffect(2) }, new NeighbourModifier[0]) });
+            var boost = new CardDefinition(
+                "demo_boost",
+                2,
+                new IEffect[0],
+                new[] { new NeighbourModifier(BonusKind.Damage, NeighbourDirection.Next, 3) });
+            var strike = new CardDefinition("demo_strike", 3, new IEffect[] { new DealDamageEffect(4) });
+            var ward = new CardDefinition("demo_ward", 2, new IEffect[] { new GainShieldEffect(3) });
+            var mend = new CardDefinition("demo_mend", 3, new IEffect[] { new HealEffect(4), new GainShieldEffect(1) });
+            var bolt = new CardDefinition("demo_bolt", 4, new IEffect[] { new DealDamageEffect(8) });
+            var hit = new CardDefinition("demo_hit", 5, new IEffect[] { new DealDamageEffect(1) });
+            var slime = new EnemyDefinition(Slime, 40, 0, new[] { hit }, 10);
+            var professor = new EnemyDefinition("demo_professor", 60, 0, new[] { hit }, 50);
+            var heroClass = new ClassDefinition(
+                "demo_class", 60, 0, 6, new[] { evolving, boost, strike, ward, mend, bolt }, new[] { bolt });
+            var biome = new BiomeDefinition(
+                "demo_biome",
+                new List<EncounterDefinition> { new EncounterDefinition("demo_slime_encounter", new[] { slime }) },
+                2,
+                new EncounterDefinition("demo_professor_encounter", new[] { professor }),
+                professor,
+                new SecretRoomDefinition[0]);
+            var run = new Run(heroClass, biome, new RunRules(200, new LevelCurve(new[] { 10, 20 }, 5)), Seed);
+            run.AddCard(strike);
+            run.AddCard(ward);
+            run.AddCard(mend);
+            run.TakeUpgrade(new PassiveUpgrade("passive_health", PassiveUpgradeKind.MaxHealth, 5));
+            run.TakeUpgrade(new PassiveUpgrade("passive_health", PassiveUpgradeKind.MaxHealth, 5));
+            run.TakeUpgrade(new PassiveUpgrade("passive_power", PassiveUpgradeKind.EffectAmount, BonusKind.Damage, 2));
+            return run;
         }
 
         /// <summary>A demo run with a full line of three cards, a card in the reserve and one secret room.</summary>

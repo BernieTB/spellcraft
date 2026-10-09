@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Game.Unity.UI.Cards;
 using UnityEngine.UIElements;
 
 namespace Game.Unity.UI
@@ -123,11 +124,19 @@ namespace Game.Unity.UI
                 for (var i = 0; i < enemy.CardIds.Count; i++)
                 {
                     var id = enemy.CardIds[i];
-                    var label = new Label($"{i + 1}. {id ?? UnknownText}");
+                    var summary = enemy.CardSummaries != null && i < enemy.CardSummaries.Count ? enemy.CardSummaries[i] : null;
+                    var label = new Label(summary == null
+                        ? $"{i + 1}. {id ?? UnknownText}"
+                        : $"{i + 1}. {id}: {string.Join(", ", summary.CompactLines)}");
                     label.AddToClassList("prep-enemy-card");
                     if (id == null)
                     {
                         label.AddToClassList(UnknownClass);
+                    }
+
+                    if (summary != null)
+                    {
+                        label.tooltip = summary.TooltipText;
                     }
 
                     section.Add(label);
@@ -160,11 +169,9 @@ namespace Game.Unity.UI
             {
                 var index = i;
                 var card = cards[i];
-                var button = new Button(() => select(index))
-                {
-                    text = $"{i + 1}. {card.Id} ({card.CastTime})",
-                };
+                var button = new Button(() => select(index));
                 button.AddToClassList(CardClass);
+                CardFace.Fill(button, $"{i + 1}. {card.Id}", card.Summary);
                 if (selected == i)
                 {
                     button.AddToClassList(SelectedClass);

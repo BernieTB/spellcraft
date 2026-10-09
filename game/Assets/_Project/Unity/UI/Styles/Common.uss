@@ -3,7 +3,7 @@
     --color-background: rgb(38, 33, 30);
     --color-panel: rgb(58, 51, 46);
     --color-ink: rgb(240, 228, 210);
-    --color-ink-muted: rgb(170, 158, 142);
+    --color-ink-muted: rgb(200, 188, 170);
     --color-accent: rgb(214, 150, 72);
     --color-success: rgb(132, 178, 108);
     --color-danger: rgb(214, 96, 82);
@@ -11,7 +11,17 @@
     --font-size-title: 72px;
     --font-size-heading: 44px;
     --font-size-body: 28px;
-    --font-size-small: 22px;
+    --font-size-small: 24px;
+    /* Cards (#123): readable at 1920x1080 and when the window is smaller (the panel scales with the screen). */
+    --font-size-card-title: 26px;
+    --font-size-card: 22px;
+    --color-panel-raised: rgb(78, 69, 62);
+    --color-border: rgb(128, 116, 102);
+    --space-small: 6px;
+    --space-medium: 12px;
+    --space-large: 24px;
+    --card-width: 280px;
+    --card-max-width: 400px;
 }
 
 .screen {
@@ -73,4 +83,31 @@
 
 .title--defeat {
     color: var(--color-danger);
+}
+
+/* The face of a card wherever it is shown (CardFace, #123): title row, stage mark, compact summary. */
+.card-title-row {
+    flex-direction: row;
+    align-items: center;
+}
+
+.card-title {
+    font-size: var(--font-size-card-title);
+    -unity-font-style: bold;
+    color: var(--color-ink);
+    white-space: normal;
+}
+
+.card-stage {
+    margin-left: var(--space-small);
+    font-size: var(--font-size-card-title);
+    -unity-font-style: bold;
+    color: var(--color-success);
+}
+
+.card-detail {
+    margin-top: 2px;
+    font-size: var(--font-size-card);
+    color: var(--color-ink-muted);
+    white-space: normal;
 }

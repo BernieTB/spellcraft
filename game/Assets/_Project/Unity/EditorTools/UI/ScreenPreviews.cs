@@ -82,15 +82,15 @@ namespace Game.Unity.EditorTools.UI
             new ScreenPreview(
                 "Recap: victory",
                 BootstrapSceneBuilder.RecapScreenPath,
-                root => RecapScreenView.Bind(root, ScreenPreviewFights.Victory())),
+                root => RecapScreenView.Bind(root, ScreenPreviewFights.Victory(), ScreenPreviewFights.Summaries)),
             new ScreenPreview(
                 "Recap: defeat",
                 BootstrapSceneBuilder.RecapScreenPath,
-                root => RecapScreenView.Bind(root, ScreenPreviewFights.Defeat())),
+                root => RecapScreenView.Bind(root, ScreenPreviewFights.Defeat(), ScreenPreviewFights.Summaries)),
             new ScreenPreview(
                 "Recap: out of time",
                 BootstrapSceneBuilder.RecapScreenPath,
-                root => RecapScreenView.Bind(root, ScreenPreviewFights.TimeLimit())),
+                root => RecapScreenView.Bind(root, ScreenPreviewFights.TimeLimit(), ScreenPreviewFights.Summaries)),
             new ScreenPreview(
                 "Preparation: mini-boss",
                 PreparationScreenView.LayoutPath,
@@ -111,6 +111,10 @@ namespace Game.Unity.EditorTools.UI
                 "Run: regular fight",
                 BootstrapSceneBuilder.RunScreenPath,
                 root => RunScreenView.Bind(root, ScreenPreviewRuns.Fighting())),
+            new ScreenPreview(
+                "Run: six cards, passives",
+                BootstrapSceneBuilder.RunScreenPath,
+                root => RunScreenView.Bind(root, ScreenPreviewRuns.CrowdedFighting())),
             new ScreenPreview(
                 "Run: level-up pending",
                 BootstrapSceneBuilder.RunScreenPath,
