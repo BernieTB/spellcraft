@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Game.Core.Cards;
 using Game.Core.Effects;
+using static Game.Unity.EditorTools.Content.MvpClassSpecs;
 using Game.Unity.Cards;
 using Game.Unity.Classes;
 using UnityEditor;
@@ -17,7 +18,7 @@ namespace Game.Unity.EditorTools.Content
     /// <para>
     /// Card words are written by the project owner: until then the cards are named by the placeholders
     /// <c>CARD_A</c>, <c>CARD_B</c>... (ADR 0007), and replacing them is a data change only. Cast times, amounts,
-    /// thresholds and the hero's stats below are first-pass numbers, to be tuned with the simulation runner
+    /// thresholds and the hero's stats are the working numbers of <see cref="MvpClassSpecs"/>, tuned with the balance bots (#125)
     /// (ADR 0006); they are not balance decisions. Unlike the test placeholders, these assets are not flagged as
     /// placeholder content, so they may be referenced from outside the placeholder folder.
     /// </para>
@@ -35,73 +36,17 @@ namespace Game.Unity.EditorTools.Content
         /// <summary>Working name of the MVP class (ADR 0007).</summary>
         public const string ClassId = "CLASS_A";
 
-        /// <summary>Hero's max health at the start of every fight (first-pass number).</summary>
-        public const int MaxHealth = 30;
+        /// <summary>Hero's max health at the start of every fight (see <see cref="MvpClassSpecs"/>).</summary>
+        public const int MaxHealth = MvpClassSpecs.MaxHealth;
 
-        /// <summary>Hero's shield at the start of every fight (first-pass number).</summary>
-        public const int StartingShield = 0;
+        /// <summary>Hero's shield at the start of every fight.</summary>
+        public const int StartingShield = MvpClassSpecs.StartingShield;
 
         /// <summary>Spell line slots at the start of a run (ADR 0009).</summary>
-        public const int StartingLineCapacity = 4;
-
-        // Casts needed for the two evolution stages of every card (first-pass numbers).
-        private const int FirstStageCasts = 3;
-        private const int SecondStageCasts = 7;
-
-        private static readonly CardSpec[] StartingSpecs =
-        {
-            // Two damage cards.
-            new CardSpec("CARD_A", 2, new[] { Damage(3) }, new Mod[0],
-                At(FirstStageCasts, new[] { Damage(4) }), At(SecondStageCasts, new[] { Damage(5) })),
-            new CardSpec("CARD_B", 3, new[] { Damage(5) }, new Mod[0],
-                At(FirstStageCasts, new[] { Damage(7) }), At(SecondStageCasts, new[] { Damage(9) })),
-
-            // The weaver card: a small hit that boosts the next card's damage.
-            new CardSpec("CARD_C", 2, new[] { Damage(1) }, new[] { NextDamage(2) },
-                At(FirstStageCasts, new[] { Damage(1) }, NextDamage(3)),
-                At(SecondStageCasts, new[] { Damage(2) }, NextDamage(4))),
-
-            // The defensive card gives shield, not healing (ADR 0009).
-            new CardSpec("CARD_D", 2, new[] { Shield(4) }, new Mod[0],
-                At(FirstStageCasts, new[] { Shield(6) }), At(SecondStageCasts, new[] { Shield(8) })),
-        };
-
-        private static readonly CardSpec[] PoolSpecs =
-        {
-            new CardSpec("CARD_E", 1, new[] { Damage(2) }, new Mod[0],
-                At(FirstStageCasts, new[] { Damage(3) }), At(SecondStageCasts, new[] { Damage(4) })),
-            new CardSpec("CARD_F", 4, new[] { Damage(8) }, new Mod[0],
-                At(FirstStageCasts, new[] { Damage(11) }), At(SecondStageCasts, new[] { Damage(14) })),
-            new CardSpec("CARD_G", 3, new[] { Damage(3), Shield(2) }, new Mod[0],
-                At(FirstStageCasts, new[] { Damage(4), Shield(3) }),
-                At(SecondStageCasts, new[] { Damage(5), Shield(4) })),
-            new CardSpec("CARD_H", 2, new[] { Shield(2) }, new[] { NextShield(2) },
-                At(FirstStageCasts, new[] { Shield(3) }, NextShield(3)),
-                At(SecondStageCasts, new[] { Shield(4) }, NextShield(4))),
-            new CardSpec("CARD_I", 3, new[] { Damage(2) }, new[] { PreviousDamage(3) },
-                At(FirstStageCasts, new[] { Damage(2) }, PreviousDamage(4)),
-                At(SecondStageCasts, new[] { Damage(3) }, PreviousDamage(5))),
-            new CardSpec("CARD_J", 2, new[] { Heal(2) }, new Mod[0],
-                At(FirstStageCasts, new[] { Heal(3) }), At(SecondStageCasts, new[] { Heal(4) })),
-            new CardSpec("CARD_K", 3, new[] { Damage(2) }, new[] { NextDamage(1), PreviousDamage(1) },
-                At(FirstStageCasts, new[] { Damage(2) }, NextDamage(2), PreviousDamage(2)),
-                At(SecondStageCasts, new[] { Damage(3) }, NextDamage(3), PreviousDamage(3))),
-            new CardSpec("CARD_L", 1, new[] { Damage(1) }, new[] { NextDamage(1) },
-                At(FirstStageCasts, new[] { Damage(1) }, NextDamage(2)),
-                At(SecondStageCasts, new[] { Damage(2) }, NextDamage(3))),
-            new CardSpec("CARD_M", 5, new[] { Damage(6), Shield(4) }, new Mod[0],
-                At(FirstStageCasts, new[] { Damage(8), Shield(6) }),
-                At(SecondStageCasts, new[] { Damage(10), Shield(8) })),
-            new CardSpec("CARD_N", 4, new[] { Shield(6) }, new[] { NextDamage(3) },
-                At(FirstStageCasts, new[] { Shield(8) }, NextDamage(4)),
-                At(SecondStageCasts, new[] { Shield(10) }, NextDamage(5))),
-        };
+        public const int StartingLineCapacity = MvpClassSpecs.StartingLineCapacity;
 
         /// <summary>Ids of the starting deck cards, in spell line order.</summary>
-        /// <remarks>
-        /// The weaver card comes before the second damage card, so its bonus lands on that card.
-        /// </remarks>
-        public static IReadOnlyList<string> StartingDeckIds { get; } = new[] { "CARD_A", "CARD_C", "CARD_B", "CARD_D" };
+        public static IReadOnlyList<string> StartingDeckIds => MvpClassSpecs.StartingDeckIds;
 
         /// <summary>Ids of the cards of the level-up pool, in order.</summary>
         public static IReadOnlyList<string> PoolIds { get; } = PoolSpecs.Select(spec => spec.Id).ToArray();
@@ -137,20 +82,6 @@ namespace Game.Unity.EditorTools.Content
             AssetDatabase.SaveAssets();
             Debug.Log($"Generated the MVP class and {cards.Count} cards in {ContentFolder}.");
         }
-
-        private static Eff Damage(int amount) => new Eff(EffectKind.DealDamage, amount);
-
-        private static Eff Heal(int amount) => new Eff(EffectKind.Heal, amount);
-
-        private static Eff Shield(int amount) => new Eff(EffectKind.GainShield, amount);
-
-        private static Mod NextDamage(int amount) => new Mod(BonusKind.Damage, NeighbourDirection.Next, amount);
-
-        private static Mod PreviousDamage(int amount) => new Mod(BonusKind.Damage, NeighbourDirection.Previous, amount);
-
-        private static Mod NextShield(int amount) => new Mod(BonusKind.Shield, NeighbourDirection.Next, amount);
-
-        private static Stage At(int casts, Eff[] effects, params Mod[] modifiers) => new Stage(casts, effects, modifiers);
 
         private static T LoadOrCreate<T>(string path) where T : ScriptableObject
         {
@@ -245,71 +176,5 @@ namespace Game.Unity.EditorTools.Content
             AssetDatabase.CreateFolder(parent, folder.Substring(separator + 1));
         }
 
-        private readonly struct Eff
-        {
-            public Eff(EffectKind kind, int amount)
-            {
-                Kind = kind;
-                Amount = amount;
-            }
-
-            public EffectKind Kind { get; }
-
-            public int Amount { get; }
-        }
-
-        private readonly struct Mod
-        {
-            public Mod(BonusKind kind, NeighbourDirection direction, int amount)
-            {
-                Kind = kind;
-                Direction = direction;
-                Amount = amount;
-            }
-
-            public BonusKind Kind { get; }
-
-            public NeighbourDirection Direction { get; }
-
-            public int Amount { get; }
-        }
-
-        private readonly struct Stage
-        {
-            public Stage(int casts, Eff[] effects, Mod[] modifiers)
-            {
-                Casts = casts;
-                Effects = effects;
-                Modifiers = modifiers;
-            }
-
-            public int Casts { get; }
-
-            public Eff[] Effects { get; }
-
-            public Mod[] Modifiers { get; }
-        }
-
-        private readonly struct CardSpec
-        {
-            public CardSpec(string id, int castTime, Eff[] effects, Mod[] modifiers, params Stage[] stages)
-            {
-                Id = id;
-                CastTime = castTime;
-                Effects = effects;
-                Modifiers = modifiers;
-                Stages = stages;
-            }
-
-            public string Id { get; }
-
-            public int CastTime { get; }
-
-            public Eff[] Effects { get; }
-
-            public Mod[] Modifiers { get; }
-
-            public Stage[] Stages { get; }
-        }
     }
 }

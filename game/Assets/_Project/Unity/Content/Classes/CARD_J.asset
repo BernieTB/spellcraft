@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: CARD_J
   m_EditorClassIdentifier: Game.Unity::Game.Unity.Cards.CardAsset
   _id: CARD_J
-  _castTime: 2
+  _castTime: 8
   _effects:
   - _kind: 1
     _amount: 2

@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Game.Unity::Game.Unity.Enemies.EnemyAsset
   _id: ENEMY_MINIBOSS_01
   _rank: 1
-  _maxHealth: 28
+  _maxHealth: 165
   _startingShield: 0
   _xpReward: 20
   _spellLine:

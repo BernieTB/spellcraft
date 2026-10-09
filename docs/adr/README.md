@@ -34,3 +34,4 @@ Status values: `Proposed`, `Accepted`, `Rejected`, `Deprecated`, `Superseded by 
 | [0014](0014-boss-preparation-and-recap.md) | Boss preparation information, reserve and recap content | Accepted |
 | [0015](0015-live-spell-line-editing-details.md) | Live spell line editing details | Accepted |
 | [0016](0016-regular-fights-chain-automatically.md) | Regular fights chain automatically (amends 0009) | Accepted |
+| [0017](0017-vertical-slice-difficulty-targets.md) | Difficulty targets and balance bots of the Vertical slice | Proposed |

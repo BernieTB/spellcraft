@@ -90,7 +90,7 @@ namespace Game.Unity.Tests.Content
         }
 
         [Test]
-        public void StartingDeck_WeaverBoostsADamageCardInTheLine()
+        public void StartingDeck_IsDisordered_TheWeaverBonusIsWastedOnTheShieldCard()
         {
             var deck = LoadClass().StartingDeck.ToList();
             var weaver = deck.Single(card => card.NeighbourModifiers.Count > 0);
@@ -99,7 +99,9 @@ namespace Game.Unity.Tests.Content
             Assert.AreEqual(NeighbourDirection.Next, modifier.Direction);
             Assert.AreEqual(BonusKind.Damage, modifier.Kind);
             var target = deck[(deck.IndexOf(weaver) + 1) % deck.Count];
-            Assert.That(target.Effects, Has.Some.InstanceOf<DealDamageEffect>());
+            Assert.That(target.Effects, Has.None.InstanceOf<DealDamageEffect>(), "the player has to move the weaver (#125)");
+            Assert.That(deck.Where(card => card != weaver && card != target).SelectMany(card => card.Effects),
+                Has.Some.InstanceOf<DealDamageEffect>(), "a damage card exists to receive the bonus once the line is ordered");
         }
 
         [Test]
@@ -195,13 +197,21 @@ namespace Game.Unity.Tests.Content
         }
 
         [Test]
-        public void StartingDeckFight_WeaverBonusReachesTheDamageCard()
+        public void StartingDeckFight_WhenTheWeaverIsMovedBeforeADamageCard_ItsBonusReachesTheDamageCard()
         {
             var definition = LoadClass();
-            var weaverBonus = definition.StartingDeck.Single(card => card.NeighbourModifiers.Count > 0).NeighbourModifiers[0].Amount;
+            var weaver = definition.StartingDeck.Single(card => card.NeighbourModifiers.Count > 0);
+            var weaverBonus = weaver.NeighbourModifiers[0].Amount;
+            var ordered = definition.StartingDeck.Where(card => card != weaver).ToList();
+            ordered.Insert(ordered.FindIndex(card => card.Effects.Any(effect => effect is DealDamageEffect)), weaver);
+            var line = new SpellLine<CardDefinition>(definition.StartingLineCapacity);
+            foreach (var card in ordered)
+            {
+                line.Add(card);
+            }
 
-            var result = new Fight(
-                CreateHero(definition), LoadEncounter("test_encounter_02").ToParticipants(), 10000, new Pcg32Random(1)).Run();
+            var hero = new FightParticipant(new Combatant(definition.MaxHealth, definition.StartingShield), line);
+            var result = new Fight(hero, LoadEncounter("test_encounter_02").ToParticipants(), 10000, new Pcg32Random(1)).Run();
 
             Assert.That(
                 result.Casts.Where(cast => cast.CasterIndex == Fight.HeroIndex),

@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Game.Unity::Game.Unity.Enemies.EnemyAsset
   _id: ENEMY_MINIBOSS_02
   _rank: 1
-  _maxHealth: 34
-  _startingShield: 3
+  _maxHealth: 220
+  _startingShield: 20
   _xpReward: 25
   _spellLine:
   - {fileID: 11400000, guid: 33307cddf3d6c0043a2ce0f8dbf6537a, type: 2}

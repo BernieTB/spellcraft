@@ -8,6 +8,7 @@ using Game.Unity.Classes;
 using Game.Unity.EditorTools.Content;
 using Game.Unity.Enemies;
 using Game.Unity.Runs;
+using Game.Unity.Tests.Balance;
 using NUnit.Framework;
 using UnityEditor;
 
@@ -15,7 +16,7 @@ namespace Game.Unity.Tests.Content
 {
     /// <summary>
     /// Loads the placeholder biome (#72, ADR 0009, 0010, 0011) from disk, checks its shape and plays it headless
-    /// through the run model with the MVP class. Numbers are first-pass values, not balance.
+    /// through the run model with the MVP class. The difficulty targets are checked in <c>BalanceTargetsTests</c>.
     /// </summary>
     public class PlaceholderBiomeContentTests
     {
@@ -194,25 +195,28 @@ namespace Game.Unity.Tests.Content
         }
 
         [Test]
-        public void FightTimeLimit_IsFarAboveEveryFight()
+        public void FightTimeLimit_IsOnlyASafetyNet()
         {
             var rules = LoadRules();
             var reports = new List<RunFightReport>();
 
             PlayToTheEnd(1, reports);
 
-            Assert.That(rules.FightTimeLimit, Is.GreaterThanOrEqualTo(10 * reports.Max(report => report.Log.Ticks)));
+            Assert.That(rules.FightTimeLimit, Is.GreaterThanOrEqualTo(2 * reports.Max(report => report.Log.Ticks)));
         }
 
         [Test]
         public void LevelCurve_GivesAboutFiveLevelUpsOnTheShortestPath()
         {
             var levels = new List<int>();
+            var bot = new BalanceBot(AssetBalanceContent.Load(), BotKind.Intermediate, StepPolicy.ShortPath);
             for (ulong seed = 1; seed <= SeedCount; seed++)
             {
                 var run = new Run(LoadClass(), LoadBiome().ToDefinition(), LoadRules(), seed);
                 for (var i = 0; i < run.Biome.MinimumRegularFights; i++)
                 {
+                    // The regular fights of a disordered line can be lost (#125): order it first, as a player would.
+                    bot.ArrangeLine(run, RunStep.RegularFight);
                     run.Play(RunStep.RegularFight);
                 }
 
@@ -224,21 +228,21 @@ namespace Game.Unity.Tests.Content
         }
 
         [Test]
-        public void WholeBiome_PlayedSimplyWithTheMvpClass_EndsInVictory()
+        public void WholeBiome_PlayedWithoutEditingTheLine_EndsInAVictoryOrADefeatButAlwaysEnds()
         {
+            var outcomes = new List<RunOutcome>();
             for (ulong seed = 1; seed <= SeedCount; seed++)
             {
                 var reports = new List<RunFightReport>();
 
                 var run = PlayToTheEnd(seed, reports);
 
-                Assert.AreEqual(RunOutcome.Victory, run.Outcome, $"seed {seed}");
-                Assert.That(reports, Has.None.Matches<RunFightReport>(report => report.TimedOut), $"seed {seed}");
-                Assert.That(reports.Select(report => report.Step.Kind), Does.Contain(RunStepKind.Professor), $"seed {seed}");
-                Assert.AreEqual(2, run.SecretRooms.Count(room => room.IsCleared), $"seed {seed}");
-                Assert.AreEqual(6, run.LineCapacity, $"seed {seed}");
-                Assert.GreaterOrEqual(run.RegularFightsWon, run.Biome.MinimumRegularFights, $"seed {seed}");
+                Assert.AreNotEqual(RunOutcome.InProgress, run.Outcome, $"seed {seed}");
+                outcomes.Add(run.Outcome);
             }
+
+            // Balance (#125): a player who never edits the line does not walk through the biome.
+            Assert.That(outcomes.Count(outcome => outcome == RunOutcome.Victory), Is.LessThanOrEqualTo(SeedCount / 4));
         }
 
         [Test]

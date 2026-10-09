@@ -13,13 +13,13 @@ MonoBehaviour:
   m_Name: CLASS_A
   m_EditorClassIdentifier: Game.Unity::Game.Unity.Classes.ClassAsset
   _id: CLASS_A
-  _maxHealth: 30
+  _maxHealth: 40
   _startingShield: 0
   _startingLineCapacity: 4
   _startingDeck:
   - {fileID: 11400000, guid: 0428ba9530a7b094ab4b05d24165cd3a, type: 2}
-  - {fileID: 11400000, guid: 053274ae714e7be4b9e1704c888d293a, type: 2}
   - {fileID: 11400000, guid: bf8d9018a2fc28c49b84b4be03a8736a, type: 2}
+  - {fileID: 11400000, guid: 053274ae714e7be4b9e1704c888d293a, type: 2}
   - {fileID: 11400000, guid: 3bf23e5ab7613784e93db7c686334a44, type: 2}
   _cardPool:
   - {fileID: 11400000, guid: 5f16154efd4030043aefbee73ffd359a, type: 2}

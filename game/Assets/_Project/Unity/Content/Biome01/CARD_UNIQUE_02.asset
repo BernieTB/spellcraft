@@ -13,13 +13,13 @@ MonoBehaviour:
   m_Name: CARD_UNIQUE_02
   m_EditorClassIdentifier: Game.Unity::Game.Unity.Cards.CardAsset
   _id: CARD_UNIQUE_02
-  _castTime: 2
+  _castTime: 8
   _effects:
   - _kind: 0
-    _amount: 3
+    _amount: 5
   _neighbourModifiers:
   - _kind: 0
     _direction: 0
-    _amount: 2
+    _amount: 6
   _evolutions: []
   _isPlaceholder: 0
