@@ -45,7 +45,7 @@ namespace Game.Unity.UI.Cards
             detail.AddToClassList(DetailClass);
             detail.pickingMode = PickingMode.Ignore;
             container.Add(detail);
-            container.tooltip = summary.TooltipText;
+            HoverDetail.Set(container, summary.TooltipText);
         }
     }
 }

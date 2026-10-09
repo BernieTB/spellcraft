@@ -13,7 +13,7 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
 - Card effects visible everywhere (#123): every card slot of the run screen (line and reserve), the preparation screen
   (line, reserve and the enemy cards the player knows) and the recap table shows a compact summary (cast time, effects with
   the amounts of the card's current evolution stage, neighbour bonus, stage mark) instead of only its id, and the full details
-  as a hover tooltip. The run screen also lists the passive upgrades the hero owns with their total effect. The summary is one
+  in a hover detail panel (UI Toolkit tooltips are editor-only, so `HoverDetail` draws it). The run screen also lists the passive upgrades the hero owns with their total effect. The summary is one
   pure view-model, `CardSummary` (and `PassiveSummary`), shared with the level-up screen. Readability pass: larger and
   higher-contrast text, card sizes and spacing as variables in `Common.uss`, slots wide enough for 4 to 6 readable cards at
   1920x1080 (they wrap in a smaller window). Previews: new "Run: six cards, passives", and the recap previews show the cards'

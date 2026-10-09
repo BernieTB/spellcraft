@@ -414,7 +414,7 @@ namespace Game.Unity.UI.RunScreen
                 {
                     var chip = (Label)_passives[i];
                     chip.text = passives[i].Text;
-                    chip.tooltip = passives[i].TooltipText;
+                    Cards.HoverDetail.Set(chip, passives[i].TooltipText);
                 }
             }
 
@@ -433,7 +433,7 @@ namespace Game.Unity.UI.RunScreen
                     // The compact summary (cast time, effects at the current stage, neighbour bonus); the details are
                     // the hover tooltip (#123).
                     element.Q<Label>("slot-detail").text = slot.Summary != null ? slot.Summary.CompactText : slot.DetailText;
-                    element.tooltip = slot.Summary != null ? slot.Summary.TooltipText : string.Empty;
+                    Cards.HoverDetail.Set(element, slot.Summary != null ? slot.Summary.TooltipText : string.Empty);
                     var bonus = element.Q<Label>("slot-bonus");
                     bonus.text = slot.PendingBonusText == null ? string.Empty : $"Waiting: {slot.PendingBonusText}";
                     SetVisible(bonus, slot.HasPendingBonus);

@@ -111,3 +111,15 @@
     color: var(--color-ink-muted);
     white-space: normal;
 }
+
+/* The detail panel shown while the pointer is over a card or a passive (HoverDetail, #123): the UI Toolkit tooltip does not exist at runtime. */
+.hover-detail {
+    max-width: 520px;
+    padding: var(--space-medium) var(--space-large);
+    font-size: var(--font-size-small);
+    color: var(--color-ink);
+    background-color: var(--color-panel-raised);
+    border-width: 2px;
+    border-color: var(--color-accent);
+    white-space: normal;
+}

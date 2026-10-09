@@ -293,7 +293,7 @@ namespace Game.Unity.UI
                 var row = BuildRow(cells, null);
                 if (cardSummary != null)
                 {
-                    row.tooltip = cardSummary.TooltipText;
+                    HoverDetail.Set(row, cardSummary.TooltipText);
                 }
 
                 if (IsCulprit(card, defeat))

@@ -211,6 +211,29 @@ namespace Game.Unity.Tests.UI
             }
         }
 
+        // --- Hover detail (the native tooltip does not exist in a runtime panel) ---
+
+        [Test]
+        public void HoverDetail_Set_StoresTheTextAndMarksTheElementOnce()
+        {
+            var element = new VisualElement();
+
+            HoverDetail.Set(element, "details");
+            HoverDetail.Set(element, "more details");
+
+            Assert.AreEqual("more details", element.tooltip);
+            Assert.AreEqual(1, element.GetClasses().Count(c => c == HoverDetail.TargetClass));
+        }
+
+        [Test]
+        public void HoverDetail_OnAnUnattachedElement_DoesNotThrow()
+        {
+            var element = new VisualElement();
+            HoverDetail.Set(element, "details");
+
+            Assert.DoesNotThrow(() => element.SendEvent(new PointerLeaveEvent { target = element }));
+        }
+
         // --- Recap ---
 
         [Test]

@@ -136,7 +136,7 @@ namespace Game.Unity.UI
 
                     if (summary != null)
                     {
-                        label.tooltip = summary.TooltipText;
+                        HoverDetail.Set(label, summary.TooltipText);
                     }
 
                     section.Add(label);
