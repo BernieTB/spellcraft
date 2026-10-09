@@ -591,13 +591,32 @@ namespace Game.Unity.UI.RunScreen
         {
             switch (controller.Phase)
             {
-                case RunScreenPhase.ChoosingStep:
-                    return controller.Run.HasPendingChoice ? "Choose your level-up before the next fight." : "Choose the next step.";
+                case RunScreenPhase.BetweenFights:
+                    return BetweenFightsText(controller);
                 case RunScreenPhase.FightResult:
                     return "Fight over.";
                 default:
                     return controller.Run.Outcome == RunOutcome.Victory ? "Biome cleared." : "The run is over.";
             }
+        }
+
+        private static string BetweenFightsText(RunScreenController controller)
+        {
+            if (controller.Run.HasPendingChoice)
+            {
+                return "Level up! Choose your bonus to go on.";
+            }
+
+            if (controller.PendingStep != null)
+            {
+                return $"Next: {controller.PendingStep}.";
+            }
+
+            var report = controller.LastReport;
+            var won = report != null && report.HeroWon ? $"Victory, +{report.XpGained} XP. " : string.Empty;
+            return controller.Pacer.IsPaused
+                ? won + "Paused."
+                : won + $"Next fight in {Math.Ceiling(controller.SecondsUntilNextFight / controller.Pacer.Speed):0}s.";
         }
 
         private static FightResultViewModel BuildResult(RunScreenController controller)

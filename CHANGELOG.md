@@ -8,6 +8,14 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
 
 ## [Unreleased]
 
+### Changed
+
+- Regular fights chain automatically (#124, ADR 0016, amends ADR 0009): after a won regular fight a short pause
+  (`RunScreenSettings.NextFightDelaySeconds`, also a field of the game flow behaviour) starts the next one with no
+  click. A level-up stops the loop until its choice is taken; secret rooms and the professor are buttons that are
+  always visible and enter the room after the current fight (`RunScreenController.RequestStep`); the recap is only
+  shown after mini-bosses, the professor and defeats. `RunScreenPhase.ChoosingStep` is now `BetweenFights`.
+
 ### Added
 
 - Evolution made visible (#80, ADR 0013): the run screen shows a stage mark (`*`, `**`) on each evolved card and a short

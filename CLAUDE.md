@@ -168,7 +168,7 @@ The playable game (#88): `Bootstrap.unity` holds a camera, `GameBootstrap` and o
 `GameFlowBehaviour`, which references `Unity/Content/GameConfig.asset` (`GameConfigAsset`: class `CLASS_A`, biome `BIOME_01`,
 fight time limit, level curve, passive pool `PASSIVE_POOL_A` and the layout of every screen; no `Resources`, no path in code).
 `Game.Unity.Flow.GameFlow` is the plain C# state machine (title, run, level-up, preparation, recap, end of run, title): it adds
-no rule, it listens to `RunScreenController` and owns the bestiary (saved after every reveal). `GameFlowPresenter` shows the
+no rule, it listens to `RunScreenController` and owns the bestiary (saved after every reveal). The regular-fight loop (ADR 0016: chaining after a pause, stop at a level-up, rooms and professor asked for with `RequestStep`) lives in `RunScreenController`, never in the views; the pause is `RunScreenSettings.NextFightDelaySeconds`. `GameFlowPresenter` shows the
 current screen through `ScreenHost`. The run seed comes from the clock in `GameFlowBehaviour` (never in Core). Rebuild the scene
 and the config with the command above (`BootstrapSceneBuilder` rewrites `GameConfig.asset` from the generated content, so
 regenerate the content first if it changed). Play it in the editor with Play on `Bootstrap.unity`, or from the CI artifact
@@ -176,7 +176,7 @@ regenerate the content first if it changed). Play it in the editor with Play on 
 
 Look at the screens without playing a run: **Tools > Game > Preview Screens** opens an editor window with one
 button per screen, filled with demo data (the recap on a victory, a defeat and a fight that runs out of time,
-played by Core from `demo_*` cards built in `ScreenPreviewFights`). The run screen (#73) has four states there (next step, regular fight, level-up pending, fight result), played by a demo run built in `ScreenPreviewRuns`; its screen code is in `Unity/UI/RunScreen/` (controller, view model and pacer are plain C#, `RunScreenView` only binds them). It uses the game's runtime theme, layouts and
+played by Core from `demo_*` cards built in `ScreenPreviewFights`). The run screen (#73) has four states there (between fights, regular fight, level-up pending, fight result), played by a demo run built in `ScreenPreviewRuns`; its screen code is in `Unity/UI/RunScreen/` (controller, view model and pacer are plain C#, `RunScreenView` only binds them). It uses the game's runtime theme, layouts and
 `ScreenHost`; it is editor-only (`Game.Unity.EditorTools`, never in a build) and changes no asset. A new screen adds
 one line to `ScreenPreviews.All` (name, layout path, how to fill it). The editor window does not scale to the
 1920x1080 reference resolution of the game panel, so judge proportions by resizing it.

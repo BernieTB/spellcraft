@@ -19,9 +19,12 @@ Pillars:
 
 ## Core loop
 
-1. The character auto-fights regular monsters in a biome and earns XP.
-2. On each level-up, the player takes a [linked choice](#character-and-level-ups) and gains a card.
+1. The character auto-fights regular monsters in a biome and earns XP. Regular fights chain by themselves, after a
+   short pause ([ADR 0016](adr/0016-regular-fights-chain-automatically.md)).
+2. On each level-up, the loop pauses and the player takes a [linked choice](#character-and-level-ups) and gains a
+   card; the loop then goes on.
 3. Objectives unlock [secret rooms](#mini-bosses-and-secret-rooms) with mini-bosses, which widen the spell line.
+   A button for each room is always visible; pressing it enters the room after the current fight.
 4. Once the professor is available, the player chooses when to face them: [prepare](#boss-preparation-phase-and-recap),
    then watch the fight.
 5. Win: move to the next biome. Lose any fight: the run ends.
@@ -37,11 +40,14 @@ Pacing (see [ADR 0009](adr/0009-vertical-slice-run-pacing.md); numbers live in d
 
 - A biome targets **about 8 minutes** when the player goes to the professor as soon as possible, so a run holds
   about three biomes.
-- Between fights the player picks the next step: a regular fight, an unlocked secret room, or the professor.
+- Regular fights follow one another with no click (a short pause between them). The player asks for an unlocked
+  secret room or the professor with a button that is always visible: it is entered after the current fight, through
+  the preparation screen, otherwise the loop goes on ([ADR 0016](adr/0016-regular-fights-chain-automatically.md),
+  which amends ADR 0009).
 - The professor becomes available after a **minimum number of regular fights** (about 8). The player may then
   keep fighting regular monsters and mini-bosses before facing the professor.
 - Regular fights are drawn with the run's seed from the biome's pool of encounters, with equal chances, when the
-  fight starts: the player does not see the encounter before choosing a regular fight.
+  fight starts: the player does not see the encounter in advance.
 - The spell line always keeps at least one card.
 - In the Vertical slice a run is one biome: defeating the professor wins the run.
 - **Each fight starts fresh:** the hero has max health and the starting shield at the start of every fight.

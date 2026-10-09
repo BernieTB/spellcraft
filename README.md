@@ -136,15 +136,16 @@ with working names and placeholder visuals (flat shapes), played from the title 
 1. Download the artifact (see above), unzip it, run `Spellcraft.exe` (windowed, 1920x1080 reference; the UI scales).
 2. **Title**: **New run** starts a run with a seed taken from the clock (shown on the end screen, useful in bug
    reports); **Quit** closes the game.
-3. **Run screen**: pick the next step with the buttons: a regular fight, an unlocked secret room (mini-boss) or, after
-   enough regular fights, the professor. The fight plays by itself; use **Pause** and the speed button
-   (x1/x2/x4/x8). During a regular fight, click a line slot, then another slot or a reserve card, to move or swap
+3. **Run screen**: regular fights chain by themselves (a short pause, then the next one starts: no click). The
+   buttons for an unlocked secret room (mini-boss) and, after enough regular fights, the professor are always
+   visible: press one to enter it after the current fight (press again to cancel); otherwise the loop goes on. Use
+   **Pause** (it stops the loop too) and the speed button (x1/x2/x4/x8). During a regular fight, click a line slot, then another slot or a reserve card, to move or swap
    cards live. **Leave** abandons the fight (it does not count).
-4. **Level-up**: each level gives a mandatory choice of one of three packages (a card and a passive); no fight can
-   start before it. With a full line, send the new card to the reserve or replace a line card.
+4. **Level-up**: each level stops the loop and gives a mandatory choice of one of three packages (a card and a
+   passive); the loop goes on once it is taken. With a full line, send the new card to the reserve or replace a line card.
 5. **Mini-boss and professor**: the preparation screen lets you arrange the line and the reserve (the line is fixed
    once the fight starts). The first win in a secret room reveals part of the professor to the **bestiary**.
-6. **Recap** after every fight, then the **end screen** (victory or defeat) and back to the title.
+6. **Recap** after every mini-boss or professor fight and after a defeat (not after regular fights), then the **end screen** (victory or defeat) and back to the title.
 
 The bestiary is the only save. It is loaded at startup, saved after every reveal and kept between runs, in
 `%USERPROFILE%\AppData\LocalLow\DefaultCompany\game\bestiary.json` (company and product name are the placeholder

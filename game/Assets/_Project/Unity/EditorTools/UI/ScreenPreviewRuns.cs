@@ -27,7 +27,7 @@ namespace Game.Unity.EditorTools.UI
         private const ulong Seed = 7;
         private const string Slime = "demo_slime";
 
-        /// <summary>A new run: the regular fight is available, the professor is not yet.</summary>
+        /// <summary>A new run between fights: the next regular fight starts soon, the professor is not yet available.</summary>
         public static RunScreenController ChoosingStep()
         {
             return new RunScreenController(NewRun());
@@ -54,11 +54,16 @@ namespace Game.Unity.EditorTools.UI
             return new RunScreenController(run);
         }
 
-        /// <summary>The result screen of a fight that was just won.</summary>
+        /// <summary>
+        /// The result screen of a mini-boss fight that was just won (regular fights have none: they chain, ADR 0016).
+        /// </summary>
         public static RunScreenController FightResult()
         {
-            var controller = new RunScreenController(NewRun());
-            controller.StartFight(RunStep.RegularFight);
+            var run = NewRun();
+            var room = run.Biome.SecretRooms[0];
+            run.UnlockSecretRoom(room.Id, room.MiniBossEncounter);
+            run.BeginPreparation(RunStep.SecretRoom(room.Id), new Bestiary()).Start();
+            var controller = new RunScreenController(run);
             while (controller.Phase == RunScreenPhase.Fighting)
             {
                 controller.StepOneTick();

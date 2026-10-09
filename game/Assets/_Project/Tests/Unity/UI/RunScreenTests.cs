@@ -97,7 +97,7 @@ namespace Game.Unity.Tests.UI
 
             var choices = controller.StepChoices;
 
-            Assert.AreEqual(RunScreenPhase.ChoosingStep, controller.Phase);
+            Assert.AreEqual(RunScreenPhase.BetweenFights, controller.Phase);
             Assert.AreEqual(2, choices.Count);
             Assert.AreEqual(RunStep.RegularFight, choices[0].Step);
             Assert.IsTrue(choices[0].IsEnabled);
@@ -154,7 +154,7 @@ namespace Game.Unity.Tests.UI
             var controller = NewController();
 
             Assert.IsFalse(controller.ChooseStep(RunStep.Professor));
-            Assert.AreEqual(RunScreenPhase.ChoosingStep, controller.Phase);
+            Assert.AreEqual(RunScreenPhase.BetweenFights, controller.Phase);
         }
 
         [Test]
@@ -169,7 +169,7 @@ namespace Game.Unity.Tests.UI
             Assert.IsTrue(controller.ChooseStep(RunStep.SecretRoom(RoomId)));
 
             Assert.AreEqual(new[] { RunStep.SecretRoom(RoomId) }, requested);
-            Assert.AreEqual(RunScreenPhase.ChoosingStep, controller.Phase);
+            Assert.AreEqual(RunScreenPhase.BetweenFights, controller.Phase);
             Assert.IsNull(run.CurrentFight);
         }
 
@@ -291,7 +291,7 @@ namespace Game.Unity.Tests.UI
         }
 
         [Test]
-        public void FightEnd_IsCompletedByTheRun_AndShowsTheResult()
+        public void FightEnd_IsCompletedByTheRun_AndTheLoopGoesOn()
         {
             var run = NewRun();
             var controller = NewController(run);
@@ -301,7 +301,7 @@ namespace Game.Unity.Tests.UI
 
             PlayToEnd(controller);
 
-            Assert.AreEqual(RunScreenPhase.FightResult, controller.Phase);
+            Assert.AreEqual(RunScreenPhase.BetweenFights, controller.Phase);
             Assert.IsNull(run.CurrentFight);
             Assert.IsNull(controller.Session);
             Assert.AreSame(reported, controller.LastReport);
@@ -310,8 +310,120 @@ namespace Game.Unity.Tests.UI
             Assert.AreEqual(10, run.TotalXp);
         }
 
+        // --- Controller: the regular fights chain (ADR 0016) ---
+
+        private static void TakeLevelUps(Run run, RunScreenController controller)
+        {
+            while (run.HasPendingChoice)
+            {
+                run.ConsumePendingLevelUp();
+            }
+
+            controller.ChoiceResolved();
+        }
+
         [Test]
-        public void Continue_AfterAWin_OpensThePendingLevelUpChoice()
+        public void Loop_AfterAWonRegularFight_StartsTheNextOneByItselfAfterThePause()
+        {
+            var run = NewRun();
+            var controller = new RunScreenController(run, new RunScreenSettings(4d, new[] { 1d, 2d }, 2d));
+            controller.StartFight(RunStep.RegularFight);
+            PlayToEnd(controller);
+            TakeLevelUps(run, controller);
+
+            Assert.AreEqual(RunScreenPhase.BetweenFights, controller.Phase);
+            Assert.AreEqual(2d, controller.SecondsUntilNextFight, 1e-9);
+            controller.Advance(1.5d);
+            Assert.AreEqual(RunScreenPhase.BetweenFights, controller.Phase);
+            Assert.IsNull(run.CurrentFight);
+            controller.Advance(0.5d);
+
+            Assert.AreEqual(RunScreenPhase.Fighting, controller.Phase);
+            Assert.AreEqual(RunStepKind.RegularFight, controller.Session.Step.Kind);
+            Assert.AreEqual(1, run.FightsPlayed);
+        }
+
+        [Test]
+        public void Loop_NeverNeedsAClick_ToPlayManyRegularFights()
+        {
+            var run = NewRun();
+            var controller = NewController(run);
+            var advances = 0;
+            while (run.FightsPlayed < 6 && advances++ < 10000)
+            {
+                controller.Advance(0.5d);
+                if (run.HasPendingChoice)
+                {
+                    TakeLevelUps(run, controller);
+                }
+            }
+
+            Assert.GreaterOrEqual(run.FightsPlayed, 6);
+            Assert.AreEqual(6, run.RegularFightsWon);
+        }
+
+        [Test]
+        public void Loop_Pause_StopsTheCountdown_AndSpeedShortensIt()
+        {
+            var run = NewRun();
+            var controller = new RunScreenController(run, new RunScreenSettings(4d, new[] { 1d, 2d }, 2d));
+            controller.Pacer.IsPaused = true;
+
+            controller.Advance(10d);
+
+            Assert.AreEqual(RunScreenPhase.BetweenFights, controller.Phase);
+            Assert.AreEqual(2d, controller.SecondsUntilNextFight, 1e-9);
+            controller.Pacer.IsPaused = false;
+            controller.Pacer.SpeedIndex = 1;
+            controller.Advance(0.9d);
+            Assert.AreEqual(RunScreenPhase.BetweenFights, controller.Phase);
+            controller.Advance(0.1d);
+            Assert.AreEqual(RunScreenPhase.Fighting, controller.Phase);
+        }
+
+        [Test]
+        public void Loop_ADelayOfZero_StartsTheNextFightOnTheNextAdvance()
+        {
+            var controller = new RunScreenController(NewRun(), new RunScreenSettings(4d, new[] { 1d }, 0d));
+
+            controller.Advance(0d);
+
+            Assert.AreEqual(RunScreenPhase.Fighting, controller.Phase);
+        }
+
+        [Test]
+        public void Settings_RejectANegativeDelay()
+        {
+            Assert.Throws<ArgumentOutOfRangeException>(() => new RunScreenSettings(4d, null, -1d));
+        }
+
+        [Test]
+        public void Loop_ALevelUp_StopsTheLoopUntilTheChoiceIsTaken()
+        {
+            var run = NewRun();
+            var controller = NewController(run);
+            var asked = 0;
+            controller.PendingChoiceRequested += () => asked++;
+            controller.StartFight(RunStep.RegularFight);
+
+            PlayToEnd(controller);
+
+            Assert.IsTrue(run.HasPendingChoice);
+            Assert.AreEqual(1, asked);
+            Assert.IsTrue(controller.IsLoopHeld);
+            controller.Advance(1000d);
+            Assert.AreEqual(RunScreenPhase.BetweenFights, controller.Phase);
+            Assert.IsNull(run.CurrentFight);
+
+            TakeLevelUps(run, controller);
+            Assert.IsFalse(controller.IsLoopHeld);
+            controller.Advance(1000d);
+
+            Assert.AreEqual(RunScreenPhase.Fighting, controller.Phase);
+        }
+
+        [Test]
+        public void Loop_ALevelUpAndAnotherOne_AskForTheChoiceOnlyOnceFromTheController()
         {
             var run = NewRun();
             var controller = NewController(run);
@@ -320,11 +432,186 @@ namespace Game.Unity.Tests.UI
             controller.StartFight(RunStep.RegularFight);
             PlayToEnd(controller);
 
+            controller.ChoiceResolved();
+
+            Assert.AreEqual(1, asked);
+        }
+
+        // --- Controller: secret rooms and the professor, on demand ---
+
+        private static Run RunWithARoom()
+        {
+            var run = NewRun();
+            run.UnlockSecretRoom(RoomId, run.Biome.SecretRooms[0].MiniBossEncounter);
+            return run;
+        }
+
+        [Test]
+        public void RequestStep_DuringAFight_WaitsForTheEndOfTheFight()
+        {
+            var run = RunWithARoom();
+            var controller = NewController(run);
+            var prepared = new List<RunStep>();
+            controller.PreparationRequested += prepared.Add;
+            controller.StartFight(RunStep.RegularFight);
+
+            Assert.IsTrue(controller.RequestStep(RunStep.SecretRoom(RoomId)));
+            controller.Advance(0.5d);
+
+            Assert.AreEqual(RunStep.SecretRoom(RoomId), controller.PendingStep);
+            Assert.IsEmpty(prepared);
+            Assert.IsTrue(controller.StepChoices.Single(choice => choice.Step.Kind == RunStepKind.SecretRoom).IsRequested);
+
+            // The fight ends with a level-up, which comes first.
+            PlayToEnd(controller);
+            Assert.IsEmpty(prepared);
+            TakeLevelUps(run, controller);
+
+            Assert.AreEqual(new[] { RunStep.SecretRoom(RoomId) }, prepared);
+            Assert.IsNull(controller.PendingStep);
+            Assert.IsTrue(controller.IsLoopHeld);
+            controller.Advance(1000d);
+            Assert.IsNull(run.CurrentFight);
+        }
+
+        [Test]
+        public void RequestStep_AfterAWinWithoutLevelUp_OpensThePreparationAtOnce()
+        {
+            var run = RunWithARoom();
+            run.Play(RunStep.RegularFight);
+            run.ConsumePendingLevelUp();
+            var controller = NewController(run);
+            var prepared = new List<RunStep>();
+            controller.PreparationRequested += prepared.Add;
+            controller.StartFight(RunStep.RegularFight);
+            controller.RequestStep(RunStep.SecretRoom(RoomId));
+
+            // Play the fight; if it gives a level, the request waits for it.
+            PlayToEnd(controller);
+            TakeLevelUps(run, controller);
+
+            Assert.AreEqual(1, prepared.Count);
+        }
+
+        [Test]
+        public void RequestStep_Twice_WithdrawsTheRequest_AndTheLoopGoesOn()
+        {
+            var run = RunWithARoom();
+            run.Play(RunStep.RegularFight);
+            run.ConsumePendingLevelUp();
+            var controller = NewController(run);
+            var prepared = new List<RunStep>();
+            controller.PreparationRequested += prepared.Add;
+            controller.StartFight(RunStep.RegularFight);
+
+            controller.RequestStep(RunStep.SecretRoom(RoomId));
+            Assert.IsFalse(controller.RequestStep(RunStep.SecretRoom(RoomId)));
+            Assert.IsNull(controller.PendingStep);
+            PlayToEnd(controller);
+            TakeLevelUps(run, controller);
+            controller.Advance(1000d);
+
+            Assert.IsEmpty(prepared);
+            Assert.AreEqual(RunScreenPhase.Fighting, controller.Phase);
+            Assert.AreEqual(RunStepKind.RegularFight, controller.Session.Step.Kind);
+        }
+
+        [Test]
+        public void RequestStep_ABetweenFights_RaisesThePreparationAtOnce_AndTheLoopWaitsForIt()
+        {
+            var run = RunWithARoom();
+            var controller = NewController(run);
+            var prepared = new List<RunStep>();
+            controller.PreparationRequested += prepared.Add;
+
+            Assert.IsTrue(controller.RequestStep(RunStep.SecretRoom(RoomId)));
+            controller.Advance(1000d);
+
+            Assert.AreEqual(1, prepared.Count);
+            Assert.IsNull(run.CurrentFight);
+            Assert.AreEqual(RunScreenPhase.BetweenFights, controller.Phase);
+        }
+
+        [Test]
+        public void RequestStep_RefusesRegularFights_UnavailableSteps_AndWhenNotPlaying()
+        {
+            var run = NewRun();
+            var controller = NewController(run);
+
+            Assert.IsFalse(controller.RequestStep(RunStep.RegularFight));
+            Assert.IsFalse(controller.RequestStep(RunStep.Professor));
+            Assert.IsFalse(controller.RequestStep(RunStep.SecretRoom(RoomId)));
+            Assert.Throws<ArgumentNullException>(() => controller.RequestStep(null));
+            Assert.IsNull(controller.PendingStep);
+        }
+
+        [Test]
+        public void RequestStep_ReplacesAnotherRequest()
+        {
+            var run = RunWithARoom();
+            run.Play(RunStep.RegularFight);
+            run.Play(RunStep.RegularFight);
+            while (run.HasPendingChoice)
+            {
+                run.ConsumePendingLevelUp();
+            }
+
+            var controller = NewController(run);
+            controller.StartFight(RunStep.RegularFight);
+
+            controller.RequestStep(RunStep.SecretRoom(RoomId));
+            controller.RequestStep(RunStep.Professor);
+
+            Assert.AreEqual(RunStep.Professor, controller.PendingStep);
+        }
+
+        [Test]
+        public void MiniBossFight_EndsOnTheResult_AndContinueGoesBackToTheLoop()
+        {
+            var run = RunWithARoom();
+            var controller = NewController(run);
+            run.BeginPreparation(RunStep.SecretRoom(RoomId), new Game.Core.Meta.Bestiary()).Start();
+            controller = NewController(run);
+            Assert.AreEqual(RunScreenPhase.Fighting, controller.Phase);
+
+            PlayToEnd(controller);
+            Assert.AreEqual(RunScreenPhase.FightResult, controller.Phase);
+            TakeLevelUps(run, controller);
             controller.Continue();
 
-            Assert.AreEqual(RunScreenPhase.ChoosingStep, controller.Phase);
-            Assert.AreEqual(1, asked);
-            Assert.IsFalse(controller.CanStartStep);
+            Assert.AreEqual(RunScreenPhase.BetweenFights, controller.Phase);
+            controller.Advance(1000d);
+            Assert.AreEqual(RunScreenPhase.Fighting, controller.Phase);
+            Assert.AreEqual(RunStepKind.RegularFight, controller.Session.Step.Kind);
+        }
+
+        [Test]
+        public void Defeat_EndsTheLoop_AndForgetsTheRequest()
+        {
+            var run = DeadlyRun();
+            var controller = NewController(run);
+            controller.StartFight(RunStep.RegularFight);
+
+            PlayToEnd(controller);
+
+            Assert.AreEqual(RunScreenPhase.FightResult, controller.Phase);
+            Assert.IsNull(controller.PendingStep);
+            controller.Advance(1000d);
+            Assert.AreEqual(RunScreenPhase.FightResult, controller.Phase);
+            Assert.IsNull(run.CurrentFight);
+        }
+
+        [Test]
+        public void EditingTheLine_StaysPossibleDuringAutoChainedFights()
+        {
+            var run = NewRun();
+            var controller = NewController(run);
+            controller.StartFight(RunStep.RegularFight);
+            PlayToEnd(controller);
+            TakeLevelUps(run, controller);
+            controller.Advance(1000d);
+
+            Assert.IsTrue(controller.CanEditLine);
         }
 
         [Test]
@@ -357,7 +644,7 @@ namespace Game.Unity.Tests.UI
 
             controller.Leave();
 
-            Assert.AreEqual(RunScreenPhase.ChoosingStep, controller.Phase);
+            Assert.AreEqual(RunScreenPhase.BetweenFights, controller.Phase);
             Assert.IsNull(run.CurrentFight);
             Assert.AreEqual(0, run.FightsPlayed);
             Assert.IsTrue(controller.ChooseStep(RunStep.RegularFight));
@@ -465,7 +752,7 @@ namespace Game.Unity.Tests.UI
             controller.ClickLineSlot(2);
             PlayToEnd(controller);
 
-            Assert.AreEqual(RunScreenPhase.FightResult, controller.Phase);
+            Assert.AreEqual(RunScreenPhase.BetweenFights, controller.Phase);
             Assert.IsTrue(controller.LastReport.Log.Events.Any(e => e.Kind == Game.Core.Combat.Log.CombatEventKind.LineChanged));
         }
 
@@ -694,20 +981,30 @@ namespace Game.Unity.Tests.UI
         [Test]
         public void ViewModel_AfterAWin_ShowsXpAndTheLevelUp()
         {
+            var controller = ScreenPreviewRuns.FightResult();
+
+            var model = RunScreenViewModel.From(controller);
+
+            Assert.AreEqual("Victory", model.Result.Title);
+            Assert.IsTrue(model.Result.IsVictory);
+            Assert.That(model.Result.Lines, Has.Member($"+{controller.LastReport.XpGained} XP"));
+            Assert.That(model.Result.Lines, Has.Member("Mini-boss reward received"));
+            Assert.AreEqual(controller.Run.HasPendingChoice, model.HasPendingChoice);
+            Assert.AreEqual(0, model.Steps.Count);
+        }
+
+        [Test]
+        public void ViewModel_AfterARegularWin_ShowsNoResult_ButTheCountdownAndTheLevelUp()
+        {
             var controller = NewController();
             controller.StartFight(RunStep.RegularFight);
             PlayToEnd(controller);
 
             var model = RunScreenViewModel.From(controller);
 
-            Assert.AreEqual("Victory", model.Result.Title);
-            Assert.IsTrue(model.Result.IsVictory);
-            Assert.That(model.Result.Lines, Has.Member("+10 XP"));
-            Assert.That(model.Result.Lines, Has.Member("Level up: now level 2"));
-            Assert.AreEqual("Choose level-up", model.Result.ContinueText);
+            Assert.IsNull(model.Result);
+            StringAssert.Contains("Level up", model.StatusText);
             Assert.AreEqual("Level-up waiting (1)", model.Hud.PendingLevelUpText);
-            Assert.IsTrue(model.HasPendingChoice);
-            Assert.AreEqual(0, model.Steps.Count);
         }
 
         [Test]
@@ -780,9 +1077,8 @@ namespace Game.Unity.Tests.UI
                 Assert.IsTrue(Hidden(root, RunScreenView.ControlsElement));
                 Assert.IsTrue(Hidden(root, RunScreenView.PendingChoiceButtonElement));
                 var steps = root.Q(RunScreenView.StepsElement).Children().ToList();
-                Assert.AreEqual(2, steps.Count);
-                Assert.IsTrue(steps[0].Q<Button>().enabledSelf);
-                Assert.IsFalse(steps[1].Q<Button>().enabledSelf);
+                Assert.AreEqual(1, steps.Count, "Only the professor button: regular fights chain, the room is still locked.");
+                Assert.IsFalse(steps[0].Q<Button>().enabledSelf);
                 Assert.AreEqual(3, root.Q(RunScreenView.LineElement).childCount);
                 Assert.AreEqual(1, root.Q(RunScreenView.ReserveElement).childCount);
                 Assert.AreEqual("Level 1", root.Q<Label>(RunScreenView.HudLevelElement).text);
@@ -802,7 +1098,7 @@ namespace Game.Unity.Tests.UI
                 controller.StepOneTick();
                 binding.Refresh();
 
-                Assert.IsTrue(Hidden(root, RunScreenView.StepsPanelElement));
+                Assert.IsFalse(Hidden(root, RunScreenView.StepsPanelElement), "Room and professor buttons stay visible in a fight.");
                 Assert.IsFalse(Hidden(root, RunScreenView.FightPanelElement));
                 Assert.IsFalse(Hidden(root, RunScreenView.ControlsElement));
                 Assert.AreEqual(1, root.Q(RunScreenView.HeroElement).childCount);
@@ -846,11 +1142,9 @@ namespace Game.Unity.Tests.UI
         public void View_FightResult_ShowsTheResultAndTheContinueButton()
         {
             var root = CloneRunScreen();
-            var controller = NewController();
+            var controller = ScreenPreviewRuns.FightResult();
             using (var binding = RunScreenView.Bind(root, controller))
             {
-                controller.StartFight(RunStep.RegularFight);
-                PlayToEnd(controller);
                 binding.Refresh();
 
                 Assert.IsFalse(Hidden(root, RunScreenView.ResultPanelElement));
@@ -858,7 +1152,7 @@ namespace Game.Unity.Tests.UI
                 Assert.IsTrue(Hidden(root, RunScreenView.StepsPanelElement));
                 Assert.AreEqual("Victory", root.Q<Label>(RunScreenView.ResultTitleElement).text);
                 Assert.IsTrue(root.Q<Label>(RunScreenView.ResultTitleElement).ClassListContains(RunScreenView.VictoryTitleClass));
-                Assert.AreEqual("Choose level-up", root.Q<Button>(RunScreenView.ContinueButtonElement).text);
+                Assert.IsFalse(Hidden(root, RunScreenView.ContinueButtonElement));
                 Assert.GreaterOrEqual(root.Q(RunScreenView.ResultLinesElement).childCount, 2);
             }
         }
@@ -933,9 +1227,9 @@ namespace Game.Unity.Tests.UI
 
             PlayToEnd(controller);
 
-            Assert.AreEqual(RunScreenPhase.FightResult, controller.Phase);
+            Assert.AreNotEqual(RunScreenPhase.Fighting, controller.Phase);
             Assert.AreEqual(1, controller.Run.FightsPlayed);
-            Assert.AreEqual(RunScreenPhase.ChoosingStep, ScreenPreviewRuns.PlaceholderBiomeChoosingStep().Phase);
+            Assert.AreEqual(RunScreenPhase.BetweenFights, ScreenPreviewRuns.PlaceholderBiomeChoosingStep().Phase);
         }
 
         [Test]

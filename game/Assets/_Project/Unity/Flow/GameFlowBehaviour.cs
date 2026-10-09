@@ -18,6 +18,11 @@ namespace Game.Unity.Flow
         [SerializeField]
         private GameConfigAsset _config;
 
+        [SerializeField]
+        [Min(0f)]
+        [Tooltip("Pause, in seconds at speed x1, between a won regular fight and the next one (ADR 0016).")]
+        private float _nextFightDelaySeconds = (float)Game.Unity.UI.RunScreen.RunScreenSettings.DefaultNextFightDelaySeconds;
+
         private GameFlow _flow;
         private GameFlowPresenter _presenter;
 
@@ -36,7 +41,9 @@ namespace Game.Unity.Flow
             var loaded = store.Load();
             Debug.Log($"[Bestiary] {loaded.Status}: {loaded.Bestiary.Entries.Count} professor(s) known ({store.Path}).");
 
-            _flow = new GameFlow(_config.CreateRun, _config.ToPassivePool(), loaded.Bestiary, store, ClockSeed, Debug.LogWarning);
+            var settings = new Game.Unity.UI.RunScreen.RunScreenSettings(
+                nextFightDelaySeconds: Mathf.Max(0f, _nextFightDelaySeconds));
+            _flow = new GameFlow(_config.CreateRun, _config.ToPassivePool(), loaded.Bestiary, store, ClockSeed, Debug.LogWarning, settings);
             _flow.QuitRequested += Quit;
             var container = GetComponent<UIDocument>().rootVisualElement;
             _presenter = new GameFlowPresenter(_flow, new ScreenHost(container), _config);

@@ -6,13 +6,22 @@ using Game.Core.Runs;
 namespace Game.Unity.UI.RunScreen
 {
     /// <summary>
-    /// The flow of the run screen (#73), in plain C# so it is tested without a scene: it picks the next step, drives
-    /// the current fight tick by tick from Core at the pace of a <see cref="FightPacer"/>, passes the player's line
-    /// edits to Core and hands over to other screens through events. It holds no game rule: availability of steps,
-    /// pending choices, who may edit the line, and every fight outcome come from <see cref="Run"/> and
-    /// <see cref="RunFightSession"/>.
+    /// The flow of the run screen (#73, #124), in plain C# so it is tested without a scene: it chains the regular
+    /// fights by itself, drives the current fight tick by tick from Core at the pace of a <see cref="FightPacer"/>,
+    /// passes the player's line edits to Core and hands over to other screens through events. It holds no game rule:
+    /// availability of steps, pending choices, who may edit the line, and every fight outcome come from
+    /// <see cref="Run"/> and <see cref="RunFightSession"/>.
     /// </summary>
     /// <remarks>
+    /// <para>
+    /// The loop (ADR 0016): a won regular fight is followed, after a short pause
+    /// (<see cref="RunScreenSettings.NextFightDelaySeconds"/>), by the next regular fight, with no click. A level-up
+    /// stops the loop and raises <see cref="PendingChoiceRequested"/>; once the choice is taken
+    /// (<see cref="ChoiceResolved"/>) the loop goes on. A secret room or the professor is asked for with
+    /// <see cref="RequestStep"/> at any time; it is entered when the current fight ends (through
+    /// <see cref="PreparationRequested"/>), otherwise the loop goes on. Pause also stops the loop's pause timer.
+    /// A mini-boss, a professor fight or a defeat ends on <see cref="RunScreenPhase.FightResult"/>, for the recap.
+    /// </para>
     /// <para>
     /// Entry points for the screens built next to this one (#77 level-up choice, #84 boss preparation): the events
     /// <see cref="PendingChoiceRequested"/> (a level-up is waiting: open the choice, then call
@@ -33,6 +42,9 @@ namespace Game.Unity.UI.RunScreen
         private RunFightSession _session;
         private int _selectedLine = -1;
         private int _selectedReserve = -1;
+        private readonly double _nextFightDelay;
+        private double _delayLeft;
+        private bool _awaitingPreparation;
 
         /// <param name="run">The run to play. If it already has an open fight session, the screen takes it over.</param>
         /// <param name="settings">Pacing settings; null for the defaults.</param>
@@ -42,16 +54,18 @@ namespace Game.Unity.UI.RunScreen
             Run = run ?? throw new ArgumentNullException(nameof(run));
             var used = settings ?? new RunScreenSettings();
             Pacer = new FightPacer(used.TicksPerSecond, used.Speeds);
+            _nextFightDelay = used.NextFightDelaySeconds;
+            _delayLeft = _nextFightDelay;
             _session = run.CurrentFight;
             Phase = _session != null
                 ? RunScreenPhase.Fighting
-                : run.IsInProgress ? RunScreenPhase.ChoosingStep : RunScreenPhase.RunEnded;
+                : run.IsInProgress ? RunScreenPhase.BetweenFights : RunScreenPhase.RunEnded;
         }
 
-        /// <summary>Raised when the player tries to start a step while a level-up waits: open the choice (#77).</summary>
+        /// <summary>Raised when a level-up waits at the end of a fight (or a step is tried): open the choice (#77).</summary>
         public event Action PendingChoiceRequested;
 
-        /// <summary>Raised when the player picks a mini-boss or the professor: open the preparation (#84).</summary>
+        /// <summary>Raised when a requested or picked mini-boss or professor is due: open the preparation (#84).</summary>
         public event Action<RunStep> PreparationRequested;
 
         /// <summary>Raised when a fight ends and was counted by the run, with its report (for the recap).</summary>
@@ -85,7 +99,21 @@ namespace Game.Unity.UI.RunScreen
         public bool CanEditLine => Session != null && Session.LineEditsAllowed && !Session.IsOver;
 
         /// <summary>True when a step can be started now (between fights, no level-up waiting, run going on).</summary>
-        public bool CanStartStep => Phase == RunScreenPhase.ChoosingStep && !Run.HasPendingChoice;
+        public bool CanStartStep => Phase == RunScreenPhase.BetweenFights && !Run.HasPendingChoice;
+
+        /// <summary>The secret room or professor the player asked for, entered after the current fight; null if none.</summary>
+        public RunStep PendingStep { get; private set; }
+
+        /// <summary>
+        /// Seconds (at speed x1) left before the next regular fight starts by itself, while
+        /// <see cref="Phase"/> is <see cref="RunScreenPhase.BetweenFights"/>; zero otherwise.
+        /// </summary>
+        public double SecondsUntilNextFight => Phase == RunScreenPhase.BetweenFights ? Math.Max(0d, _delayLeft) : 0d;
+
+        /// <summary>
+        /// True while the loop is stopped by a level-up that waits for its choice or by a preparation that is open.
+        /// </summary>
+        public bool IsLoopHeld => Phase == RunScreenPhase.BetweenFights && (Run.HasPendingChoice || _awaitingPreparation);
 
         /// <summary>The next-step choices with their availability, in a fixed order.</summary>
         public IReadOnlyList<StepChoice> StepChoices
@@ -93,7 +121,7 @@ namespace Game.Unity.UI.RunScreen
             get
             {
                 var choices = new List<StepChoice>();
-                if (Phase != RunScreenPhase.ChoosingStep)
+                if ((Phase != RunScreenPhase.BetweenFights && Phase != RunScreenPhase.Fighting) || !Run.IsInProgress)
                 {
                     return choices.AsReadOnly();
                 }
@@ -101,7 +129,7 @@ namespace Game.Unity.UI.RunScreen
                 var blocked = Run.HasPendingChoice ? "Choose your level-up first." : null;
                 foreach (var step in Run.AvailableSteps)
                 {
-                    choices.Add(new StepChoice(step, LabelOf(step), blocked == null, blocked));
+                    choices.Add(new StepChoice(step, LabelOf(step), blocked == null, blocked, step.Equals(PendingStep)));
                 }
 
                 if (!Run.IsProfessorAvailable)
@@ -119,7 +147,8 @@ namespace Game.Unity.UI.RunScreen
         }
 
         /// <summary>
-        /// Picks the next step. A regular fight starts at once; a mini-boss or the professor raises
+        /// Starts the next step now, without waiting for the pause of the loop (used by tests and tools; the screen
+        /// asks for rooms with <see cref="RequestStep"/>). A regular fight starts at once; a mini-boss or the professor raises
         /// <see cref="PreparationRequested"/> instead (the preparation screen then calls <see cref="StartFight"/>).
         /// While a level-up waits, raises <see cref="PendingChoiceRequested"/> and starts nothing.
         /// </summary>
@@ -132,7 +161,7 @@ namespace Game.Unity.UI.RunScreen
                 throw new ArgumentNullException(nameof(step));
             }
 
-            if (Phase != RunScreenPhase.ChoosingStep)
+            if (Phase != RunScreenPhase.BetweenFights)
             {
                 return false;
             }
@@ -150,12 +179,55 @@ namespace Game.Unity.UI.RunScreen
 
             if (step.RequiresPreparation)
             {
-                PreparationRequested?.Invoke(step);
+                RaisePreparation(step);
                 return true;
             }
 
             StartFight(step);
             return true;
+        }
+
+        /// <summary>
+        /// Asks to enter a secret room or the professor after the current fight (the player's button, always visible
+        /// while the step is available). Asking again for the same step withdraws the request; asking for another
+        /// replaces it. Between fights there is nothing to wait for: the preparation is requested at once (after the
+        /// level-up choice if one waits). A regular fight cannot be requested: the loop chains them.
+        /// </summary>
+        /// <returns>True when the step is now requested or was handed to the preparation.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="step"/> is null.</exception>
+        public bool RequestStep(RunStep step)
+        {
+            if (step == null)
+            {
+                throw new ArgumentNullException(nameof(step));
+            }
+
+            if (!step.RequiresPreparation
+                || (Phase != RunScreenPhase.Fighting && Phase != RunScreenPhase.BetweenFights)
+                || !Run.AvailableSteps.Contains(step))
+            {
+                return false;
+            }
+
+            if (Phase == RunScreenPhase.Fighting || Run.HasPendingChoice)
+            {
+                PendingStep = step.Equals(PendingStep) ? null : step;
+                return PendingStep != null;
+            }
+
+            if (_awaitingPreparation)
+            {
+                return false;
+            }
+
+            RaisePreparation(step);
+            return true;
+        }
+
+        /// <summary>Withdraws the request made with <see cref="RequestStep"/>, if any.</summary>
+        public void CancelRequest()
+        {
+            PendingStep = null;
         }
 
         /// <summary>
@@ -173,7 +245,7 @@ namespace Game.Unity.UI.RunScreen
                 throw new ArgumentNullException(nameof(step));
             }
 
-            if (Phase != RunScreenPhase.ChoosingStep)
+            if (Phase != RunScreenPhase.BetweenFights)
             {
                 throw new InvalidOperationException("A fight can only start between fights.");
             }
@@ -184,6 +256,12 @@ namespace Game.Unity.UI.RunScreen
             }
 
             _session = Run.BeginFight(step);
+            _awaitingPreparation = false;
+            if (step.Equals(PendingStep))
+            {
+                PendingStep = null;
+            }
+
             ClearSelection();
             Pacer.Reset();
             Phase = RunScreenPhase.Fighting;
@@ -195,7 +273,7 @@ namespace Game.Unity.UI.RunScreen
         /// <returns>True when the event was raised.</returns>
         public bool OpenPendingChoiceIfAny()
         {
-            if (Phase != RunScreenPhase.ChoosingStep || !Run.HasPendingChoice)
+            if (Phase != RunScreenPhase.BetweenFights || !Run.HasPendingChoice)
             {
                 return false;
             }
@@ -205,19 +283,31 @@ namespace Game.Unity.UI.RunScreen
         }
 
         /// <summary>
-        /// Tells the screen the pending level-up choice was taken. Nothing is cached: the step choices read
-        /// <see cref="Run.HasPendingChoice"/> every time, so this only documents the hand-back.
+        /// Tells the screen the pending level-up choice was taken, so the loop goes on: a requested room or professor
+        /// is handed to the preparation, otherwise the pause timer runs again. Does nothing while another level-up
+        /// still waits (the caller shows it).
         /// </summary>
         public void ChoiceResolved()
         {
+            if (!Run.HasPendingChoice)
+            {
+                ResolveBetweenFights();
+            }
         }
 
         /// <summary>
         /// Plays the ticks due after <paramref name="seconds"/> of real time. When the fight ends it is completed
-        /// (counted by the run) and the result phase begins. Does nothing outside a fight.
+        /// (counted by the run) and the loop goes on (see the class remarks). Between fights it counts down the pause
+        /// before the next regular fight (faster with the speed; stopped by pause, a level-up or an open preparation).
         /// </summary>
         public void Advance(double seconds)
         {
+            if (Phase == RunScreenPhase.BetweenFights)
+            {
+                AdvanceLoop(seconds);
+                return;
+            }
+
             if (Phase != RunScreenPhase.Fighting)
             {
                 return;
@@ -262,12 +352,13 @@ namespace Game.Unity.UI.RunScreen
             }
 
             CancelSession();
-            Phase = RunScreenPhase.ChoosingStep;
+            Phase = RunScreenPhase.BetweenFights;
+            _delayLeft = _nextFightDelay;
         }
 
         /// <summary>
-        /// Leaves the result of the last fight: ends the run screen if the run is over, otherwise opens the pending
-        /// level-up choice if there is one, otherwise goes back to the step choice.
+        /// Leaves the result of the last fight: ends the run screen if the run is over, otherwise the loop goes on
+        /// (pending level-up choice, requested room or professor, or the next regular fight after the pause).
         /// </summary>
         public void Continue()
         {
@@ -283,8 +374,9 @@ namespace Game.Unity.UI.RunScreen
                 return;
             }
 
-            Phase = RunScreenPhase.ChoosingStep;
-            OpenPendingChoiceIfAny();
+            Phase = RunScreenPhase.BetweenFights;
+            _delayLeft = _nextFightDelay;
+            ResolveBetweenFights();
         }
 
         /// <summary>Cancels an open fight, if any. The screen calls it when it is closed (screen host hide callback).</summary>
@@ -293,7 +385,8 @@ namespace Game.Unity.UI.RunScreen
             if (Phase == RunScreenPhase.Fighting)
             {
                 CancelSession();
-                Phase = RunScreenPhase.ChoosingStep;
+                Phase = RunScreenPhase.BetweenFights;
+                _delayLeft = _nextFightDelay;
             }
         }
 
@@ -363,8 +456,69 @@ namespace Game.Unity.UI.RunScreen
             _session = null;
             ClearSelection();
             LastReport = session.Complete();
-            Phase = RunScreenPhase.FightResult;
+
+            // A won regular fight chains into the next one; the others (mini-boss, professor, defeat) show the recap.
+            var chains = Run.IsInProgress && LastReport.HeroWon && LastReport.Step.Kind == RunStepKind.RegularFight;
+            Phase = chains ? RunScreenPhase.BetweenFights : RunScreenPhase.FightResult;
+            _delayLeft = _nextFightDelay;
+            if (!Run.IsInProgress)
+            {
+                PendingStep = null;
+            }
+
             FightCompleted?.Invoke(LastReport);
+            if (chains)
+            {
+                ResolveBetweenFights();
+            }
+        }
+
+        // The loop is between two fights: a waiting level-up first, then a requested room or professor. Otherwise
+        // nothing happens here: the pause timer starts the next regular fight.
+        private void ResolveBetweenFights()
+        {
+            if (Phase != RunScreenPhase.BetweenFights || _awaitingPreparation)
+            {
+                return;
+            }
+
+            if (Run.HasPendingChoice)
+            {
+                PendingChoiceRequested?.Invoke();
+                return;
+            }
+
+            var step = PendingStep;
+            if (step == null)
+            {
+                return;
+            }
+
+            PendingStep = null;
+            if (Run.AvailableSteps.Contains(step))
+            {
+                RaisePreparation(step);
+            }
+        }
+
+        private void RaisePreparation(RunStep step)
+        {
+            _awaitingPreparation = true;
+            PreparationRequested?.Invoke(step);
+        }
+
+        private void AdvanceLoop(double seconds)
+        {
+            if (Pacer.IsPaused || Run.HasPendingChoice || _awaitingPreparation || !Run.IsInProgress || Run.CurrentFight != null)
+            {
+                return;
+            }
+
+            _delayLeft -= seconds * Pacer.Speed;
+            if (_delayLeft <= 0d)
+            {
+                StartFight(RunStep.RegularFight);
+            }
         }
 
         private void CancelSession()
