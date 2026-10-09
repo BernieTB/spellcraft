@@ -278,11 +278,11 @@ namespace Game.Unity.UI
             section.Add(BuildRow(Columns.Select(column => column.Title).ToArray(), HeaderRowClass));
             foreach (var card in combatant.Cards)
             {
-                var summary = summaries?.Invoke(card);
+                var cardSummary = summaries?.Invoke(card);
                 var cells = new[]
                 {
                     (card.Position + 1).ToString(),
-                    CardCellText(card, summary),
+                    CardCellText(card, cardSummary),
                     card.Casts.ToString(),
                     card.Damage.ToString(),
                     card.Healing.ToString(),
@@ -291,9 +291,9 @@ namespace Game.Unity.UI
                     FormatBonus(card.BonusWasted),
                 };
                 var row = BuildRow(cells, null);
-                if (summary != null)
+                if (cardSummary != null)
                 {
-                    row.tooltip = summary.TooltipText;
+                    row.tooltip = cardSummary.TooltipText;
                 }
 
                 if (IsCulprit(card, defeat))
