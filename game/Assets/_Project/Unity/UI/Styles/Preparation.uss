@@ -19,6 +19,7 @@
 }
 
 .prep-enemy {
+    flex-shrink: 1;
     margin-right: 32px;
 }
 
@@ -26,6 +27,7 @@
 .prep-enemy-card {
     font-size: var(--font-size-small);
     color: var(--color-ink);
+    white-space: normal;
 }
 
 .unknown {
@@ -45,12 +47,20 @@
     min-height: 64px;
 }
 
+/* A card of the line or the reserve: a button holding the card face (title, compact summary). */
 .prep-card {
-    margin: 4px;
-    padding: 8px 16px;
-    font-size: var(--font-size-small);
+    flex-grow: 1;
+    flex-basis: var(--card-width);
+    min-width: var(--card-width);
+    max-width: var(--card-max-width);
+    margin: var(--space-small);
+    padding: var(--space-medium);
+    align-items: stretch;
+    -unity-text-align: upper-left;
     color: var(--color-ink);
-    background-color: var(--color-panel);
+    background-color: var(--color-panel-raised);
+    border-width: 3px;
+    border-color: var(--color-border);
 }
 
 .prep-card--selected {

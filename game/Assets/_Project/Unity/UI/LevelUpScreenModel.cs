@@ -2,11 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text;
 using Game.Core.Cards;
-using Game.Core.Effects;
 using Game.Core.Runs;
 using Game.Core.Upgrades;
+using Game.Unity.UI.Cards;
 
 namespace Game.Unity.UI
 {
@@ -195,54 +194,12 @@ namespace Game.Unity.UI
 
         private static string DescribeCard(CardDefinition card)
         {
-            var text = new StringBuilder($"Cast time: {card.CastTime}");
-            foreach (var effect in card.Effects)
-            {
-                text.Append('\n').Append(effect is IAmountEffect amount
-                    ? DescribeAmount(amount.Kind, amount.Amount)
-                    : effect.GetType().Name);
-            }
-
-            foreach (var modifier in card.NeighbourModifiers)
-            {
-                var target = modifier.Direction == NeighbourDirection.Next ? "next" : "previous";
-                text.Append($"\nGives the {target} card +{modifier.Amount} {KindWord(modifier.Kind)}");
-            }
-
-            return text.ToString();
-        }
-
-        private static string DescribeAmount(BonusKind kind, int amount)
-        {
-            switch (kind)
-            {
-                case BonusKind.Damage:
-                    return $"Deal {amount} damage";
-                case BonusKind.Heal:
-                    return $"Heal {amount}";
-                default:
-                    return $"Gain {amount} shield";
-            }
-        }
-
-        private static string KindWord(BonusKind kind)
-        {
-            return kind == BonusKind.Damage ? "damage" : kind == BonusKind.Heal ? "healing" : "shield";
+            return CardSummary.From(card).DetailedText;
         }
 
         private static string DescribePassive(PassiveUpgrade passive)
         {
-            switch (passive.Kind)
-            {
-                case PassiveUpgradeKind.MaxHealth:
-                    return $"+{passive.Amount} max health";
-                case PassiveUpgradeKind.StartingShield:
-                    return $"+{passive.Amount} starting shield each fight";
-                case PassiveUpgradeKind.EffectAmount:
-                    return $"+{passive.Amount} to every {KindWord(passive.EffectKind)} effect you cast";
-                default:
-                    return $"+{passive.Amount} to the neighbour bonuses your cards give";
-            }
+            return PassiveSummary.Describe(passive);
         }
     }
 }

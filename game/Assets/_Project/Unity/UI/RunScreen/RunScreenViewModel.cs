@@ -5,6 +5,7 @@ using Game.Core.Cards;
 using Game.Core.Combat;
 using Game.Core.Effects;
 using Game.Core.Runs;
+using Game.Unity.UI.Cards;
 
 namespace Game.Unity.UI.RunScreen
 {
@@ -88,8 +89,10 @@ namespace Game.Unity.UI.RunScreen
             bool isSelected,
             double castFraction,
             int stage = 0,
-            bool justEvolved = false)
+            bool justEvolved = false,
+            CardSummary summary = null)
         {
+            Summary = summary;
             Stage = stage;
             JustEvolved = justEvolved;
             Index = index;
@@ -110,6 +113,12 @@ namespace Game.Unity.UI.RunScreen
 
         /// <summary>Cast time and effects, for example "t3: damage 4, shield 2".</summary>
         public string DetailText { get; }
+
+        /// <summary>
+        /// What the slot shows of the card (#123): cast time, effects at the card's current stage, neighbour bonuses
+        /// and the hover details. Null only for a slot built without a card definition.
+        /// </summary>
+        public CardSummary Summary { get; }
 
         /// <summary>The neighbour bonus waiting on this slot ("+3 damage"), or null.</summary>
         public string PendingBonusText { get; }
@@ -265,6 +274,9 @@ namespace Game.Unity.UI.RunScreen
         /// <summary>The reserve, in order.</summary>
         public IReadOnlyList<CardSlotViewModel> Reserve { get; private set; }
 
+        /// <summary>The passive upgrades the hero owns, same ones stacked, with their effect (#123).</summary>
+        public IReadOnlyList<PassiveSummaryLine> Passives { get; private set; }
+
         /// <summary>The next-step choices (only between fights).</summary>
         public IReadOnlyList<StepChoice> Steps { get; private set; }
 
@@ -296,6 +308,7 @@ namespace Game.Unity.UI.RunScreen
                 Phase = controller.Phase,
                 Hud = BuildHud(run),
                 HasPendingChoice = run.HasPendingChoice,
+                Passives = PassiveSummary.DescribeOwned(run.Upgrades),
                 Steps = controller.StepChoices,
             };
 
@@ -486,7 +499,7 @@ namespace Game.Unity.UI.RunScreen
             bool justEvolved = false)
         {
             return new CardSlotViewModel(
-                index, card.Id, DescribeCard(card), pendingBonus, isCasting, isNext, isSelected, castFraction, card.Stage, justEvolved);
+                index, card.Id, DescribeCard(card), pendingBonus, isCasting, isNext, isSelected, castFraction, card.Stage, justEvolved, CardSummary.From(card));
         }
 
         // An evolution of the line slot's card in the last ticks. The record's position is where the cast was; the

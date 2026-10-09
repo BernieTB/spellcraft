@@ -6,6 +6,7 @@ using Game.Core.Combat.Recap;
 using Game.Core.Effects;
 using Game.Core.Randomness;
 using Game.Core.SpellLines;
+using Game.Unity.UI.Cards;
 
 namespace Game.Unity.EditorTools.UI
 {
@@ -20,6 +21,15 @@ namespace Game.Unity.EditorTools.UI
     public static class ScreenPreviewFights
     {
         private const int Seed = 1;
+
+        // Every demo card built so far, by id, so the recap preview can show what each card does.
+        private static readonly Dictionary<string, CardDefinition> Cards = new Dictionary<string, CardDefinition>();
+
+        /// <summary>What the recap preview shows under a card: its summary, as the demo cards define it.</summary>
+        public static CardSummary Summaries(CardRecap card)
+        {
+            return Cards.TryGetValue(card.CardId, out var definition) ? CardSummary.From(definition) : null;
+        }
 
         /// <summary>The hero beats one enemy; one card boosts the next card's damage.</summary>
         public static CombatLog VictoryLog()
@@ -81,7 +91,9 @@ namespace Game.Unity.EditorTools.UI
             IEffect[] effects,
             params NeighbourModifier[] modifiers)
         {
-            return new CardDefinition(id, castTime, effects, modifiers);
+            var card = new CardDefinition(id, castTime, effects, modifiers);
+            Cards[id] = card;
+            return card;
         }
 
         private static FightParticipant Participant(int maxHealth, int shield, params CardDefinition[] cards)

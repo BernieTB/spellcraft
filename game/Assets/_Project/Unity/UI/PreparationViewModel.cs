@@ -3,14 +3,16 @@ using System.Collections.Generic;
 using System.Linq;
 using Game.Core.Enemies;
 using Game.Core.Runs;
+using Game.Unity.UI.Cards;
 
 namespace Game.Unity.UI
 {
     /// <summary>One card shown on the preparation screen.</summary>
     public readonly struct PreparationCard
     {
-        public PreparationCard(string id, int castTime, int stage)
+        public PreparationCard(string id, int castTime, int stage, CardSummary summary = null)
         {
+            Summary = summary;
             Id = id;
             CastTime = castTime;
             Stage = stage;
@@ -24,13 +26,22 @@ namespace Game.Unity.UI
 
         /// <summary>Evolution stage reached by this copy.</summary>
         public int Stage { get; }
+
+        /// <summary>The effects, at the stage this copy has reached, that the screen shows on the card (#123).</summary>
+        public CardSummary Summary { get; }
     }
 
     /// <summary>What the player may know about one enemy of the fight: a null value or a null card is unknown.</summary>
     public sealed class PreparationEnemyInfo
     {
-        public PreparationEnemyInfo(string id, int? maxHealth, int? shield, IReadOnlyList<string> cardIds)
+        public PreparationEnemyInfo(
+            string id,
+            int? maxHealth,
+            int? shield,
+            IReadOnlyList<string> cardIds,
+            IReadOnlyList<CardSummary> cardSummaries = null)
         {
+            CardSummaries = cardSummaries;
             Id = id;
             MaxHealth = maxHealth;
             Shield = shield;
@@ -47,6 +58,12 @@ namespace Game.Unity.UI
 
         /// <summary>One entry per card of the enemy line; an entry is null while that card is unknown.</summary>
         public IReadOnlyList<string> CardIds { get; }
+
+        /// <summary>
+        /// What each enemy card does, parallel to <see cref="CardIds"/>; an entry is null while that card is unknown.
+        /// Null when the list was not given.
+        /// </summary>
+        public IReadOnlyList<CardSummary> CardSummaries { get; }
     }
 
     /// <summary>
@@ -101,7 +118,8 @@ namespace Game.Unity.UI
                             knowledge.ProfessorId,
                             knowledge.MaxHealth,
                             knowledge.Shield,
-                            knowledge.SpellLine.Select(card => card?.Id).ToList()),
+                            knowledge.SpellLine.Select(card => card?.Id).ToList(),
+                            knowledge.SpellLine.Select(card => card == null ? null : CardSummary.From(card)).ToList()),
                     };
                 }
 
@@ -233,13 +251,18 @@ namespace Game.Unity.UI
 
         private static PreparationCard ToCard(CardInstance card)
         {
-            return new PreparationCard(card.Definition.Id, card.Definition.CastTime, card.Stage);
+            return new PreparationCard(
+                card.Definition.Id, card.Definition.CastTime, card.Stage, CardSummary.From(card.CurrentDefinition));
         }
 
         private static PreparationEnemyInfo Known(EnemyDefinition enemy)
         {
             return new PreparationEnemyInfo(
-                enemy.Id, enemy.MaxHealth, enemy.Shield, enemy.SpellLine.Select(card => card.Id).ToList());
+                enemy.Id,
+                enemy.MaxHealth,
+                enemy.Shield,
+                enemy.SpellLine.Select(card => card.Id).ToList(),
+                enemy.SpellLine.Select(CardSummary.From).ToList());
         }
     }
 }
