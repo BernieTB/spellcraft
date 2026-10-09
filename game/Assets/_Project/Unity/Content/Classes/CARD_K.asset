@@ -13,17 +13,17 @@ MonoBehaviour:
   m_Name: CARD_K
   m_EditorClassIdentifier: Game.Unity::Game.Unity.Cards.CardAsset
   _id: CARD_K
-  _castTime: 3
+  _castTime: 12
   _effects:
   - _kind: 0
     _amount: 2
   _neighbourModifiers:
   - _kind: 0
     _direction: 0
-    _amount: 1
+    _amount: 2
   - _kind: 0
     _direction: 1
-    _amount: 1
+    _amount: 2
   _evolutions:
   - _castsRequired: 3
     _effects:
@@ -32,10 +32,10 @@ MonoBehaviour:
     _neighbourModifiers:
     - _kind: 0
       _direction: 0
-      _amount: 2
+      _amount: 4
     - _kind: 0
       _direction: 1
-      _amount: 2
+      _amount: 4
   - _castsRequired: 7
     _effects:
     - _kind: 0
@@ -43,8 +43,8 @@ MonoBehaviour:
     _neighbourModifiers:
     - _kind: 0
       _direction: 0
-      _amount: 3
+      _amount: 6
     - _kind: 0
       _direction: 1
-      _amount: 3
+      _amount: 6
   _isPlaceholder: 0

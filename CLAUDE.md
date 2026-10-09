@@ -206,6 +206,21 @@ Every `-sim*` option is optional: `-simSetup` (asset path, default `Assets/_Proj
 never commit run outputs). Exit code `0` = summary written, `1` = error (see the log). Durations (simulation loop,
 runner total) are in the log lines starting with `[Simulation]`, not in the summary.
 
+Tune the difficulty of the Vertical slice (#125, [ADR 0017](docs/adr/0017-vertical-slice-difficulty-targets.md)): the
+numbers live in the plain-data specs `PlaceholderBiomeSpecs`, `MvpClassSpecs` and `PassivePoolSpecs`
+(`game/Assets/_Project/Unity/EditorTools/Content/`), never in the asset YAML. The balance bots
+(`Tests/Unity/Balance`) play complete runs and `BalanceTargetsTests` checks the targets. To get the table of win rates,
+deaths per stage and run length, regenerate the assets from the specs and play 300 seeds (close the editor first; about
+20 minutes):
+
+```powershell
+$env:SPELLCRAFT_BALANCE_REPORT = "<scratch-dir>/balance.md"; $env:SPELLCRAFT_BALANCE_REGEN = "1"; $env:SPELLCRAFT_BALANCE_SEEDS = "300"
+unity test ./game --mode EditMode --filter WriteReport_WhenAskedByTheEnvironment --output <scratch-dir>/balance.xml
+```
+
+Without `SPELLCRAFT_BALANCE_REPORT` that test does nothing. `Core` and the specs compile in a plain .NET console project,
+which is how the numbers were iterated in seconds instead of minutes.
+
 ## Code conventions
 
 - Namespaces mirror assemblies and folders: `Game.Core.*`, `Game.Unity.*`, `Game.Core.Tests.*`.

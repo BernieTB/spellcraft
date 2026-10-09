@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Game.Unity::Game.Unity.Enemies.EnemyAsset
   _id: ENEMY_PROFESSOR_01
   _rank: 2
-  _maxHealth: 55
-  _startingShield: 4
+  _maxHealth: 470
+  _startingShield: 34
   _xpReward: 40
   _spellLine:
   - {fileID: 11400000, guid: b133b6aef373da34abec8fb2a6f4ee9e, type: 2}

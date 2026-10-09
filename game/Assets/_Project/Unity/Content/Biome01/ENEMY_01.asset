@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Game.Unity::Game.Unity.Enemies.EnemyAsset
   _id: ENEMY_01
   _rank: 0
-  _maxHealth: 10
+  _maxHealth: 48
   _startingShield: 0
   _xpReward: 5
   _spellLine:

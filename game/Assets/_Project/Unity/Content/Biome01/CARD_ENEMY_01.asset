@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: CARD_ENEMY_01
   m_EditorClassIdentifier: Game.Unity::Game.Unity.Cards.CardAsset
   _id: CARD_ENEMY_01
-  _castTime: 3
+  _castTime: 12
   _effects:
   - _kind: 0
     _amount: 2

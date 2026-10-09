@@ -15,7 +15,7 @@ namespace Game.Unity.EditorTools.Content
     /// <remarks>
     /// <para>
     /// Passive words are written by the project owner: until then they are named by the placeholders
-    /// <c>PASSIVE_A</c>... like the cards (ADR 0007). Amounts are first-pass numbers to tune with the simulation
+    /// <c>PASSIVE_A</c>... like the cards (ADR 0007). Amounts are working numbers to tune with the simulation
     /// runner (ADR 0006), not balance decisions. The assets are not flagged as placeholder content.
     /// </para>
     /// <para>
@@ -32,27 +32,8 @@ namespace Game.Unity.EditorTools.Content
         /// <summary>Identifier of the pool of the MVP class.</summary>
         public const string PoolId = "PASSIVE_POOL_A";
 
-        private static readonly Spec[] Specs =
-        {
-            // Base stats.
-            new Spec("PASSIVE_A", PassiveUpgradeKind.MaxHealth, BonusKind.Damage, 5),
-            new Spec("PASSIVE_B", PassiveUpgradeKind.MaxHealth, BonusKind.Damage, 10),
-            new Spec("PASSIVE_C", PassiveUpgradeKind.StartingShield, BonusKind.Damage, 3),
-
-            // +X to every effect of one kind.
-            new Spec("PASSIVE_D", PassiveUpgradeKind.EffectAmount, BonusKind.Damage, 1),
-            new Spec("PASSIVE_E", PassiveUpgradeKind.EffectAmount, BonusKind.Damage, 2),
-            new Spec("PASSIVE_F", PassiveUpgradeKind.EffectAmount, BonusKind.Heal, 1),
-            new Spec("PASSIVE_G", PassiveUpgradeKind.EffectAmount, BonusKind.Shield, 1),
-            new Spec("PASSIVE_H", PassiveUpgradeKind.EffectAmount, BonusKind.Shield, 2),
-
-            // Stronger neighbour bonuses.
-            new Spec("PASSIVE_I", PassiveUpgradeKind.NeighbourBonus, BonusKind.Damage, 1),
-            new Spec("PASSIVE_J", PassiveUpgradeKind.NeighbourBonus, BonusKind.Damage, 2),
-        };
-
         /// <summary>Ids of the generated passives, in pool order.</summary>
-        public static IReadOnlyList<string> PassiveIds { get; } = Specs.Select(spec => spec.Id).ToArray();
+        public static IReadOnlyList<string> PassiveIds { get; } = PassivePoolSpecs.All.Select(spec => spec.Id).ToArray();
 
         /// <summary>Path of the pool asset.</summary>
         public static string PoolPath => $"{ContentFolder}/{PoolId}.asset";
@@ -64,7 +45,7 @@ namespace Game.Unity.EditorTools.Content
         public static void Generate()
         {
             var assets = new List<PassiveUpgradeAsset>();
-            foreach (var spec in Specs)
+            foreach (var spec in PassivePoolSpecs.All)
             {
                 var asset = LoadOrCreate<PassiveUpgradeAsset>(PassivePath(spec.Id));
                 var serialized = new SerializedObject(asset);
@@ -105,25 +86,6 @@ namespace Game.Unity.EditorTools.Content
             }
 
             return asset;
-        }
-
-        private readonly struct Spec
-        {
-            public Spec(string id, PassiveUpgradeKind kind, BonusKind effectKind, int amount)
-            {
-                Id = id;
-                Kind = kind;
-                EffectKind = effectKind;
-                Amount = amount;
-            }
-
-            public string Id { get; }
-
-            public PassiveUpgradeKind Kind { get; }
-
-            public BonusKind EffectKind { get; }
-
-            public int Amount { get; }
         }
     }
 }

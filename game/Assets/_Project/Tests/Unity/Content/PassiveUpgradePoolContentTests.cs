@@ -57,7 +57,7 @@ namespace Game.Unity.Tests.Content
         }
 
         [Test]
-        public void PlaceholderBiome_PlayedTakingOffersFromThePool_EndsInVictory()
+        public void PlaceholderBiome_PlayedTakingOffersFromThePool_AlwaysEnds()
         {
             var classDefinition = AssetDatabase.LoadAssetAtPath<ClassAsset>(MvpClassContentGenerator.ClassPath).ToDefinition();
             var biome = AssetDatabase.LoadAssetAtPath<BiomeAsset>(PlaceholderBiomeGenerator.AssetPath(PlaceholderBiomeSpecs.BiomeId))
@@ -70,6 +70,7 @@ namespace Game.Unity.Tests.Content
             var upgrades = LoadPool().ToUpgrades();
             var poolIds = new HashSet<string>(upgrades.Select(upgrade => upgrade.Id));
 
+            var totalTaken = 0;
             for (ulong seed = 1; seed <= SeedCount; seed++)
             {
                 var run = new Run(classDefinition, biome, rules, seed);
@@ -99,10 +100,13 @@ namespace Game.Unity.Tests.Content
                     Assert.Less(run.FightsPlayed, 200, $"seed {seed}: the run does not end.");
                 }
 
-                Assert.AreEqual(RunOutcome.Victory, run.Outcome, $"seed {seed}");
-                Assert.Greater(taken, 0, $"seed {seed}: no level-up was taken.");
+                // Balance (#125): the player never edits the line, so a run may end in defeat, even in the first fights.
+                Assert.AreNotEqual(RunOutcome.InProgress, run.Outcome, $"seed {seed}");
                 Assert.AreEqual(taken, run.Upgrades.Upgrades.Count, $"seed {seed}");
+                totalTaken += taken;
             }
+
+            Assert.Greater(totalTaken, 0, "no level-up was taken in any run.");
         }
     }
 }

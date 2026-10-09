@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: CARD_ENEMY_10
   m_EditorClassIdentifier: Game.Unity::Game.Unity.Cards.CardAsset
   _id: CARD_ENEMY_10
-  _castTime: 2
+  _castTime: 8
   _effects:
   - _kind: 0
-    _amount: 2
+    _amount: 4
   _neighbourModifiers: []
   _evolutions: []
   _isPlaceholder: 0

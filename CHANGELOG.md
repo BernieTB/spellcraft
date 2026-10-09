@@ -10,6 +10,13 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
 
 ### Changed
 
+- Vertical slice rebalanced (#125, ADR 0017): the run was far too easy. Data only, through the generator specs
+  (`PlaceholderBiomeSpecs`, `MvpClassSpecs`, `PassivePoolSpecs`, split out of the generators so a harness can read them):
+  card cast times are four times longer and neighbour bonuses doubled, the hero has 40 health, the starting line is
+  disordered on purpose (`CARD_A, CARD_B, CARD_C, CARD_D`: the weaver's bonus is wasted until it is moved), enemies have
+  much more health, the mini-bosses and the professor have worked decks, and the fight time limit is 2000 ticks. A bot that
+  never touches the line now loses, one that orders it wins about half of the runs, one that optimises it wins most
+  (table in the PR).
 - Regular fights chain automatically (#124, ADR 0016, amends ADR 0009): after a won regular fight a short pause
   (`RunScreenSettings.NextFightDelaySeconds`, also a field of the game flow behaviour) starts the next one with no
   click. A level-up stops the loop until its choice is taken; secret rooms and the professor are buttons that are
@@ -18,6 +25,10 @@ released, versions will follow [Semantic Versioning](https://semver.org/spec/v2.
 
 ### Added
 
+- Balance bots (#125, `Tests/Unity/Balance`): a naive, an intermediate and an expert bot play complete runs of the biome on
+  the real `Run`; `BalanceTargetsTests` checks the difficulty targets on fixed seeds; `BalanceReportTests` writes the
+  table of win rates, deaths per stage and run length (set `SPELLCRAFT_BALANCE_REPORT`, optionally
+  `SPELLCRAFT_BALANCE_REGEN=1` and `SPELLCRAFT_BALANCE_SEEDS`).
 - Card effects visible everywhere (#123): every card slot of the run screen (line and reserve), the preparation screen
   (line, reserve and the enemy cards the player knows) and the recap table shows a compact summary (cast time, effects with
   the amounts of the card's current evolution stage, neighbour bonus, stage mark) instead of only its id, and the full details

@@ -9,8 +9,11 @@ namespace Game.Unity.EditorTools.Content
     /// </summary>
     /// <remarks>
     /// Ids are working names (<c>CARD_*</c>, <c>ENEMY_*</c>...) with no invented words: final names, words and
-    /// creatures are written by the project owner. The numbers are first-pass values chosen so that the MVP class
-    /// (<c>CLASS_A</c>) can finish the biome by playing simply (ADR 0009, 0010, 0011); they are not balance decisions.
+    /// creatures are written by the project owner. The numbers were tuned in #125 with the balance bots of
+    /// <c>Tests/Unity/Balance</c> (a bot that never touches the line, one that orders it and one that optimises it) so
+    /// that ordering the line matters: the starting line is deliberately disordered, regular fights are safe for an
+    /// ordered line, the mini-bosses are spikes and the professor is a wall without the mini-bosses' rewards and
+    /// revelations (ADR 0009, 0010, 0011). They remain working values, not final balance decisions.
     /// </remarks>
     public static class PlaceholderBiomeSpecs
     {
@@ -21,10 +24,10 @@ namespace Game.Unity.EditorTools.Content
         public const int MinimumRegularFights = 8;
 
         /// <summary>
-        /// Global fight time limit in ticks (ADR 0011): far above a normal fight (tens of ticks), so it is only a
+        /// Global fight time limit in ticks (ADR 0011): above the longest fight of the balance bots (about 1500 ticks), so it is only a
         /// safety net.
         /// </summary>
-        public const int FightTimeLimit = 1000;
+        public const int FightTimeLimit = 2000;
 
         /// <summary>Extra cost of each level past <see cref="LevelCosts"/>.</summary>
         public const int CostIncreaseAfterList = 3;
@@ -42,44 +45,44 @@ namespace Game.Unity.EditorTools.Content
         public static readonly CardSpec[] Cards =
         {
             // Regular monsters: one attack card each (ADR 0011).
-            new CardSpec("CARD_ENEMY_01", 3, new[] { Damage(2) }),
-            new CardSpec("CARD_ENEMY_02", 4, new[] { Damage(3) }),
-            new CardSpec("CARD_ENEMY_03", 2, new[] { Damage(1) }),
-            new CardSpec("CARD_ENEMY_04", 3, new[] { Damage(3) }),
+            new CardSpec("CARD_ENEMY_01", 12, new[] { Damage(2) }),
+            new CardSpec("CARD_ENEMY_02", 16, new[] { Damage(3) }),
+            new CardSpec("CARD_ENEMY_03", 8, new[] { Damage(1) }),
+            new CardSpec("CARD_ENEMY_04", 13, new[] { Damage(4) }),
 
             // First mini-boss: a small hit that boosts the next hit, a strong hit, then a shield.
-            new CardSpec("CARD_ENEMY_05", 2, new[] { Damage(2) }, NextDamage(2)),
-            new CardSpec("CARD_ENEMY_06", 3, new[] { Damage(3) }),
-            new CardSpec("CARD_ENEMY_07", 4, new[] { Shield(5) }),
+            new CardSpec("CARD_ENEMY_05", 8, new[] { Damage(4) }, NextDamage(2)),
+            new CardSpec("CARD_ENEMY_06", 12, new[] { Damage(6) }),
+            new CardSpec("CARD_ENEMY_07", 16, new[] { Shield(11) }),
 
             // Second mini-boss: a heavy hit, a shield that boosts the next hit, a quick hit.
-            new CardSpec("CARD_ENEMY_08", 4, new[] { Damage(4) }),
-            new CardSpec("CARD_ENEMY_09", 2, new[] { Shield(3) }, NextDamage(2)),
-            new CardSpec("CARD_ENEMY_10", 2, new[] { Damage(2) }),
+            new CardSpec("CARD_ENEMY_08", 16, new[] { Damage(8) }),
+            new CardSpec("CARD_ENEMY_09", 8, new[] { Shield(6) }, NextDamage(2)),
+            new CardSpec("CARD_ENEMY_10", 8, new[] { Damage(4) }),
 
             // Professor: five cards, with boosts and a shield.
-            new CardSpec("CARD_ENEMY_11", 3, new[] { Damage(3) }, NextDamage(2)),
-            new CardSpec("CARD_ENEMY_12", 3, new[] { Damage(3) }),
-            new CardSpec("CARD_ENEMY_13", 4, new[] { Shield(6) }),
-            new CardSpec("CARD_ENEMY_14", 2, new[] { Damage(2) }, PreviousDamage(1)),
-            new CardSpec("CARD_ENEMY_15", 4, new[] { Damage(5) }),
+            new CardSpec("CARD_ENEMY_11", 12, new[] { Damage(8) }, NextDamage(2)),
+            new CardSpec("CARD_ENEMY_12", 12, new[] { Damage(8) }),
+            new CardSpec("CARD_ENEMY_13", 16, new[] { Shield(15) }),
+            new CardSpec("CARD_ENEMY_14", 8, new[] { Damage(5) }, PreviousDamage(1)),
+            new CardSpec("CARD_ENEMY_15", 16, new[] { Damage(13) }),
 
             // Unique cards given by the mini-bosses (ADR 0010).
-            new CardSpec("CARD_UNIQUE_01", 3, new[] { Damage(6), Shield(2) }),
-            new CardSpec("CARD_UNIQUE_02", 2, new[] { Damage(3) }, NextDamage(2)),
+            new CardSpec("CARD_UNIQUE_01", 12, new[] { Damage(10), Shield(4) }),
+            new CardSpec("CARD_UNIQUE_02", 8, new[] { Damage(5) }, NextDamage(6)),
         };
 
         /// <summary>Regular monsters, mini-bosses and the professor. XP: mini-bosses above any regular fight.</summary>
         public static readonly EnemySpec[] Enemies =
         {
-            new EnemySpec("ENEMY_01", Rank.Regular, 10, 0, 5, "CARD_ENEMY_01"),
-            new EnemySpec("ENEMY_02", Rank.Regular, 14, 0, 7, "CARD_ENEMY_02"),
-            new EnemySpec("ENEMY_03", Rank.Regular, 8, 0, 3, "CARD_ENEMY_03"),
-            new EnemySpec("ENEMY_04", Rank.Regular, 12, 2, 6, "CARD_ENEMY_04"),
-            new EnemySpec("ENEMY_MINIBOSS_01", Rank.MiniBoss, 28, 0, 20, "CARD_ENEMY_05", "CARD_ENEMY_06", "CARD_ENEMY_07"),
-            new EnemySpec("ENEMY_MINIBOSS_02", Rank.MiniBoss, 34, 3, 25, "CARD_ENEMY_08", "CARD_ENEMY_09", "CARD_ENEMY_10"),
+            new EnemySpec("ENEMY_01", Rank.Regular, 48, 0, 5, "CARD_ENEMY_01"),
+            new EnemySpec("ENEMY_02", Rank.Regular, 66, 0, 7, "CARD_ENEMY_02"),
+            new EnemySpec("ENEMY_03", Rank.Regular, 38, 0, 3, "CARD_ENEMY_03"),
+            new EnemySpec("ENEMY_04", Rank.Regular, 58, 10, 6, "CARD_ENEMY_04"),
+            new EnemySpec("ENEMY_MINIBOSS_01", Rank.MiniBoss, 165, 0, 20, "CARD_ENEMY_05", "CARD_ENEMY_06", "CARD_ENEMY_07"),
+            new EnemySpec("ENEMY_MINIBOSS_02", Rank.MiniBoss, 220, 20, 25, "CARD_ENEMY_08", "CARD_ENEMY_09", "CARD_ENEMY_10"),
             new EnemySpec(
-                "ENEMY_PROFESSOR_01", Rank.Professor, 55, 4, 40,
+                "ENEMY_PROFESSOR_01", Rank.Professor, 470, 34, 40,
                 "CARD_ENEMY_11", "CARD_ENEMY_12", "CARD_ENEMY_13", "CARD_ENEMY_14", "CARD_ENEMY_15"),
         };
 

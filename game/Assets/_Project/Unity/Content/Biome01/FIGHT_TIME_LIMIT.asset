@@ -12,5 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9054e5c2ee53e8a4e857783171b28906, type: 3}
   m_Name: FIGHT_TIME_LIMIT
   m_EditorClassIdentifier: Game.Unity::Game.Unity.Runs.FightTimeLimitAsset
-  _maxTicks: 1000
+  _maxTicks: 2000
   _isPlaceholder: 0
