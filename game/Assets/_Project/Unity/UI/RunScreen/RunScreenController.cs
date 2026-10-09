@@ -354,6 +354,9 @@ namespace Game.Unity.UI.RunScreen
             CancelSession();
             Phase = RunScreenPhase.BetweenFights;
             _delayLeft = _nextFightDelay;
+
+            // A room or the professor asked for during this fight is due now, not after another regular fight.
+            ResolveBetweenFights();
         }
 
         /// <summary>

@@ -651,6 +651,22 @@ namespace Game.Unity.Tests.UI
         }
 
         [Test]
+        public void Leave_WithARequestedRoom_OpensThePreparationAtOnce()
+        {
+            var run = RunWithARoom();
+            var controller = NewController(run);
+            var prepared = new List<RunStep>();
+            controller.PreparationRequested += prepared.Add;
+            controller.StartFight(RunStep.RegularFight);
+            controller.RequestStep(RunStep.SecretRoom(RoomId));
+
+            controller.Leave();
+
+            Assert.AreEqual(new[] { RunStep.SecretRoom(RoomId) }, prepared);
+            Assert.IsNull(controller.PendingStep);
+        }
+
+        [Test]
         public void Dispose_WhileFighting_CancelsTheSession()
         {
             var run = NewRun();
